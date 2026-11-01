@@ -38,6 +38,7 @@ namespace AshenVale
     {
         public int id;
         public string name, theme;
+        public string key;                      // file-friendly name, e.g. "amberleaf_trail" (Art/Backdrops/<key>.png is used if present)
         public MapKind kind;
         public int columns, rows;               // size in cells; one cell is one world unit
         public float minX, maxX;                // how far players can walk
@@ -57,6 +58,7 @@ namespace AshenVale
         // and at the lowest camera its painted path (backdropFloor, as for scenes) lines up with the ground.
         public string backdrop;
         public float backdropFloor, backdropWidth;
+        public bool backdropFlip;               // show it mirrored (to reuse a neighbour's picture until the map has its own)
         public Platform[] platforms = new Platform[0];
         public Ladder[] ladders = new Ladder[0];
         public Portal[] portals = new Portal[0];
@@ -97,11 +99,12 @@ namespace AshenVale
         public static Link L(char key, int targetMap, char targetKey) { return new Link { key = key, targetMap = targetMap, targetKey = targetKey }; }
 
         // Gives a map a painted backdrop (see MapDef.backdrop).
-        public static MapDef WithBackdrop(MapDef def, string backdrop, float floor, float width)
+        public static MapDef WithBackdrop(MapDef def, string backdrop, float floor, float width, bool flip = false)
         {
             def.backdrop = backdrop;
             def.backdropFloor = floor;
             def.backdropWidth = width;
+            def.backdropFlip = flip;
             return def;
         }
 
@@ -134,6 +137,7 @@ namespace AshenVale
             var def = new MapDef
             {
                 id = id, name = name, theme = theme, kind = kind, columns = cols, rows = rows,
+                key = name.ToLowerInvariant().Replace(' ', '_'),
                 minX = .5f, maxX = cols - .5f, startX = cols * .5f, startY = G,
             };
 
@@ -234,23 +238,24 @@ namespace AshenVale
     public static class Maps
     {
         // Map ids are stored in save files: never renumber, only add.
-        public const int Emberfields = 0, Mosswood = 1, Emberhaven = 2, HollowDen = 3, Kingsroad = 4, Cinderford = 5, AshenMarsh = 6;
+        public const int Emberfields = 0, Mosswood = 1, Emberhaven = 2, HollowDen = 3, Kingsroad = 4, Cinderford = 5, AshenMarsh = 6,
+                         AmberleafTrail = 7, MossgateHollow = 8;
         public const int FirstTown = Emberhaven;    // every hero knows it; where you wake if nothing else is known
 
         // The world so far (west to east):
-        //   Emberhaven (town) - Emberfields - Mosswood - Kingsroad - Cinderford (town) - Ashen Marsh
-        //                                        '- secret ledge, top left: Hollow Den
+        //   Emberhaven (town) - Emberfields - Amberleaf Trail - Mossgate Hollow - Mosswood - Kingsroad - Cinderford (town) - Ashen Marsh
+        //                                                                            '- secret ledge, top left: Hollow Den
         // In id order: All[i].id == i.
         public static readonly MapDef[] All =
         {
             MapLayout.WithBackdrop(MapLayout.Build(Emberfields, "Emberfields", "autumn", MapKind.Field, EmberfieldsLayout,
                     new[] { MapLayout.S('a', Monsters.Emberling), MapLayout.S('b', Monsters.AshSprout),
                             MapLayout.S('c', Monsters.EliteEmberling), MapLayout.S('k', Monsters.OldChest) },
-                    new[] { MapLayout.L('A', Emberhaven, 'A'), MapLayout.L('B', Mosswood, 'B') }),
+                    new[] { MapLayout.L('A', Emberhaven, 'A'), MapLayout.L('B', AmberleafTrail, 'B') }),
                 "Art/Backdrops/emberfields", 116f / 724f, 42f),   // path 116 px above the bottom of the 724 px picture
             MapLayout.Build(Mosswood, "Mosswood", "forest", MapKind.Field, MosswoodLayout,
                 new[] { MapLayout.S('a', Monsters.MossCrawler), MapLayout.S('b', Monsters.BrambleBoar), MapLayout.S('k', Monsters.MossyChest) },
-                new[] { MapLayout.L('B', Emberfields, 'B'), MapLayout.L('C', Kingsroad, 'C'), MapLayout.L('S', HollowDen, 'S') }),
+                new[] { MapLayout.L('B', MossgateHollow, 'B'), MapLayout.L('C', Kingsroad, 'C'), MapLayout.L('S', HollowDen, 'S') }),
             MapLayout.WithScene(MapLayout.Build(Emberhaven, "Emberhaven", "town", MapKind.Town, EmberhavenLayout,
                     new MapLayout.Spawn[0],
                     new[] { MapLayout.L('A', Emberfields, 'A') }),
@@ -268,6 +273,17 @@ namespace AshenVale
                 new[] { MapLayout.S('t', Monsters.MarshToad), MapLayout.S('l', Monsters.BogLurker),
                         MapLayout.S('w', Monsters.AshWisp), MapLayout.S('k', Monsters.SunkenChest) },
                 new[] { MapLayout.L('E', Cinderford, 'E') }),
+            // The path from Emberfields down toward Mosswood. Until Amberleaf Trail has its own picture
+            // (Art/Backdrops/amberleaf_trail.png), it shows the Emberfields forest mirrored.
+            MapLayout.WithBackdrop(MapLayout.Build(AmberleafTrail, "Amberleaf Trail", "autumn", MapKind.Field, AmberleafTrailLayout,
+                    new[] { MapLayout.S('a', Monsters.AshSprout), MapLayout.S('b', Monsters.LeafBeetle),
+                            MapLayout.S('f', Monsters.EmberFox), MapLayout.S('k', Monsters.OldChest) },
+                    new[] { MapLayout.L('B', Emberfields, 'B'), MapLayout.L('F', MossgateHollow, 'F') }),
+                "Art/Backdrops/emberfields", 116f / 724f, 42f, true),
+            MapLayout.Build(MossgateHollow, "Mossgate Hollow", "mossgate", MapKind.Field, MossgateHollowLayout,
+                new[] { MapLayout.S('m', Monsters.Mossling), MapLayout.S('f', Monsters.EmberFox),
+                        MapLayout.S('c', Monsters.MossCrawler), MapLayout.S('k', Monsters.MossyChest) },
+                new[] { MapLayout.L('F', AmberleafTrail, 'F'), MapLayout.L('B', Mosswood, 'B') }),
         };
 
         public static bool IsTown(int map) { return map >= 0 && map < All.Length && All[map].kind == MapKind.Town; }
@@ -371,5 +387,42 @@ namespace AshenVale
             ..........|========.............=============...............===========.............
             .E..@.....|.t...........t.............l...........t.............l.............t.....
             ####################################################################################";
+
+        // Downhill: arrive on the high ledge at the top left and walk the terraces down to the exit on the right.
+        // A ladder at the left climbs back to the ledge from the lower path; another reaches a lookout with a chest.
+        const string AmberleafTrailLayout = @"
+            ....................................................................................
+            ....................................................................................
+            ..........................................f...k.....................................
+            ..B..@..a...........................=============...................................
+            ==============........................|.............................................
+            .........|......b.....a...............|.............................................
+            .........|.================...........|.............................................
+            .........|..................b.....f...|...............................f.............
+            .........|..............=================.........................=========.........
+            .........|.................................f......b............b.............a......
+            .........|............................=================.....=========.....=======...
+            ........b|..........a..........b..............f..........b......f......a..........F.
+            ####################################################################################";
+
+        // A mossy dip: zigzag ledges on the left lead to a rope bridge across the top; the gate ledge on the right
+        // (ladder from the floor) holds the portal into Mosswood. A hidden ledge at the top left has a chest.
+        const string MossgateHollowLayout = @"
+            ....k..c..............................................................
+            ..=========...........................................................
+            ........|.................f.......c.........f.........................
+            ........|.........=================================...................
+            ........|...........|...................................c......m...B..
+            ........|...........|................................=================
+            ........|.........c.|.......................................|.........
+            ........|.....===========...................................|.........
+            ........|..m................................................|.........
+            ......===========...........................................|.........
+            ...................f...................c....................|.........
+            ..............===========.........===========...............|.........
+            ...........m.....................m..............f...........|.........
+            ......===========...........===========.....=========.......|.........
+            .F..@.....m...........f.......m.........c.......f.......m...|.........
+            ######################################################################";
     }
 }

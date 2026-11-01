@@ -14,9 +14,9 @@ Heroes save automatically (one file each, in Unity's persistent data folder unde
 ## The world so far
 
 ```
-Emberhaven (town) - Emberfields - Mosswood - Kingsroad - Cinderford (town) - Ashen Marsh
-                    Lv 1-4        Lv 6-8   \ Lv 8-10                         Lv 11-14
-                                            '- secret ledge, top left: Hollow Den (Lv 9)
+Emberhaven (town) - Emberfields - Amberleaf Trail - Mossgate Hollow - Mosswood - Kingsroad - Cinderford (town) - Ashen Marsh
+                    Lv 1-4        Lv 2-5            Lv 4-6            Lv 6-8   \ Lv 8-10                         Lv 11-14
+                                                                                '- secret ledge, top left: Hollow Den (Lv 9)
 ```
 
 New heroes start in Emberhaven; Emberfields is through the portal on the right.
