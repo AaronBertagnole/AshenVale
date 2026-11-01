@@ -35,12 +35,14 @@ public class AshenValeSpriteImporter : AssetPostprocessor
         importer.alphaIsTransparency = true;
         importer.wrapMode = TextureWrapMode.Clamp;
         importer.textureCompression = TextureImporterCompression.CompressedHQ;
+        importer.maxTextureSize = 8192;     // painted scenes are wider than Unity's default 2048 limit
 
-        // Pivot: monsters and props stand on their bottom edge; platforms and ground hang from their top edge
+        // Pivot: monsters, props and scenes stand on their bottom edge; platforms and ground hang from their top edge
         // (the walking surface); far / mid backdrops sit on their bottom edge; anything else is centred.
         string file = Path.GetFileNameWithoutExtension(path).ToLowerInvariant();
         var alignment = SpriteAlignment.Center;
-        if (path.StartsWith("Assets/Resources/Art/Monsters/") || path.StartsWith("Assets/Resources/Art/Props/")) alignment = SpriteAlignment.BottomCenter;
+        if (path.StartsWith("Assets/Resources/Art/Monsters/") || path.StartsWith("Assets/Resources/Art/Props/") ||
+            path.StartsWith("Assets/Resources/Art/Scenes/")) alignment = SpriteAlignment.BottomCenter;
         else if (file.StartsWith("platform") || file == "ground") alignment = SpriteAlignment.TopCenter;
         else if (file == "far" || file == "mid" || file == "ladder") alignment = SpriteAlignment.BottomCenter;
 

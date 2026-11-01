@@ -28,6 +28,9 @@ namespace AshenVale
         public bool aggressive, harmless;
         public float respawn = 8f;      // seconds before its spawn point fills again
         public float itemChance = -1f;  // chance of dropping gear (below 0: the usual Tuning.EquipmentDropChance)
+        public int part = -1;           // the monster part it drops (Parts), -1 for none
+        public float partChance = Tuning.PartDropChance;
+        public int[] chestParts;        // chests: spill Tuning.ChestParts parts picked from this list
     }
 
     public static class Monsters
@@ -40,40 +43,53 @@ namespace AshenVale
         public static readonly MonsterDef[] All =
         {
             new MonsterDef { key = "emberling", name = "Emberling", level = 1, color = new Color(.86f, .38f, .25f),
-                width = .85f, height = .9f, hp = 40, speed = 1.6f, damage = 7, xp = 7, goldMin = 4, goldRange = 5 },
+                width = .85f, height = .9f, hp = 40, speed = 1.6f, damage = 7, xp = 7, goldMin = 4, goldRange = 5,
+                part = Parts.EmberAsh },
             new MonsterDef { key = "elite_emberling", name = "Elite Emberling", level = 4, color = new Color(.78f, .25f, .62f),
                 width = 1.15f, height = 1.35f, hp = 130, speed = 1.5f, damage = 14, xp = 22, goldMin = 14, goldRange = 9,
-                aggressive = true, respawn = 15f },
+                aggressive = true, respawn = 15f,
+                part = Parts.EmberCore, partChance = .5f },
             new MonsterDef { key = "moss_crawler", name = "Moss Crawler", level = 6, color = new Color(.31f, .71f, .45f),
-                width = 1f, height = .7f, hp = 140, speed = 1.4f, damage = 14, xp = 20, goldMin = 15, goldRange = 10 },
+                width = 1f, height = .7f, hp = 140, speed = 1.4f, damage = 14, xp = 20, goldMin = 15, goldRange = 10,
+                part = Parts.MossTuft },
             new MonsterDef { key = "violet_wraith", name = "Violet Wraith", level = 10, color = new Color(.58f, .33f, .92f),
                 width = 1.2f, height = 1.5f, hover = .15f, hp = 270, speed = 2.2f, damage = 24, xp = 33, goldMin = 23, goldRange = 14,
-                aggressive = true },
+                aggressive = true,
+                part = Parts.WraithSilk },
             new MonsterDef { key = "ash_sprout", name = "Ash Sprout", level = 2, color = new Color(.62f, .7f, .38f),
-                width = .8f, height = .8f, hp = 55, speed = 1f, damage = 6, xp = 10, goldMin = 6, goldRange = 6 },
+                width = .8f, height = .8f, hp = 55, speed = 1f, damage = 6, xp = 10, goldMin = 6, goldRange = 6,
+                part = Parts.SproutLeaf },
             new MonsterDef { key = "old_chest", name = "Old Chest", level = 4, color = new Color(.62f, .43f, .22f),
                 width = 1f, height = .8f, hp = 100, speed = 0f, damage = 0, xp = 20, goldMin = 35, goldRange = 25,
-                harmless = true, respawn = 45f, itemChance = .6f },
+                harmless = true, respawn = 45f, itemChance = .6f,
+                chestParts = new[] { Parts.EmberAsh, Parts.SproutLeaf, Parts.EmberAsh, Parts.SproutLeaf, Parts.EmberCore } },
             new MonsterDef { key = "bramble_boar", name = "Bramble Boar", level = 8, color = new Color(.55f, .38f, .27f),
                 width = 1.4f, height = 1f, hp = 200, speed = 2.6f, damage = 20, xp = 26, goldMin = 19, goldRange = 12,
-                aggressive = true },
+                aggressive = true,
+                part = Parts.BoarTusk },
             new MonsterDef { key = "mossy_chest", name = "Mossy Chest", level = 8, color = new Color(.4f, .55f, .3f),
                 width = 1f, height = .8f, hp = 220, speed = 0f, damage = 0, xp = 35, goldMin = 60, goldRange = 40,
-                harmless = true, respawn = 45f, itemChance = .6f },
+                harmless = true, respawn = 45f, itemChance = .6f,
+                chestParts = new[] { Parts.MossTuft, Parts.BoarTusk, Parts.MossTuft, Parts.BoarTusk, Parts.ShadeEssence, Parts.WraithSilk } },
             new MonsterDef { key = "den_shade", name = "Den Shade", level = 9, color = new Color(.3f, .3f, .45f),
                 width = 1f, height = 1.4f, hover = .1f, hp = 250, speed = 2f, damage = 22, xp = 32, goldMin = 22, goldRange = 14,
-                aggressive = true },
+                aggressive = true,
+                part = Parts.ShadeEssence },
             new MonsterDef { key = "marsh_toad", name = "Marsh Toad", level = 11, color = new Color(.45f, .58f, .33f),
-                width = 1f, height = .8f, hp = 290, speed = 1.2f, damage = 22, xp = 36, goldMin = 25, goldRange = 15 },
+                width = 1f, height = .8f, hp = 290, speed = 1.2f, damage = 22, xp = 36, goldMin = 25, goldRange = 15,
+                part = Parts.ToadSlime },
             new MonsterDef { key = "bog_lurker", name = "Bog Lurker", level = 13, color = new Color(.3f, .42f, .4f),
                 width = 1.4f, height = 1.1f, hp = 360, speed = 1.6f, damage = 30, xp = 42, goldMin = 30, goldRange = 18,
-                aggressive = true },
+                aggressive = true,
+                part = Parts.LurkerScale },
             new MonsterDef { key = "ash_wisp", name = "Ash Wisp", level = 14, color = new Color(.85f, .82f, .7f),
                 width = .8f, height = .9f, hover = .35f, hp = 330, speed = 2.8f, damage = 28, xp = 45, goldMin = 32, goldRange = 18,
-                aggressive = true },
+                aggressive = true,
+                part = Parts.WispEmber },
             new MonsterDef { key = "sunken_chest", name = "Sunken Chest", level = 15, color = new Color(.35f, .45f, .5f),
                 width = 1.1f, height = .9f, hp = 500, speed = 0f, damage = 0, xp = 70, goldMin = 120, goldRange = 60,
-                harmless = true, respawn = 45f, itemChance = .6f },
+                harmless = true, respawn = 45f, itemChance = .6f,
+                chestParts = new[] { Parts.ToadSlime, Parts.LurkerScale, Parts.ToadSlime, Parts.LurkerScale, Parts.WispEmber } },
         };
     }
 }

@@ -3,6 +3,7 @@
     python Tools/check_maps.py            check every map
     python Tools/check_maps.py --print    also print the layouts
 
+Markers: @ start, $ merchant, ^ waystone, & town return portal, % smithy, A-Z portals, a-z spawn points.
 Checks: every ladder has a floor at both ends, every marker stands on a floor, no ladder cuts a platform,
 every portal letter is linked and links are two-way, towns have @ $ ^ &, spawn letters are in the legend,
 and every floor can really be reached by a slow hero (speed 5.3) using a copy of the game's movement rules

@@ -15,7 +15,7 @@ namespace AshenVale
     // because the World is plain C#. The NetworkManager is created in code, so the scene needs nothing.
     //
     // Messages (all start with "av."):
-    //   client -> host   join (hero JSON) · input (axes + presses) · cmd (equip / sell / buy / waystone travel)
+    //   client -> host   join (hero JSON) · input (axes + presses) · cmd (equip / sell / buy / travel / upgrade)
     //   host -> client   welcome (your player id) · snap (world snapshot) · char (your hero JSON)
     public sealed class NetSession
     {
@@ -304,6 +304,7 @@ namespace AshenVale
                 case 2: world.BuyPotion(playerId, argument != 0); break;
                 case 3: world.BuyGear(playerId, (Slot)Mathf.Clamp(argument, 0, (int)Slot.Boots)); break;
                 case 4: world.Travel(playerId, argument); break;
+                case 5: world.Upgrade(playerId, argument); break;
             }
             var p = world.GetPlayer(playerId);
             if (p != null) SendCharacter(sender, p);           // show the result right away
@@ -400,6 +401,7 @@ namespace AshenVale
                 {
                     w.WriteValueSafe(d.id); w.WriteValueSafe((byte)d.kind); w.WriteValueSafe(d.x); w.WriteValueSafe(d.y);
                     if (d.kind == DropKind.Item) { w.WriteValueSafe((byte)d.item.rarity); w.WriteValueSafe(d.item.name ?? ""); }
+                    else if (d.kind == DropKind.Part) w.WriteValueSafe((byte)d.value);
                 }
                 w.WriteValueSafe(map.shots.Count);
                 foreach (var s in map.shots) { w.WriteValueSafe(s.id); w.WriteValueSafe(s.x); w.WriteValueSafe(s.y); }
@@ -563,7 +565,8 @@ namespace AshenVale
             for (int i = 0; i < dropCount; i++)
             {
                 r.ReadValueSafe(out int id); r.ReadValueSafe(out byte kind); r.ReadValueSafe(out float x); r.ReadValueSafe(out float y);
-                var dropKind = (DropKind)Mathf.Clamp(kind, 0, (int)DropKind.Item);
+                var dropKind = (DropKind)Mathf.Clamp(kind, 0, (int)DropKind.Part);
+                int value = 0;
                 Item item = null;
                 if (dropKind == DropKind.Item)
                 {
@@ -571,9 +574,14 @@ namespace AshenVale
                     r.ReadValueSafe(out string itemName);
                     item = new Item { rarity = (Rarity)Mathf.Clamp(rarity, 0, (int)Rarity.Epic), name = itemName };
                 }
+                else if (dropKind == DropKind.Part)
+                {
+                    r.ReadValueSafe(out byte part);
+                    value = Mathf.Clamp(part, 0, Parts.All.Length - 1);
+                }
                 DropState d;
                 if (!dropLookup.TryGetValue(id, out d)) d = new DropState { id = id, map = shown };
-                d.kind = dropKind; d.x = x; d.y = y; d.item = item;
+                d.kind = dropKind; d.x = x; d.y = y; d.item = item; d.value = value;
                 runtime.drops.Add(d);
             }
 
@@ -610,5 +618,6 @@ namespace AshenVale
         public void BuyPotion(bool health) { net.SendCommand(2, health ? 1 : 0); }
         public void BuyGear(Slot slot) { net.SendCommand(3, (int)slot); }
         public void Travel(int town) { net.SendCommand(4, town); }
+        public void Upgrade(int target) { net.SendCommand(5, target); }
     }
 }

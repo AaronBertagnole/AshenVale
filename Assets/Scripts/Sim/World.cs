@@ -409,6 +409,12 @@ namespace AshenVale
             var kind = potion == 1 ? DropKind.HpPotion : potion == 2 ? DropKind.MpPotion : equipment ? DropKind.Item : DropKind.Gold;
             AddDrop(map, attacker, kind, m.x, m.y, equipment ? Loot.Roll(rng, def.level, attacker.Hero) : null, def.goldMin + rng.Next(def.goldRange));
             if (chest && kind != DropKind.Gold) AddDrop(map, attacker, DropKind.Gold, m.x + .45f, m.y, null, def.goldMin + rng.Next(def.goldRange));
+
+            // Monster parts for the smithy, on top of the usual drop.
+            if (def.part >= 0 && rng.NextDouble() < def.partChance) AddDrop(map, attacker, DropKind.Part, m.x - .45f, m.y, null, def.part);
+            if (def.chestParts != null && def.chestParts.Length > 0)
+                for (int i = 0; i < Tuning.ChestParts; i++)
+                    AddDrop(map, attacker, DropKind.Part, m.x - .4f - i * .35f, m.y, null, def.chestParts[rng.Next(def.chestParts.Length)]);
         }
 
         void AddDrop(MapRuntime map, PlayerState owner, DropKind kind, float x, float floor, Item item, int gold)
@@ -588,6 +594,10 @@ namespace AshenVale
                         if (p.ch.inventory.Count >= Tuning.InventoryCapacity) continue;   // bag full: leave it on the ground
                         p.ch.inventory.Add(d.item);
                         break;
+                    case DropKind.Part:
+                        if (d.value < 0 || d.value >= p.ch.parts.Length || p.ch.parts[d.value] >= Tuning.MaxParts) continue;
+                        p.ch.parts[d.value]++;
+                        break;
                     default: p.ch.gold += d.value; break;
                 }
                 map.drops.RemoveAt(i);
@@ -626,6 +636,37 @@ namespace AshenVale
             if (!InTown(p)) return false;
             var def = maps[p.map].def;
             return Mathf.Abs(p.x - def.waystoneX) < reach && Mathf.Abs(p.y - def.waystoneY) < 1.5f;
+        }
+
+        public bool NearSmithy(PlayerState p, float reach)
+        {
+            if (!InTown(p)) return false;
+            var def = maps[p.map].def;
+            return def.hasSmithy && Mathf.Abs(p.x - def.smithyX) < reach && Mathf.Abs(p.y - def.smithyY) < 1.5f;
+        }
+
+        // The item an upgrade target points at: 0-3 a worn slot, Smithing.InventoryTarget + i inventory item i.
+        public static Item UpgradeTarget(Character ch, int target)
+        {
+            if (target >= 0 && target < ch.equipped.Length) return ch.equipped[target];
+            int i = target - Smithing.InventoryTarget;
+            return i >= 0 && i < ch.inventory.Count ? ch.inventory[i] : null;
+        }
+
+        // Smithy: spend gold and monster parts to raise an item by +1 (always succeeds, up to Tuning.MaxUpgrade).
+        public bool Upgrade(int playerId, int target)
+        {
+            var p = GetPlayer(playerId);
+            if (!NearSmithy(p, Tuning.NpcReach)) return false;
+            var item = UpgradeTarget(p.ch, target);
+            if (item == null || item.upgrade >= Tuning.MaxUpgrade) return false;
+            var cost = Smithing.Cost(item);
+            if (!Smithing.CanPay(p.ch, cost)) return false;
+            int before = p.ch.BonusHealth;
+            Smithing.Pay(p.ch, cost);
+            item.upgrade++;
+            p.hp = Mathf.Clamp(p.hp + Mathf.Max(0, p.ch.BonusHealth - before), 1, p.MaxHp);   // worn health gear heals the difference
+            return true;
         }
 
         // Waystone: jump to another town you have already found, arriving at its waystone.

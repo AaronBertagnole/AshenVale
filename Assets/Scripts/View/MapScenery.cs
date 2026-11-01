@@ -21,8 +21,9 @@ namespace AshenVale
     // Builds the look of a map from its MapDef and theme. Every piece first looks for real art under
     // Resources/Art (see ART.md) and falls back to placeholder shapes, so art can be dropped in one file at a time.
     //
+    //   Art/Scenes/<map>          a whole painted scene for one map (MapDef.scene), replacing the backdrop and ground
     //   Art/Themes/<theme>/sky, far, mid, ground, platform_left, platform_mid, platform_right, ladder
-    //   Art/Props/portal, return_portal, waystone, merchant
+    //   Art/Props/portal, return_portal, waystone, merchant, smithy
     public static class MapScenery
     {
         // Sorting orders, back to front (ladders stand behind platforms). Monsters 7, drops 9, heroes 10-11,
@@ -118,20 +119,42 @@ namespace AshenVale
             visual.cameraLowY = minY;
             string art = "Art/Themes/" + def.theme + "/";
 
-            Sky(visual, def, theme, art);
-            Far(visual, def, theme, art, rng);
-            Mid(visual, def, theme, art, rng);
-            Ground(root, def, theme, art, rng);
+            // A painted scene already shows the sky, ground, houses, waystone and shops: draw only what it lacks.
+            bool painted = BuildScene(root, def);
+            if (!painted)
+            {
+                Sky(visual, def, theme, art);
+                Far(visual, def, theme, art, rng);
+                Mid(visual, def, theme, art, rng);
+                Ground(root, def, theme, art, rng);
+            }
             foreach (var plat in def.platforms) BuildPlatform(root, plat, theme, art, rng);
             foreach (var ladder in def.ladders) BuildLadder(root, ladder, art);
             foreach (var portal in def.portals) BuildPortal(root, portal.x, portal.y, false);
             if (def.kind == MapKind.Town)
             {
                 BuildPortal(root, def.returnX, def.returnY, true);
-                BuildWaystone(root, def.waystoneX, def.waystoneY, theme);
-                BuildMerchant(root, def.merchantX, def.merchantY);
+                BuildWaystone(root, def.waystoneX, def.waystoneY, !painted);
+                BuildMerchant(root, def.merchantX, def.merchantY, !painted);
             }
+            if (def.hasSmithy) BuildSmithy(root, def.smithyX, def.smithyY, !painted);
             return visual;
+        }
+
+        // The map's painted scene, stretched to the map's width with its walking line on the ground. False if the map
+        // has none or its picture isn't in the project.
+        static bool BuildScene(Transform root, MapDef def)
+        {
+            if (string.IsNullOrEmpty(def.scene)) return false;
+            var sprite = Sprites.Art(def.scene);
+            if (sprite == null) return false;
+            var size = sprite.bounds.size;
+            float scale = def.columns / size.x, bottom = Tuning.Ground - def.sceneFloor * size.y * scale;
+            // Placed from the sprite's own bounds, so it lines up whatever pivot it was imported with.
+            var o = Sprites.Picture("Scene", sprite, SkyOrder, root,
+                                    def.columns * .5f - sprite.bounds.center.x * scale, bottom - sprite.bounds.min.y * scale);
+            o.transform.localScale = new Vector3(scale, scale, 1);
+            return true;
         }
 
         static Transform Layer(MapVisual visual, string name, float fx, float fy)
@@ -370,20 +393,23 @@ namespace AshenVale
             Sprites.Blob("Portal base", glow, 1.4f, .3f, PortalOrder, root, x, y + .05f);
         }
 
-        static void BuildWaystone(Transform root, float x, float y, Theme theme)
+        // placeholder: draw stand-in shapes when there is no art (false on painted scenes, which show their own).
+        static void BuildWaystone(Transform root, float x, float y, bool placeholder)
         {
             var sprite = Sprites.Art("Art/Props/waystone");
             if (sprite != null) { Sprites.Picture("Waystone", sprite, PropOrder, root, x, y); return; }
+            if (!placeholder) return;
             Sprites.Block("Waystone", new Color(.55f, .58f, .64f), .7f, 1.7f, PropOrder, root, x, y + .85f);
             Sprites.Blob("Waystone top", new Color(.55f, .58f, .64f), .7f, .5f, PropOrder, root, x, y + 1.7f);
             Sprites.Blob("Waystone rune glow", new Color(.45f, .85f, 1f, .45f), .9f, .9f, PropOrder, root, x, y + 1.15f);
             Sprites.Blob("Waystone rune", new Color(.75f, .95f, 1f, .95f), .3f, .3f, PropOrder + 1, root, x, y + 1.15f);
         }
 
-        static void BuildMerchant(Transform root, float x, float y)
+        static void BuildMerchant(Transform root, float x, float y, bool placeholder)
         {
             var sprite = Sprites.Art("Art/Props/merchant");
             if (sprite != null) { Sprites.Picture("Merchant", sprite, PropOrder, root, x, y); return; }
+            if (!placeholder) return;
             Sprites.Block("Merchant stall", new Color(.53f, .31f, .18f), 2.6f, 1.1f, PropOrder, root, x + .6f, y + .55f);
             Sprites.Block("Merchant awning", new Color(.86f, .45f, .22f), 3f, .4f, PropOrder, root, x + .6f, y + 2f);
             Sprites.Block("Awning post", new Color(.40f, .25f, .15f), .1f, 1.6f, PropOrder, root, x - .7f, y + 1.2f);
@@ -391,6 +417,19 @@ namespace AshenVale
             Sprites.Blob("Merchant body", new Color(.36f, .48f, .70f), .7f, .95f, PropOrder + 1, root, x - .3f, y + .5f);
             Sprites.Blob("Merchant head", new Color(.96f, .80f, .62f), .55f, .55f, PropOrder + 1, root, x - .3f, y + 1.2f);
             Sprites.Blob("Merchant hat", new Color(.70f, .30f, .25f), .65f, .3f, PropOrder + 2, root, x - .3f, y + 1.45f);
+        }
+
+        static void BuildSmithy(Transform root, float x, float y, bool placeholder)
+        {
+            var sprite = Sprites.Art("Art/Props/smithy");
+            if (sprite != null) { Sprites.Picture("Smithy", sprite, PropOrder, root, x, y); return; }
+            if (!placeholder) return;
+            Sprites.Block("Forge", new Color(.50f, .47f, .45f), 1.8f, 1.6f, PropOrder, root, x + 1f, y + .8f);
+            Sprites.Blob("Forge fire", new Color(1f, .55f, .15f, .9f), .9f, .7f, PropOrder + 1, root, x + 1f, y + .6f);
+            Sprites.Block("Anvil", new Color(.25f, .26f, .30f), .9f, .3f, PropOrder + 1, root, x - .4f, y + .65f);
+            Sprites.Block("Anvil foot", new Color(.25f, .26f, .30f), .4f, .5f, PropOrder + 1, root, x - .4f, y + .25f);
+            Sprites.Blob("Smith body", new Color(.45f, .32f, .22f), .75f, 1f, PropOrder + 1, root, x - 1.3f, y + .5f);
+            Sprites.Blob("Smith head", new Color(.96f, .80f, .62f), .55f, .55f, PropOrder + 2, root, x - 1.3f, y + 1.22f);
         }
     }
 }

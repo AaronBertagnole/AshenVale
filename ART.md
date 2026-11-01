@@ -28,6 +28,20 @@ its actual sprites and backgrounds belong to Nexon, so nothing traced or ripped 
 
 Everything lives under `Assets/Resources/Art/`.
 
+### Painted scenes: `Art/Scenes/<map>.png`
+
+One finished painting for a whole map (usually a town), drawn behind everything in place of the theme layers
+below. It is stretched to the map's width, and `MapDef.sceneFloor` says how far up the picture the street is
+(the share of the picture's height below the walking line), so feet land on it. The map's layout is then lined up with
+the painting: shops, waystone and portals go where the picture shows them (`Assets/Scripts/Data/MapDefs.cs`).
+
+| File | Map | Picture | Notes |
+|---|---|---|---|
+| `emberhaven.png` | Emberhaven | 2172 x 724, street 116 px above the bottom | merchant at the left house, waystone at the arch, smithy at the forge |
+
+Emberhaven is 38 cells wide, so this picture shows at about 57 px per unit. A version twice the size
+(4344 x 1448, same framing) would look sharp on a 1080p screen: drop it in with the same name.
+
 ### Map themes: `Art/Themes/<theme>/`
 
 Themes: `town` (Emberhaven), `meadow` (Emberfields), `forest` (Mosswood), `cave` (Hollow Den),
@@ -88,6 +102,10 @@ Bottom centre of the image = where it stands.
 | `return_portal.png` | Town return portal | 110 x 210 |
 | `waystone.png` | Town waystone | 90 x 190 |
 | `merchant.png` | Merchant and stall | 300 x 230 |
+| `smithy.png` | Smith, anvil and forge | 320 x 230 |
+
+On a painted scene these are optional: the painting already shows the shops, so nothing is drawn there
+unless one of these files exists (a merchant or smith character standing in front of the painting, for example).
 
 ### Heroes: `Assets/Resources/Heroes/<Hero>/<animation>/`
 

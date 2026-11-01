@@ -67,6 +67,11 @@ namespace AshenVale
         }
 
         // Loot and items
+        public const float PartDropChance = .35f;   // chance a monster also drops its part (some monsters override it)
+        public const int ChestParts = 3;            // parts a chest spills
+        public const int MaxParts = 999;            // most of one part you can carry
+        public const int MaxUpgrade = 5;            // smithy upgrades per item
+        public const float UpgradeStatGain = .12f;  // each upgrade adds this share of the item's base stats (at least 1)
         public const int InventoryCapacity = 20;
         public const float PickupRangeX = 2f;
         public const float PickupRangeY = 1.8f;

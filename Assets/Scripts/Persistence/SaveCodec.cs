@@ -6,7 +6,8 @@ namespace AshenVale
     // Converts between a hero in the world and its save data, and checks loaded values.
     public static class SaveCodec
     {
-        // 1: first save format.  2: adds lastTown and towns (older files start with Emberhaven only).
+        // 1: first save format.  2: adds lastTown, towns, monster parts, item level and upgrade
+        //    (older files start with Emberhaven only, no parts, items at level 1 +0).
         public const int Version = 2;
 
         // forSave: true for the save file (a fallen hero is stored as woken in town); false for sending a
@@ -19,6 +20,7 @@ namespace AshenVale
                 id = ch.id, name = ch.name, hero = ch.hero, level = ch.level, xp = ch.xp, gold = ch.gold, kills = ch.kills,
                 hpPotions = ch.hpPotions, mpPotions = ch.mpPotions, playSeconds = ch.playSeconds,
                 map = p.map, hp = p.hp, mp = p.mp, lastTown = ch.lastTown, towns = ch.towns, savedAt = DateTime.UtcNow.ToString("o"),
+                parts = (int[])ch.parts.Clone(),
             };
             if (p.dead && forSave)
             {
@@ -59,6 +61,8 @@ namespace AshenVale
                     if ((d.towns & (1 << i)) != 0 && Maps.IsTown(i)) towns |= 1 << i;
             ch.towns = towns;
             ch.lastTown = d.version >= 2 && Maps.IsTown(d.lastTown) && ch.KnowsTown(d.lastTown) ? d.lastTown : Maps.FirstTown;
+            if (d.parts != null)
+                for (int i = 0; i < d.parts.Length && i < ch.parts.Length; i++) ch.parts[i] = Mathf.Clamp(d.parts[i], 0, Tuning.MaxParts);
             if (d.inventory != null)
                 foreach (var item in d.inventory)
                     if (item != null && ch.inventory.Count < Tuning.InventoryCapacity) ch.inventory.Add(ToItem(item));
@@ -77,7 +81,8 @@ namespace AshenVale
         static ItemData ToData(Item item)
         {
             return new ItemData { name = item.name, rarity = (int)item.rarity, slot = (int)item.slot,
-                                  attack = item.attack, defense = item.defense, health = item.health, price = item.price };
+                                  attack = item.attack, defense = item.defense, health = item.health, price = item.price,
+                                  level = item.level, upgrade = item.upgrade };
         }
 
         static Item ToItem(ItemData d)
@@ -88,6 +93,7 @@ namespace AshenVale
                 rarity = (Rarity)Mathf.Clamp(d.rarity, 0, (int)Rarity.Epic),
                 slot = (Slot)Mathf.Clamp(d.slot, 0, (int)Slot.Boots),
                 attack = d.attack, defense = d.defense, health = d.health, price = Mathf.Max(0, d.price),
+                level = Mathf.Max(1, d.level), upgrade = Mathf.Clamp(d.upgrade, 0, Tuning.MaxUpgrade),
             };
         }
 

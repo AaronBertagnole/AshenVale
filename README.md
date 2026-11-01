@@ -23,6 +23,9 @@ Every monster kind has a fixed level, like classic MapleStory, and monsters far 
 Walk into a town to find it; its waystone then lets you travel between found towns. **T** opens a portal to
 your last town, and that town's return portal takes you back.
 
+Monsters also drop parts (chests spill several). Emberhaven's smithy spends parts and gold to upgrade gear
+from +1 to +5, about 12% of the item's base stats each time. Which parts depends on the item's level band and slot.
+
 Maps are text pictures in `Assets/Scripts/Data/MapDefs.cs` (the legend is in the comment above `MapLayout`).
 After editing one, run `python Tools/check_maps.py`: it checks that every platform can really be reached,
 every ladder and marker stands on something, and every portal leads somewhere and back.

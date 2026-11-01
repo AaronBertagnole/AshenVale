@@ -75,7 +75,8 @@ namespace AshenVale
         {
             minX = halfWidth; maxX = def.columns - halfWidth;
             if (minX > maxX) minX = maxX = def.columns * .5f;
-            minY = def.Bottom - 1.3f + ViewHalfHeight;      // a strip of ground under your feet at the lowest
+            // A strip of ground under your feet at the lowest; painted scenes keep it thin to show more of the picture.
+            minY = def.Bottom - (string.IsNullOrEmpty(def.scene) ? 1.3f : .9f) + ViewHalfHeight;
             maxY = def.Top + 1f - ViewHalfHeight;
             if (maxY < minY) maxY = minY;
         }
@@ -323,10 +324,13 @@ namespace AshenVale
                 GameObject go;
                 if (!dropViews.TryGetValue(d.id, out go))
                 {
-                    string name = d.kind == DropKind.HpPotion ? "HP Potion" : d.kind == DropKind.MpPotion ? "MP Potion" : d.kind == DropKind.Item ? d.item.name : "Gold drop";
+                    bool part = d.kind == DropKind.Part && d.value >= 0 && d.value < Parts.All.Length;
+                    string name = d.kind == DropKind.HpPotion ? "HP Potion" : d.kind == DropKind.MpPotion ? "MP Potion" : d.kind == DropKind.Item ? d.item.name
+                                : part ? Parts.All[d.value].name : "Gold drop";
                     Color color = d.kind == DropKind.HpPotion ? new Color(1, .22f, .32f) : d.kind == DropKind.MpPotion ? new Color(.22f, .48f, 1)
-                                : d.kind == DropKind.Item ? Loot.RarityColor(d.item.rarity) : new Color(1, .81f, .18f);
-                    go = Sprites.Block(name, color, .28f, .34f, DropOrder);
+                                : d.kind == DropKind.Item ? Loot.RarityColor(d.item.rarity) : part ? Parts.All[d.value].color : new Color(1, .81f, .18f);
+                    // Parts are small round blobs, everything else a little block (until drops get icons).
+                    go = part ? Sprites.Blob(name, color, .3f, .3f, DropOrder, null, 0, 0) : Sprites.Block(name, color, .28f, .34f, DropOrder);
                     dropViews[d.id] = go;
                 }
                 go.transform.position = new Vector3(d.x, d.y + Mathf.Sin(Time.time * 4 + d.x) * .1f, 0);

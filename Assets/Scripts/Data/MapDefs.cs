@@ -45,6 +45,13 @@ namespace AshenVale
         public float merchantX, merchantY;      // $  towns
         public float waystoneX, waystoneY;      // ^  towns: travel to other towns you have found
         public float returnX, returnY;          // &  towns: town portals (T) and waking up arrive here; it leads back out
+        public float smithyX, smithyY;          // %  towns with a smithy: upgrade gear with monster parts
+        public bool hasSmithy;
+        // Optional painted scene (Resources/<scene>.png) drawn behind the whole map instead of the theme's
+        // placeholder backdrop. It is stretched to the map's width; sceneFloor is how far up the picture
+        // (as a share of its height) the walking line is, so feet land on the painted street.
+        public string scene;
+        public float sceneFloor;
         public Platform[] platforms = new Platform[0];
         public Ladder[] ladders = new Ladder[0];
         public Portal[] portals = new Portal[0];
@@ -72,7 +79,7 @@ namespace AshenVale
     //   |      ladder: from the floor under its lowest cell up to the floor above its highest cell
     //   .      empty
     // Markers stand in the cell just above the floor they are on:
-    //   @ start   $ merchant   ^ waystone   & town return portal
+    //   @ start   $ merchant   ^ waystone   & town return portal   % smithy
     //   A-Z portal (linked by letter, see Link)   a-z monster spawn point (see Spawn)
     // A jump reaches about 2.4 units, so a platform 2 lines up can be jumped to; 3 or more needs a ladder.
     // Layouts were checked with a script (every floor reachable, every portal two-way) before going in.
@@ -83,6 +90,14 @@ namespace AshenVale
 
         public static Spawn S(char mark, int monster) { return new Spawn { mark = mark, monster = monster }; }
         public static Link L(char key, int targetMap, char targetKey) { return new Link { key = key, targetMap = targetMap, targetKey = targetKey }; }
+
+        // Gives a map a painted scene (see MapDef.scene).
+        public static MapDef WithScene(MapDef def, string scene, float floor)
+        {
+            def.scene = scene;
+            def.sceneFloor = floor;
+            return def;
+        }
 
         public static MapDef Build(int id, string name, string theme, MapKind kind, string text, Spawn[] legend, Link[] links)
         {
@@ -144,6 +159,7 @@ namespace AshenVale
                     else if (ch == '$') { def.merchantX = x; def.merchantY = y; }
                     else if (ch == '^') { def.waystoneX = x; def.waystoneY = y; }
                     else if (ch == '&') { def.returnX = x; def.returnY = y; }
+                    else if (ch == '%') { def.smithyX = x; def.smithyY = y; def.hasSmithy = true; }
                     else if (ch >= 'A' && ch <= 'Z')
                     {
                         bool linked = false;
@@ -220,9 +236,10 @@ namespace AshenVale
             MapLayout.Build(Mosswood, "Mosswood", "forest", MapKind.Field, MosswoodLayout,
                 new[] { MapLayout.S('a', Monsters.MossCrawler), MapLayout.S('b', Monsters.BrambleBoar), MapLayout.S('k', Monsters.MossyChest) },
                 new[] { MapLayout.L('B', Emberfields, 'B'), MapLayout.L('C', Kingsroad, 'C'), MapLayout.L('S', HollowDen, 'S') }),
-            MapLayout.Build(Emberhaven, "Emberhaven", "town", MapKind.Town, EmberhavenLayout,
-                new MapLayout.Spawn[0],
-                new[] { MapLayout.L('A', Emberfields, 'A') }),
+            MapLayout.WithScene(MapLayout.Build(Emberhaven, "Emberhaven", "town", MapKind.Town, EmberhavenLayout,
+                    new MapLayout.Spawn[0],
+                    new[] { MapLayout.L('A', Emberfields, 'A') }),
+                "Art/Scenes/emberhaven", 116f / 724f),     // the painted street is 116 px above the bottom of the 724 px picture
             MapLayout.Build(HollowDen, "Hollow Den", "cave", MapKind.Field, HollowDenLayout,
                 new[] { MapLayout.S('d', Monsters.DenShade), MapLayout.S('k', Monsters.MossyChest) },
                 new[] { MapLayout.L('S', Mosswood, 'S') }),
@@ -274,16 +291,17 @@ namespace AshenVale
             .B..@...|.....a...........a.............b...........a.............a.........b...C.
             ##################################################################################";
 
+        // Matches the painted scene: merchant at the house on the left, waystone at the arch, smithy at the forge.
         const string EmberhavenLayout = @"
-            ..........................................................
-            ..........................................................
-            ..........................................................
-            ..........................................................
-            ..........................................................
-            ........................^.........$.......................
-            ..................=======================.................
-            ...@....&..............................................A..
-            ##########################################################";
+            ......................................
+            ......................................
+            ......................................
+            ......................................
+            ......................................
+            ......................................
+            ......................................
+            .&.....$.....@....^............%....A.
+            ######################################";
 
         const string HollowDenLayout = @"
             ..................................................
