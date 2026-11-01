@@ -15,11 +15,13 @@ Heroes save automatically (one file each, in Unity's persistent data folder unde
 
 ```
 Emberhaven (town) - Emberfields - Amberleaf Trail - Mossgate Hollow - Mosswood - Kingsroad - Cinderford (town) - Ashen Marsh
-                    Lv 1-4        Lv 2-5            Lv 4-6            Lv 6-8   \ Lv 8-10                         Lv 11-14
-                                                                                '- secret ledge, top left: Hollow Den (Lv 9)
+                    Lv 1-4        Lv 2-5            Lv 4-6     \      Lv 6-8   \ Lv 8-10                         Lv 11-14
+                                                        top ledge: Shale Cliffs   '- secret ledge, top left: Hollow Den (Lv 9)
+                                                        (up the mountain, Lv 9-10)
 ```
 
-New heroes start in Emberhaven; Emberfields is through the portal on the right.
+New heroes start in Emberhaven; Emberfields is through the portal on the right. A portal on Mossgate Hollow's top
+ledge climbs to Shale Cliffs, the first step up the mountain (its summit will lead on to Highspire later).
 Every monster kind has a fixed level, like classic MapleStory, and monsters far below your level give less XP.
 Walk into a town to find it; its waystone then lets you travel between found towns. **T** opens a portal to
 your last town, and that town's return portal takes you back.

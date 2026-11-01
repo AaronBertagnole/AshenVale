@@ -185,6 +185,18 @@ namespace AshenVale
                     platformBody = new Color(.50f, .40f, .28f), platformTop = new Color(.62f, .76f, .36f),
                     accent = new Color(1f, .93f, .62f), farStyle = "mountains", midStyle = "fields",
                 };
+                case "cliffs": return new Theme     // Shale Cliffs: grey-blue rock, pines, snowy peaks far off
+                {
+                    skyBottom = new Color(.86f, .90f, .96f), skyTop = new Color(.38f, .56f, .86f),
+                    far = new Color(.62f, .68f, .80f), farDark = new Color(.52f, .58f, .72f),
+                    mid = new Color(.44f, .50f, .56f), midDark = new Color(.22f, .40f, .34f),
+                    groundBody = new Color(.40f, .42f, .46f), groundTop = new Color(.62f, .64f, .62f),
+                    platformBody = new Color(.46f, .48f, .52f), platformTop = new Color(.66f, .68f, .66f),
+                    accent = new Color(.95f, .97f, 1f), farStyle = "mountains", midStyle = "bigtrees",
+                    ladderRail = new Color(.42f, .32f, .22f), ladderRung = new Color(.6f, .46f, .3f),
+                    hanging = new Color(.30f, .34f, .38f),
+                    flecks = new[] { new Color(.78f, .80f, .78f), new Color(.35f, .55f, .40f) },
+                };
                 case "rivertown": return new Theme
                 {
                     skyBottom = new Color(.88f, .84f, .94f), skyTop = new Color(.42f, .52f, .78f),

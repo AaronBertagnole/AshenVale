@@ -95,7 +95,7 @@ It replaces the theme's sky / far / mid; ground and platforms are still drawn in
 Each also has its distant `_back.png` (see "Two layers" above).
 
 **Adding one is just a file:** a picture named after the map (`amberleaf_trail.png`, `mossgate_hollow.png`,
-`mosswood.png`, ... the map's name in lower case with `_` for spaces) is picked up automatically, assuming the
+`mosswood.png`, `shale_cliffs.png`, ... the map's name in lower case with `_` for spaces) is picked up automatically, assuming the
 same framing as the Emberfields picture (2172 x 724, path 116 px above the bottom) and shown 42 units wide.
 
 The ground and platforms can be cut from the same picture so they match it:

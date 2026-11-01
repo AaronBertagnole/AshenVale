@@ -128,6 +128,7 @@ namespace AshenVale
                 },
             };
             a[Maps.AshenMarsh] = new MapArtDef { ambient = new[] { Ash() } };
+            a[Maps.ShaleCliffs] = new MapArtDef { ambient = new[] { Snow() } };
             return a;
         }
 
@@ -153,6 +154,12 @@ namespace AshenVale
         {
             return new AmbientDef { name = "Falling leaves", drift = Drift.Fall, aroundView = true, count = count, tint = tint,
                                     sizeMin = .14f, sizeMax = .26f, speed = .7f, sway = .4f, rate = .35f, leaf = true, order = 14 };
+        }
+
+        static AmbientDef Snow()
+        {
+            return new AmbientDef { name = "Snow", drift = Drift.Fall, aroundView = true, count = 45, tint = new Color(1f, 1f, 1f, .8f),
+                                    sizeMin = .05f, sizeMax = .1f, speed = .4f, sway = .3f, rate = .3f, order = 14 };
         }
 
         static AmbientDef Ash()
