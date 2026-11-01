@@ -2,34 +2,78 @@ using UnityEngine;
 
 namespace AshenVale
 {
-    // One kind of monster. Maps refer to monsters by their index in Monsters.All.
-    // A monster's level is the level of the player it spawned near; HP, hits and XP grow with it.
+    // One kind of monster. Like classic MapleStory, every monster kind has a fixed level and fixed stats:
+    // an Emberling is always a level 1 Emberling, whoever meets it. Maps say which monsters live where
+    // (see MapDefs), so a map's level range comes from its monsters.
+    //
+    // Behaviour:
+    //   passive     wanders its platform; when hit, chases whoever hit it for a while (if it can reach them)
+    //   aggressive  also chases any player who comes close on its own platform
+    //   harmless    never hurts anyone on touch (chests)
+    //   speed 0     never moves
+    // Touching a monster that isn't harmless hurts, MapleStory style.
     public sealed class MonsterDef
     {
+        public string key;              // art folder: Resources/Art/Monsters/<key>/
         public string name;
-        public Color color;             // placeholder look until monsters get real sprites
-        public float width, height;
-        public int baseHp, hpPerLevel;
+        public int level;
+        public Color color;             // placeholder look until the monster has art
+        public float width, height;     // body size in world units (one map cell = 1 unit)
+        public float hover;             // drawn this far above its floor (floating monsters)
+        public int hp;
         public float speed;
-        public int damage;              // contact damage at level 1
-        public int xpBase, xpPerLevel;  // XP = xpBase + (level - 1) * xpPerLevel
+        public int damage;              // touch damage before armor
+        public int xp;
         public int goldMin, goldRange;  // gold = goldMin + random(0 .. goldRange - 1)
+        public bool aggressive, harmless;
+        public float respawn = 8f;      // seconds before its spawn point fills again
+        public float itemChance = -1f;  // chance of dropping gear (below 0: the usual Tuning.EquipmentDropChance)
     }
 
     public static class Monsters
     {
-        public const int Emberling = 0, EliteEmberling = 1, MossCrawler = 2, VioletWraith = 3;
+        // The first four keep their old numbers.
+        public const int Emberling = 0, EliteEmberling = 1, MossCrawler = 2, VioletWraith = 3,
+                         AshSprout = 4, OldChest = 5, BrambleBoar = 6, MossyChest = 7, DenShade = 8,
+                         MarshToad = 9, BogLurker = 10, AshWisp = 11, SunkenChest = 12;
 
         public static readonly MonsterDef[] All =
         {
-            new MonsterDef { name = "Emberling", color = new Color(.82f, .35f, .25f), width = .85f, height = 1f,
-                baseHp = 45, hpPerLevel = 8, speed = 2.1f, damage = 10, xpBase = 13, xpPerLevel = 5, goldMin = 5, goldRange = 10 },
-            new MonsterDef { name = "Elite Emberling", color = new Color(.75f, .23f, .62f), width = 1.15f, height = 1.35f,
-                baseHp = 110, hpPerLevel = 12, speed = 1.5f, damage = 19, xpBase = 32, xpPerLevel = 10, goldMin = 20, goldRange = 12 },
-            new MonsterDef { name = "Moss Crawler", color = new Color(.29f, .7f, .45f), width = .85f, height = 1f,
-                baseHp = 65, hpPerLevel = 7, speed = 1.7f, damage = 13, xpBase = 22, xpPerLevel = 7, goldMin = 11, goldRange = 12 },
-            new MonsterDef { name = "Violet Wraith", color = new Color(.56f, .3f, .9f), width = 1.2f, height = 1.5f,
-                baseHp = 125, hpPerLevel = 10, speed = 2.6f, damage = 23, xpBase = 44, xpPerLevel = 12, goldMin = 27, goldRange = 17 },
+            new MonsterDef { key = "emberling", name = "Emberling", level = 1, color = new Color(.86f, .38f, .25f),
+                width = .85f, height = .9f, hp = 40, speed = 1.6f, damage = 7, xp = 7, goldMin = 4, goldRange = 5 },
+            new MonsterDef { key = "elite_emberling", name = "Elite Emberling", level = 4, color = new Color(.78f, .25f, .62f),
+                width = 1.15f, height = 1.35f, hp = 130, speed = 1.5f, damage = 14, xp = 22, goldMin = 14, goldRange = 9,
+                aggressive = true, respawn = 15f },
+            new MonsterDef { key = "moss_crawler", name = "Moss Crawler", level = 6, color = new Color(.31f, .71f, .45f),
+                width = 1f, height = .7f, hp = 140, speed = 1.4f, damage = 14, xp = 20, goldMin = 15, goldRange = 10 },
+            new MonsterDef { key = "violet_wraith", name = "Violet Wraith", level = 10, color = new Color(.58f, .33f, .92f),
+                width = 1.2f, height = 1.5f, hover = .15f, hp = 270, speed = 2.2f, damage = 24, xp = 33, goldMin = 23, goldRange = 14,
+                aggressive = true },
+            new MonsterDef { key = "ash_sprout", name = "Ash Sprout", level = 2, color = new Color(.62f, .7f, .38f),
+                width = .8f, height = .8f, hp = 55, speed = 1f, damage = 6, xp = 10, goldMin = 6, goldRange = 6 },
+            new MonsterDef { key = "old_chest", name = "Old Chest", level = 4, color = new Color(.62f, .43f, .22f),
+                width = 1f, height = .8f, hp = 100, speed = 0f, damage = 0, xp = 20, goldMin = 35, goldRange = 25,
+                harmless = true, respawn = 45f, itemChance = .6f },
+            new MonsterDef { key = "bramble_boar", name = "Bramble Boar", level = 8, color = new Color(.55f, .38f, .27f),
+                width = 1.4f, height = 1f, hp = 200, speed = 2.6f, damage = 20, xp = 26, goldMin = 19, goldRange = 12,
+                aggressive = true },
+            new MonsterDef { key = "mossy_chest", name = "Mossy Chest", level = 8, color = new Color(.4f, .55f, .3f),
+                width = 1f, height = .8f, hp = 220, speed = 0f, damage = 0, xp = 35, goldMin = 60, goldRange = 40,
+                harmless = true, respawn = 45f, itemChance = .6f },
+            new MonsterDef { key = "den_shade", name = "Den Shade", level = 9, color = new Color(.3f, .3f, .45f),
+                width = 1f, height = 1.4f, hover = .1f, hp = 250, speed = 2f, damage = 22, xp = 32, goldMin = 22, goldRange = 14,
+                aggressive = true },
+            new MonsterDef { key = "marsh_toad", name = "Marsh Toad", level = 11, color = new Color(.45f, .58f, .33f),
+                width = 1f, height = .8f, hp = 290, speed = 1.2f, damage = 22, xp = 36, goldMin = 25, goldRange = 15 },
+            new MonsterDef { key = "bog_lurker", name = "Bog Lurker", level = 13, color = new Color(.3f, .42f, .4f),
+                width = 1.4f, height = 1.1f, hp = 360, speed = 1.6f, damage = 30, xp = 42, goldMin = 30, goldRange = 18,
+                aggressive = true },
+            new MonsterDef { key = "ash_wisp", name = "Ash Wisp", level = 14, color = new Color(.85f, .82f, .7f),
+                width = .8f, height = .9f, hover = .35f, hp = 330, speed = 2.8f, damage = 28, xp = 45, goldMin = 32, goldRange = 18,
+                aggressive = true },
+            new MonsterDef { key = "sunken_chest", name = "Sunken Chest", level = 15, color = new Color(.35f, .45f, .5f),
+                width = 1.1f, height = .9f, hp = 500, speed = 0f, damage = 0, xp = 70, goldMin = 120, goldRange = 60,
+                harmless = true, respawn = 45f, itemChance = .6f },
         };
     }
 }

@@ -13,6 +13,11 @@ namespace AshenVale
         public int hpPotions = Tuning.StartingPotions, mpPotions = Tuning.StartingPotions;
         public readonly List<Item> inventory = new List<Item>();
         public readonly Item[] equipped = new Item[4];
+        public int lastTown = Maps.FirstTown;           // where town portals (T) and waking up take you
+        public int towns = 1 << Maps.FirstTown;         // towns found so far, one bit per map id (waystones travel between them)
+
+        public bool KnowsTown(int map) { return map >= 0 && map < 32 && (towns & (1 << map)) != 0; }
+        public void FindTown(int map) { if (Maps.IsTown(map)) { towns |= 1 << map; lastTown = map; } }
 
         public HeroDef Def { get { return Heroes.All[hero]; } }
         public int BonusAttack { get { int n = 0; foreach (var i in equipped) if (i != null) n += i.attack; return n; } }
@@ -33,6 +38,8 @@ namespace AshenVale
         public int facing = 1;
         public bool grounded = true, climbing, crouching;
         public float currentFloor = Tuning.Ground;
+        public float dropTimer, dropFloor;  // Down + Jump: falling through the platform at dropFloor
+        public float knockTime, knockVx;    // pushed back after touching a monster
 
         public int hp, mp;
         public int MaxHp { get { return Hero.baseHp + Tuning.HpPerLevel * (ch.level - 1) + ch.BonusHealth; } }
@@ -51,7 +58,9 @@ namespace AshenVale
         public int portalMap;
         public float portalX, portalY;
 
-        // Where the town's return portal sends you.
+        // Where a town's return portal (&) sends you. It only works after arriving by town portal or waking up
+        // (returnReady), and closes once used or once you walk out of town another way.
+        public bool returnReady;
         public int returnMap;
         public float returnX, returnY;
     }
@@ -59,7 +68,12 @@ namespace AshenVale
     public sealed class MonsterState
     {
         public int id, def, map, level;
-        public float x, y, px, py, hp, speed, cooldown;
+        public int spawn = -1;          // index of its spawn point in the map (refilled after it dies)
+        public float x, y, px, py, hp;  // y is its floor: monsters never leave the platform they live on
+        public float left, right;       // the stretch of floor it keeps to
+        public int facing = -1;
+        public int wanderDir;           // -1, 0 (standing) or 1 while nobody is being chased
+        public float wanderTime;
         public float knockbackVelocity, knockbackTime;
         public int target;              // player id it is chasing (0 = none)
         public float aggroTime;         // seconds it stays on the player who last hit it

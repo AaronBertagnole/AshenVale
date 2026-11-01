@@ -6,7 +6,8 @@ namespace AshenVale
     // Converts between a hero in the world and its save data, and checks loaded values.
     public static class SaveCodec
     {
-        public const int Version = 1;
+        // 1: first save format.  2: adds lastTown and towns (older files start with Emberhaven only).
+        public const int Version = 2;
 
         // forSave: true for the save file (a fallen hero is stored as woken in town); false for sending a
         // hero's live data to its player online.
@@ -17,13 +18,13 @@ namespace AshenVale
             {
                 id = ch.id, name = ch.name, hero = ch.hero, level = ch.level, xp = ch.xp, gold = ch.gold, kills = ch.kills,
                 hpPotions = ch.hpPotions, mpPotions = ch.mpPotions, playSeconds = ch.playSeconds,
-                map = p.map, hp = p.hp, mp = p.mp, savedAt = DateTime.UtcNow.ToString("o"),
+                map = p.map, hp = p.hp, mp = p.mp, lastTown = ch.lastTown, towns = ch.towns, savedAt = DateTime.UtcNow.ToString("o"),
             };
             if (p.dead && forSave)
             {
                 // Quitting while fallen counts as waking in town: same XP cost as pressing R.
                 d.xp = Mathf.Max(0, ch.xp - Mathf.RoundToInt(Tuning.XpNeeded(ch.level) * Tuning.DeathXpLoss));
-                d.map = Maps.Town;
+                d.map = Maps.IsTown(ch.lastTown) ? ch.lastTown : Maps.FirstTown;
                 d.hp = 0;
             }
             d.inventory = new ItemData[ch.inventory.Count];
@@ -51,6 +52,13 @@ namespace AshenVale
                 mpPotions = Mathf.Max(0, d.mpPotions),
                 playSeconds = Mathf.Max(0, d.playSeconds),
             };
+            // Towns: keep only real town ids; everyone knows the first town.
+            int towns = 1 << Maps.FirstTown;
+            if (d.version >= 2)
+                for (int i = 0; i < Maps.All.Length && i < 32; i++)
+                    if ((d.towns & (1 << i)) != 0 && Maps.IsTown(i)) towns |= 1 << i;
+            ch.towns = towns;
+            ch.lastTown = d.version >= 2 && Maps.IsTown(d.lastTown) && ch.KnowsTown(d.lastTown) ? d.lastTown : Maps.FirstTown;
             if (d.inventory != null)
                 foreach (var item in d.inventory)
                     if (item != null && ch.inventory.Count < Tuning.InventoryCapacity) ch.inventory.Add(ToItem(item));

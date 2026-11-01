@@ -11,6 +11,25 @@ online co-op but fully playable solo.
 
 Heroes save automatically (one file each, in Unity's persistent data folder under `Characters/`).
 
+## The world so far
+
+```
+Emberhaven (town) - Emberfields - Mosswood - Kingsroad - Cinderford (town) - Ashen Marsh
+                    Lv 1-4        Lv 6-8   \ Lv 8-10                         Lv 11-14
+                                            '- secret ledge, top left: Hollow Den (Lv 9)
+```
+
+Every monster kind has a fixed level, like classic MapleStory, and monsters far below your level give less XP.
+Walk into a town to find it; its waystone then lets you travel between found towns. **T** opens a portal to
+your last town, and that town's return portal takes you back.
+
+Maps are text pictures in `Assets/Scripts/Data/MapDefs.cs` (the legend is in the comment above `MapLayout`).
+
+## Art
+
+Everything you see is placeholder shapes until real art is added. See [ART.md](ART.md) for sizes, file names
+and folders: drop a PNG in the right place and it replaces that placeholder.
+
 ## Playing together
 
 The host's game runs the world (monsters, damage, loot, XP). Everyone else sends their key presses and
@@ -49,11 +68,11 @@ Relay has a free tier that easily covers testing.
 Assets/Scripts/
   AshenValeGame.cs     entry point: menus, fixed 60 Hz tick loop, solo / host / client modes
   Core/Tuning.cs       every balance number
-  Data/                heroes, monsters, items, maps (content tables)
+  Data/                heroes, monsters, items, maps (content tables; maps are text layouts)
   Sim/World.cs         every game rule; driven only by PlayerInput and commands, so the host can run it online
   Persistence/         hero save files
   Net/                 online co-op: NetSession (messages, snapshots), OnlineSession (Relay join codes)
-  View/                draws the world (scenery, heroes, monsters, effects, camera)
-  UI/                  menus, HUD, inventory, shop, Esc menu
+  View/                draws the world (themed scenery with parallax, heroes, monsters, effects, camera)
+  UI/                  menus, HUD, inventory, shop, waystone, Esc menu
   Client/              keyboard and music
 ```

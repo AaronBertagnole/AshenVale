@@ -267,8 +267,9 @@ namespace AshenVale
         {
             GUI.Label(new Rect(left + 30, top + 19, 780, 54), "YOUR FIRST ADVENTURE", heading);
             GUI.Label(new Rect(left + 55, top + 78, 730, 30), "A few essentials before you enter Emberfields", subtitle);
-            string[] keys = { "A / D  or  ← / →", "SPACE", "W / S", "S / DOWN", "J / K", "Q / F", "E / I", "T / W", "L / ESC" };
-            string[] actions = { "Move", "Jump", "Climb ladders", "Crouch", "Attack / Special attack", "HP / MP potions", "Collect loot / Inventory", "Create / Enter portal", "Dash / Menu" };
+            string[] keys = { "A / D  or  ← / →", "SPACE  ·  DOWN + SPACE", "W / S", "J / K", "Q / F", "E / I", "W / UP", "T", "L / ESC" };
+            string[] actions = { "Move", "Jump  ·  Drop through a platform", "Climb ladders", "Attack / Special attack", "HP / MP potions",
+                                 "Loot, talk / Inventory", "Use a portal", "Open a portal back to town", "Dash / Menu" };
             for (int i = 0; i < keys.Length; i++)
             {
                 float y = top + 125 + i * 33;
@@ -276,7 +277,7 @@ namespace AshenVale
                 GUI.Label(new Rect(left + 124, y + 2, 275, 27), keys[i], small);
                 GUI.Label(new Rect(left + 405, y + 2, 305, 27), actions[i], small);
             }
-            GUI.Label(new Rect(left + 60, top + 432, 720, 29), "Hunt monsters, collect equipment, and visit Emberhaven to restock. Your hero saves automatically.", small);
+            GUI.Label(new Rect(left + 60, top + 432, 720, 29), "Explore east, find new towns, and touch their waystones to travel back fast. Your hero saves automatically.", small);
             if (GUI.Button(new Rect(left + 282, top + 468, 276, 44), "BEGIN ADVENTURE", button)) Create();
             if (GUI.Button(new Rect(left + 362, top + 517, 116, 25), "BACK  [ESC]")) screen = Screen.Select;
         }

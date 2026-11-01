@@ -5,14 +5,21 @@ namespace AshenVale
 {
     // Monsters, drops and arrows of one map. Every map exists all the time; a map only moves
     // while a living player is on it (so in a party, players can split up across maps).
+    // Each spawn point holds one monster; when it dies the point refills after the monster's respawn time.
     public sealed class MapRuntime
     {
         public readonly MapDef def;
         public readonly List<MonsterState> monsters = new List<MonsterState>();
         public readonly List<DropState> drops = new List<DropState>();
         public readonly List<ProjectileState> shots = new List<ProjectileState>();
-        public float spawnTimer;
-        public MapRuntime(MapDef def) { this.def = def; }
+        public readonly bool[] spawnFilled;
+        public readonly float[] spawnTimers;
+        public MapRuntime(MapDef def)
+        {
+            this.def = def;
+            spawnFilled = new bool[def.spawns.Length];
+            spawnTimers = new float[def.spawns.Length];
+        }
     }
 
     // The whole game state and every rule that changes it. Nothing here draws, plays sound or reads the keyboard:
@@ -40,19 +47,21 @@ namespace AshenVale
 
         // ---------------------------------------------------------------- players
 
-        // Brings a hero into the world at the start of `map`. hp / mp below 0 mean full; hp of exactly 0
-        // means the hero was saved while fallen, so they wake in town at full health.
+        // Brings a hero into the world at the start (@) of `map`. hp / mp below 0 mean full; hp of exactly 0
+        // means the hero was saved while fallen, so they wake in their last town at full health.
         public PlayerState AddPlayer(Character ch, int map = Maps.Emberfields, int hp = -1, int mp = -1)
         {
             if (map < 0 || map >= maps.Length) map = Maps.Emberfields;
-            if (hp == 0) map = Maps.Town;
+            if (hp == 0) map = Maps.IsTown(ch.lastTown) ? ch.lastTown : Maps.FirstTown;
             var p = new PlayerState { id = NextId(), ch = ch };
-            Teleport(p, map, maps[map].def.startX, Tuning.Ground);
+            var def = maps[map].def;
+            Teleport(p, map, def.startX, def.startY);
+            if (def.kind == MapKind.Town) ch.FindTown(map);
             p.hp = hp <= 0 ? p.MaxHp : Mathf.Min(hp, p.MaxHp);
             p.mp = mp < 0 ? p.MaxMp : Mathf.Min(mp, p.MaxMp);
-            p.returnMap = maps[map].def.kind == MapKind.Field ? map : Maps.Emberfields;
+            p.returnMap = def.kind == MapKind.Field ? map : Maps.Emberfields;
             p.returnX = maps[p.returnMap].def.startX;
-            p.returnY = Tuning.Ground;
+            p.returnY = maps[p.returnMap].def.startY;
             players.Add(p);
             return p;
         }
@@ -81,7 +90,7 @@ namespace AshenVale
                 map.monsters.Clear();
                 map.drops.Clear();
                 map.shots.Clear();
-                map.spawnTimer = 0;
+                for (int i = 0; i < map.spawnFilled.Length; i++) { map.spawnFilled[i] = false; map.spawnTimers[i] = 0; }
             }
         }
 
@@ -131,17 +140,18 @@ namespace AshenVale
             }
 
             var map = maps[p.map];
-            bool town = map.def.kind == MapKind.Town;
+            var def = map.def;
+            bool town = def.kind == MapKind.Town;
 
-            if (town)
+            if (input.up && p.grounded)
             {
-                if (input.up && Mathf.Abs(p.x - map.def.returnPortalX) < 1.35f) { ReturnFromTown(p); return; }
+                foreach (var portal in def.portals)
+                    if (Mathf.Abs(p.x - portal.x) < Tuning.GateReach && Mathf.Abs(p.y - portal.y) < .6f) { UsePortal(p, portal); return; }
+                if (town && p.returnReady && Mathf.Abs(p.x - def.returnX) < Tuning.GateReach && Mathf.Abs(p.y - def.returnY) < .6f)
+                { ReturnFromTown(p); return; }
             }
-            else
+            if (!town)
             {
-                if (input.up && p.grounded)
-                    foreach (var gate in map.def.gates)
-                        if (Mathf.Abs(p.x - gate.x) < Tuning.GateReach) { UseGate(p, gate); return; }
                 if (input.townPortal && !p.portalOpen && p.portalCast <= 0) p.portalCast = Tuning.PortalCastTime;
                 if (p.portalCast > 0)
                 {
@@ -158,7 +168,7 @@ namespace AshenVale
             p.dashCooldown = Mathf.Max(0, p.dashCooldown - dt);
             p.immunity = Mathf.Max(0, p.immunity - dt);
 
-            Move(p, map.def, input, dt, !town);
+            Move(p, def, input, dt, !town);
 
             if (input.hpPotion && p.ch.hpPotions > 0 && p.hp < p.MaxHp) { p.ch.hpPotions--; p.hp = Mathf.Min(p.MaxHp, p.hp + Tuning.HpPotionHeal); }
             if (input.mpPotion && p.ch.mpPotions > 0 && p.mp < p.MaxMp) { p.ch.mpPotions--; p.mp = Mathf.Min(p.MaxMp, p.mp + Tuning.MpPotionHeal); }
@@ -177,19 +187,39 @@ namespace AshenVale
         {
             float axis = Mathf.Clamp(input.moveX, -1f, 1f);
             float vertical = Mathf.Clamp(input.moveY, -1f, 1f);
+            bool knocked = p.knockTime > 0;
+            if (knocked) { p.knockTime -= dt; axis = 0; }
             if (axis != 0) p.facing = axis > 0 ? 1 : -1;
-            bool jump = input.jump;
+            bool jump = input.jump && !knocked;
+            p.dropTimer = Mathf.Max(0, p.dropTimer - dt);
 
             Ladder nearby = new Ladder();
             bool atLadder = false;
             foreach (var ladder in def.ladders)
                 if (Mathf.Abs(p.x - ladder.x) < .68f && p.y >= ladder.bottom - .35f && p.y <= ladder.top + .45f) { nearby = ladder; atLadder = true; break; }
-            if (!p.climbing && atLadder && Mathf.Abs(vertical) > .1f) { p.climbing = true; p.grounded = false; p.vy = 0; p.x = nearby.x; }
+            if (!p.climbing && atLadder && !knocked)
+            {
+                // Up grabs a ladder you are below the top of; Down grabs one you are standing on top of.
+                bool climbUp = vertical > .1f && p.y < nearby.top - .05f;
+                bool climbDown = vertical < -.1f && p.y > nearby.bottom + .05f;
+                if (climbUp || climbDown) { p.climbing = true; p.grounded = false; p.vy = 0; p.x = nearby.x; p.dashTime = 0; }
+            }
             if (p.climbing && (!atLadder || jump)) { p.climbing = false; if (jump) { p.vy = Tuning.JumpSpeed; p.grounded = false; } }
-            p.crouching = p.grounded && !p.climbing && vertical < -.1f;
-            if (!p.climbing && p.grounded && jump) { p.vy = Tuning.JumpSpeed; p.grounded = false; }
-            if (allowDash && input.dash && p.dashCooldown <= 0) { p.dashTime = Tuning.DashTime; p.dashCooldown = Tuning.DashCooldown; p.immunity = Tuning.DashImmunity; }
-            if (p.dashTime > 0) { p.dashTime -= dt; p.vx = p.facing * Tuning.DashSpeed; }
+            p.crouching = p.grounded && !p.climbing && !knocked && vertical < -.1f;
+            if (!p.climbing && p.grounded && jump)
+            {
+                if (vertical < -.1f)
+                {
+                    // Down + Jump drops through the platform you stand on (the ground is solid).
+                    if (p.currentFloor > Tuning.Ground + .05f)
+                    { p.dropTimer = Tuning.DropThroughTime; p.dropFloor = p.currentFloor; p.grounded = false; p.crouching = false; p.vy = 0; }
+                }
+                else { p.vy = Tuning.JumpSpeed; p.grounded = false; }
+            }
+            if (allowDash && input.dash && p.dashCooldown <= 0 && !knocked && !p.climbing)
+            { p.dashTime = Tuning.DashTime; p.dashCooldown = Tuning.DashCooldown; p.immunity = Mathf.Max(p.immunity, Tuning.DashImmunity); }
+            if (knocked) p.vx = p.knockVx;
+            else if (p.dashTime > 0) { p.dashTime -= dt; p.vx = p.facing * Tuning.DashSpeed; }
             else p.vx = axis * p.Hero.moveSpeed * (p.crouching ? Tuning.CrouchSpeedFactor : 1f);
             p.x = Mathf.Clamp(p.x + (p.climbing ? 0 : p.vx * dt), def.minX, def.maxX);
 
@@ -198,6 +228,7 @@ namespace AshenVale
                 p.vx = 0; p.vy = 0;
                 p.y = Mathf.Clamp(p.y + vertical * Tuning.ClimbSpeed * dt, nearby.bottom, nearby.top);
                 if (p.y >= nearby.top - .04f && vertical > 0) { p.climbing = false; p.grounded = true; p.currentFloor = nearby.top; p.y = nearby.top; }
+                else if (p.y <= nearby.bottom + .04f && vertical < 0) { p.climbing = false; p.grounded = true; p.currentFloor = nearby.bottom; p.y = nearby.bottom; }
                 return;
             }
 
@@ -207,13 +238,16 @@ namespace AshenVale
             {
                 float landing = Tuning.Ground;
                 foreach (var plat in def.platforms)
+                {
+                    if (p.dropTimer > 0 && Mathf.Abs(plat.top - p.dropFloor) < .05f) continue;   // the one we are dropping through
                     if (p.x >= plat.left + .16f && p.x <= plat.right - .16f && previousY >= plat.top - .03f && p.y <= plat.top && plat.top > landing)
                         landing = plat.top;
+                }
                 if (p.y <= landing && previousY >= landing - .03f) { p.y = landing; p.vy = 0; p.grounded = true; p.currentFloor = landing; }
             }
             if (p.grounded)
             {
-                bool supported = p.currentFloor == Tuning.Ground;
+                bool supported = Mathf.Abs(p.currentFloor - Tuning.Ground) < .01f;
                 foreach (var plat in def.platforms)
                     if (Mathf.Abs(p.currentFloor - plat.top) < .05f && p.x >= plat.left + .16f && p.x <= plat.right - .16f) supported = true;
                 if (!supported) { p.grounded = false; p.vy = 0; }
@@ -230,30 +264,45 @@ namespace AshenVale
             p.grounded = true;
             p.climbing = p.crouching = false;
             p.currentFloor = y;
-            p.dashTime = 0;
+            p.dashTime = p.knockTime = p.dropTimer = 0;
         }
 
-        void UseGate(PlayerState p, Gate gate)
+        // Up at a map portal: come out of the matching portal on the other map.
+        void UsePortal(PlayerState p, Portal portal)
         {
             p.portalOpen = false;   // a town portal only lasts while you stay on its map
             p.portalCast = 0;
-            Teleport(p, gate.targetMap, gate.targetX, Tuning.Ground);
+            p.returnReady = false;  // walking out of town closes the way back
+            var target = maps[portal.targetMap].def;
+            Portal exit;
+            if (target.FindPortal(portal.targetKey, out exit)) Teleport(p, target.id, exit.x, exit.y);
+            else Teleport(p, target.id, target.startX, target.startY);
+            if (target.kind == MapKind.Town) p.ch.FindTown(target.id);
         }
 
+        // Arrive at the return portal (&) of your last town, which can then take you back out.
+        void GoToTown(PlayerState p)
+        {
+            int town = Maps.IsTown(p.ch.lastTown) ? p.ch.lastTown : Maps.FirstTown;
+            var def = maps[town].def;
+            Teleport(p, town, def.returnX, def.returnY);
+            p.returnReady = true;
+        }
+
+        // Up at your open town portal (T).
         void EnterTown(PlayerState p)
         {
             p.returnMap = p.map; p.returnX = p.x; p.returnY = p.y;
-            Teleport(p, Maps.Town, Maps.All[Maps.Town].startX, Tuning.Ground);
+            GoToTown(p);
         }
 
         void ReturnFromTown(PlayerState p)
         {
+            p.returnReady = false;
             Teleport(p, p.returnMap, p.returnX, p.returnY);
-            var map = maps[p.map];
-            map.spawnTimer = Mathf.Max(1, map.spawnTimer);
         }
 
-        // R on the death screen: wake in town with full HP / MP, minus part of this level's XP.
+        // R on the death screen: wake in your last town with full HP / MP, minus part of this level's XP.
         void Respawn(PlayerState p)
         {
             p.ch.xp = Mathf.Max(0, p.ch.xp - Mathf.RoundToInt(Tuning.XpNeeded(p.ch.level) * Tuning.DeathXpLoss));
@@ -262,9 +311,9 @@ namespace AshenVale
             p.hurtVisual = p.immunity = p.attackVisual = p.portalCast = 0;
             p.portalOpen = false;
             int fell = maps[p.map].def.kind == MapKind.Field ? p.map : Maps.Emberfields;
-            EnterTown(p);
+            GoToTown(p);
             // The return portal leads to the start of the map you fell on, not into the monsters that beat you.
-            p.returnMap = fell; p.returnX = maps[fell].def.startX; p.returnY = Tuning.Ground;
+            p.returnMap = fell; p.returnX = maps[fell].def.startX; p.returnY = maps[fell].def.startY;
         }
 
         // ---------------------------------------------------------------- combat
@@ -300,7 +349,7 @@ namespace AshenVale
             float range = skill ? hero.skillRange : hero.meleeRange;
             var targets = new List<MonsterState>();
             foreach (var m in map.monsters)
-                if (Mathf.Abs(m.x - p.x) <= range && Mathf.Abs(m.y - p.y) < 1.7f && (m.x - p.x) * p.facing >= -.3f) targets.Add(m);
+                if (Mathf.Abs(m.x - p.x) <= range && Mathf.Abs(m.y - p.y) < 1.5f && (m.x - p.x) * p.facing >= -.3f) targets.Add(m);
             targets.Sort((a, b) => ((a.x - p.x) * p.facing).CompareTo((b.x - p.x) * p.facing));
             for (int i = 0; i < targets.Count; i++)
             {
@@ -323,7 +372,9 @@ namespace AshenVale
                 for (int j = 0; j < map.monsters.Count; j++)
                 {
                     var m = map.monsters[j];
-                    if (s.hitSet.Contains(m.id) || Mathf.Abs(m.x - s.x) >= .5f || Mathf.Abs((m.y + .7f) - s.y) >= 1f) continue;
+                    var d = m.Def;
+                    float middle = m.y + d.hover + d.height * .5f;
+                    if (s.hitSet.Contains(m.id) || Mathf.Abs(m.x - s.x) >= d.width * .5f + .1f || Mathf.Abs(middle - s.y) >= d.height * .5f + .5f) continue;
                     s.hitSet.Add(m.id);
                     HitMonster(map, m, s.damage, GetPlayer(s.owner));
                     s.pierce--;
@@ -342,22 +393,27 @@ namespace AshenVale
                                       playerId = attacker != null ? attacker.id : 0, x = m.x, y = m.y });
             if (m.hp > 0) return;
             map.monsters.Remove(m);
+            var def = m.Def;
+            if (m.spawn >= 0 && m.spawn < map.spawnFilled.Length) { map.spawnFilled[m.spawn] = false; map.spawnTimers[m.spawn] = def.respawn; }
             if (attacker == null) return;
 
-            var def = m.Def;
             attacker.ch.kills++;
-            GainXp(attacker, def.xpBase + (m.level - 1) * def.xpPerLevel);
+            GainXp(attacker, Tuning.XpFor(def.xp, def.level, attacker.ch.level));
 
-            int potion = rng.NextDouble() < Tuning.PotionDropChance ? (rng.NextDouble() < .5 ? 1 : 2) : 0;
-            bool equipment = potion == 0 && rng.NextDouble() < Tuning.EquipmentDropChance;
-            var drop = new DropState
-            {
-                id = NextId(), map = map.def.id, owner = attacker.id, x = m.x, y = m.y + .25f,
-                kind = potion == 1 ? DropKind.HpPotion : potion == 2 ? DropKind.MpPotion : equipment ? DropKind.Item : DropKind.Gold,
-                item = equipment ? Loot.Roll(rng, attacker.ch.level, attacker.Hero) : null,
-                value = def.goldMin + rng.Next(def.goldRange),
-            };
-            map.drops.Add(drop);
+            // Chests roll for gear first (and always add gold); other monsters roll for a potion first.
+            bool chest = def.itemChance >= 0f;
+            float itemChance = chest ? def.itemChance : Tuning.EquipmentDropChance;
+            bool equipment = chest && rng.NextDouble() < itemChance;
+            int potion = !equipment && rng.NextDouble() < Tuning.PotionDropChance ? (rng.NextDouble() < .5 ? 1 : 2) : 0;
+            if (!chest) equipment = potion == 0 && rng.NextDouble() < itemChance;
+            var kind = potion == 1 ? DropKind.HpPotion : potion == 2 ? DropKind.MpPotion : equipment ? DropKind.Item : DropKind.Gold;
+            AddDrop(map, attacker, kind, m.x, m.y, equipment ? Loot.Roll(rng, def.level, attacker.Hero) : null, def.goldMin + rng.Next(def.goldRange));
+            if (chest && kind != DropKind.Gold) AddDrop(map, attacker, DropKind.Gold, m.x + .45f, m.y, null, def.goldMin + rng.Next(def.goldRange));
+        }
+
+        void AddDrop(MapRuntime map, PlayerState owner, DropKind kind, float x, float floor, Item item, int gold)
+        {
+            map.drops.Add(new DropState { id = NextId(), map = map.def.id, owner = owner.id, kind = kind, x = x, y = floor + .25f, item = item, value = gold });
         }
 
         void GainXp(PlayerState p, int amount)
@@ -373,50 +429,50 @@ namespace AshenVale
             }
         }
 
-        // Monster HP grows with its level, so its hits do too. Defense is a percentage that shrinks as you level:
+        // A monster's touch damage is fixed by its kind. Defense is a percentage that shrinks as you level:
         // two Epic armor pieces give roughly 35-40% reduction, never immunity.
-        int DamageTaken(int raw, int monsterLevel, PlayerState victim)
+        int DamageTaken(int raw, PlayerState victim)
         {
-            float scaled = raw * (1f + Tuning.FoeDamagePerLevel * (monsterLevel - 1));
             int def = victim.ch.BonusDefense;
             float reduction = def / (def + Tuning.ArmorBase + Tuning.ArmorPerLevel * victim.ch.level);
-            return Mathf.Max(1, Mathf.RoundToInt(scaled * (1f - reduction)));
+            return Mathf.Max(1, Mathf.RoundToInt(raw * (1f - reduction)));
         }
 
         // ---------------------------------------------------------------- monsters
 
-        // A monster can reach a player standing on its own floor. Uses the floor the player last stood on,
-        // so a player jumping on the ground still counts as reachable.
+        // A monster can reach a player standing on its own stretch of floor. Uses the floor the player last
+        // stood on, so a player jumping still counts as reachable.
         static bool CanReach(MonsterState m, PlayerState p)
         {
-            return Mathf.Abs(p.currentFloor - m.y) < Tuning.MonsterFloorTolerance;
+            return Mathf.Abs(p.currentFloor - m.y) < Tuning.MonsterFloorTolerance && p.x >= m.left - .6f && p.x <= m.right + .6f;
         }
 
-        // Who a monster goes after:
+        // Who a monster goes after (null = nobody, it wanders):
         //  1. the player who hit it in the last few seconds, if it can reach them;
-        //  2. otherwise the nearest player it can reach (sticking with its current target unless someone is
-        //     clearly closer, so it doesn't flip back and forth);
-        //  3. only if nobody is reachable, the nearest player anywhere on the map (it waits under their platform).
+        //  2. aggressive monsters only: the nearest player it can reach within sight, sticking with its
+        //     current target unless someone is clearly closer, so it doesn't flip back and forth.
         PlayerState PickTarget(int mapId, MonsterState m, float dt)
         {
             m.aggroTime = Mathf.Max(0f, m.aggroTime - dt);
-            PlayerState current = null, nearestReachable = null, nearestAny = null;
-            float reachDist = float.MaxValue, anyDist = float.MaxValue;
+            PlayerState current = null, nearest = null;
+            float nearestDist = float.MaxValue;
             foreach (var p in players)
             {
-                if (p.dead || p.map != mapId) continue;
+                if (p.dead || p.map != mapId || !CanReach(m, p)) continue;
                 float d = Mathf.Abs(p.x - m.x);
                 if (p.id == m.target) current = p;
-                if (d < anyDist) { anyDist = d; nearestAny = p; }
-                if (CanReach(m, p) && d < reachDist) { reachDist = d; nearestReachable = p; }
+                if (d < nearestDist) { nearestDist = d; nearest = p; }
             }
-            PlayerState pick;
-            if (current != null && CanReach(m, current) &&
-                (m.aggroTime > 0f || Mathf.Abs(current.x - m.x) <= reachDist + Tuning.MonsterTargetStickiness))
-                pick = current;
-            else
-                pick = nearestReachable ?? nearestAny;
-            m.target = pick != null ? pick.id : 0;
+            PlayerState pick = null;
+            if (current != null && m.aggroTime > 0f) pick = current;
+            else if (m.Def.aggressive)
+            {
+                if (current != null && Mathf.Abs(current.x - m.x) <= Tuning.MonsterSight &&
+                    Mathf.Abs(current.x - m.x) <= nearestDist + Tuning.MonsterTargetStickiness) pick = current;
+                else if (nearest != null && nearestDist <= Tuning.MonsterSight) pick = nearest;
+            }
+            if (pick != null) m.target = pick.id;
+            else if (m.aggroTime <= 0f) m.target = 0;   // while still angry it remembers who hit it
             return pick;
         }
 
@@ -424,73 +480,96 @@ namespace AshenVale
         {
             foreach (var m in map.monsters)
             {
+                var d = m.Def;
                 var target = PickTarget(map.def.id, m, dt);
-                if (target == null) continue;
-                float dist = target.x - m.x;
+                if (d.speed <= 0f) { m.knockbackTime = 0f; continue; }   // chests and other things that never move
+                float inset = Mathf.Min(d.width * .5f, .5f);
+                float lo = m.left + inset, hi = m.right - inset;
+                if (lo > hi) lo = hi = (m.left + m.right) * .5f;
+
                 if (m.knockbackTime > 0f)
                 {
                     float step = Mathf.Min(dt, m.knockbackTime);
-                    m.x = Mathf.Clamp(m.x + m.knockbackVelocity * step, map.def.minX + .5f, map.def.maxX - .5f);
+                    m.x += m.knockbackVelocity * step;
                     m.knockbackTime = Mathf.Max(0f, m.knockbackTime - dt);
                     m.knockbackVelocity = Mathf.MoveTowards(m.knockbackVelocity, 0f, 20f * dt);
                 }
-                else if (Mathf.Abs(dist) > .95f) m.x += Mathf.Sign(dist) * m.speed * dt;
-
-                m.cooldown -= dt;
-                if (Mathf.Abs(dist) < 1.1f && Mathf.Abs(m.y - target.y) < 1.4f && m.cooldown <= 0)
+                else if (target != null)
                 {
-                    m.cooldown = Tuning.MonsterAttackCooldown;
-                    if (target.immunity <= 0)
+                    float dist = target.x - m.x;
+                    if (Mathf.Abs(dist) > .2f) { m.facing = dist > 0 ? 1 : -1; m.x += m.facing * d.speed * dt; }
+                }
+                else
+                {
+                    m.wanderTime -= dt;
+                    if (m.wanderTime <= 0f) { m.wanderDir = rng.Next(3) - 1; m.wanderTime = 1.2f + (float)rng.NextDouble() * 2.3f; }
+                    if (m.wanderDir != 0)
                     {
-                        target.hp -= DamageTaken(m.Def.damage, m.level, target);
-                        target.immunity = Tuning.HitImmunity;
-                        target.hurtVisual = Tuning.HurtFlash;
-                        if (target.hp <= 0)
-                        {
-                            target.hp = 0; target.dead = true; target.deathClock = 0; target.portalCast = 0;
-                            events.Add(new SimEvent { kind = SimEventKind.PlayerDied, map = map.def.id, playerId = target.id, x = target.x, y = target.y });
-                        }
+                        m.facing = m.wanderDir;
+                        m.x += m.wanderDir * d.speed * Tuning.MonsterWanderSpeed * dt;
+                        if ((m.x <= lo && m.wanderDir < 0) || (m.x >= hi && m.wanderDir > 0)) m.wanderDir = -m.wanderDir;
                     }
+                }
+                m.x = Mathf.Clamp(m.x, lo, hi);
+            }
+            TouchDamage(map);
+        }
+
+        // MapleStory rules: bumping into a monster hurts (unless it's harmless) and knocks you back a little.
+        void TouchDamage(MapRuntime map)
+        {
+            foreach (var p in players)
+            {
+                if (p.dead || p.map != map.def.id || p.immunity > 0f) continue;
+                foreach (var m in map.monsters)
+                {
+                    var d = m.Def;
+                    if (d.harmless) continue;
+                    float bottom = m.y + d.hover, top = bottom + d.height;
+                    if (Mathf.Abs(p.x - m.x) >= d.width * .5f + .3f || p.y >= top - .1f || p.y + 1.4f <= bottom) continue;
+                    Hurt(map, p, m);
+                    break;
                 }
             }
         }
 
-        void UpdateSpawning(MapRuntime map, float dt)
+        void Hurt(MapRuntime map, PlayerState p, MonsterState m)
         {
-            if (map.def.kind != MapKind.Field || map.def.spawns.Length == 0) return;
-            map.spawnTimer -= dt;
-            if (map.spawnTimer > 0 || map.monsters.Count >= Tuning.MaxMonstersPerMap) return;
-            map.spawnTimer = Tuning.SpawnInterval;
-
-            // Spawn 7-11 units to one side of a random player on this map, at that player's level.
-            var here = new List<PlayerState>();
-            foreach (var p in players) if (!p.dead && p.map == map.def.id) here.Add(p);
-            if (here.Count == 0) return;
-            var anchor = here[rng.Next(here.Count)];
-            float sx = Mathf.Clamp(anchor.x + (rng.Next(2) == 0 ? -1 : 1) * (7 + rng.Next(0, 5)), map.def.minX + 1.5f, map.def.maxX - 1.5f);
-
-            int kind = PickSpawn(map.def.spawns);
-            var def = Monsters.All[kind];
-            int level = anchor.ch.level;
-            map.monsters.Add(new MonsterState
+            p.hp -= DamageTaken(m.Def.damage, p);
+            p.immunity = Tuning.HitImmunity;
+            p.hurtVisual = Tuning.HurtFlash;
+            if (!p.climbing)
             {
-                id = NextId(), def = kind, map = map.def.id, level = level,
-                x = sx, y = Tuning.Ground, px = sx, py = Tuning.Ground,
-                hp = def.baseHp + def.hpPerLevel * level, speed = def.speed,
-            });
+                p.knockTime = Tuning.KnockbackTime;
+                p.knockVx = (p.x >= m.x ? 1 : -1) * Tuning.KnockbackSpeed;
+                p.dashTime = 0;
+                if (p.grounded) { p.vy = Tuning.KnockbackHop; p.grounded = false; }
+            }
+            if (p.hp > 0) return;
+            p.hp = 0; p.dead = true; p.deathClock = 0; p.portalCast = 0; p.knockTime = 0;
+            events.Add(new SimEvent { kind = SimEventKind.PlayerDied, map = map.def.id, playerId = p.id, x = p.x, y = p.y });
         }
 
-        int PickSpawn(SpawnEntry[] table)
+        // Empty spawn points count down and refill. A map that nobody is on doesn't count down.
+        void UpdateSpawning(MapRuntime map, float dt)
         {
-            float total = 0;
-            foreach (var e in table) total += e.weight;
-            float r = (float)rng.NextDouble() * total;
-            foreach (var e in table)
+            var points = map.def.spawns;
+            for (int i = 0; i < points.Length; i++)
             {
-                if (r < e.weight) return e.monster;
-                r -= e.weight;
+                if (map.spawnFilled[i]) continue;
+                map.spawnTimers[i] -= dt;
+                if (map.spawnTimers[i] > 0f) continue;
+                var point = points[i];
+                var def = Monsters.All[point.monster];
+                map.spawnFilled[i] = true;
+                map.monsters.Add(new MonsterState
+                {
+                    id = NextId(), def = point.monster, map = map.def.id, level = def.level, spawn = i,
+                    x = point.x, y = point.y, px = point.x, py = point.y, hp = def.hp,
+                    left = point.left, right = point.right, facing = rng.Next(2) == 0 ? -1 : 1,
+                    wanderTime = (float)rng.NextDouble() * 2f,
+                });
             }
-            return table[table.Length - 1].monster;
         }
 
         // ---------------------------------------------------------------- loot
@@ -537,7 +616,27 @@ namespace AshenVale
 
         public bool NearMerchant(PlayerState p, float reach)
         {
-            return InTown(p) && Mathf.Abs(p.x - maps[p.map].def.merchantX) < reach;
+            if (!InTown(p)) return false;
+            var def = maps[p.map].def;
+            return Mathf.Abs(p.x - def.merchantX) < reach && Mathf.Abs(p.y - def.merchantY) < 1.5f;
+        }
+
+        public bool NearWaystone(PlayerState p, float reach)
+        {
+            if (!InTown(p)) return false;
+            var def = maps[p.map].def;
+            return Mathf.Abs(p.x - def.waystoneX) < reach && Mathf.Abs(p.y - def.waystoneY) < 1.5f;
+        }
+
+        // Waystone: jump to another town you have already found, arriving at its waystone.
+        public bool Travel(int playerId, int town)
+        {
+            var p = GetPlayer(playerId);
+            if (!NearWaystone(p, Tuning.NpcReach) || !Maps.IsTown(town) || town == p.map || !p.ch.KnowsTown(town)) return false;
+            var def = maps[town].def;
+            Teleport(p, town, def.waystoneX, def.waystoneY);
+            p.ch.FindTown(town);
+            return true;
         }
 
         public bool Sell(int playerId, int index)

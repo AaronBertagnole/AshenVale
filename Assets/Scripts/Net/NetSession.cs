@@ -15,7 +15,7 @@ namespace AshenVale
     // because the World is plain C#. The NetworkManager is created in code, so the scene needs nothing.
     //
     // Messages (all start with "av."):
-    //   client -> host   join (hero JSON) · input (axes + presses) · cmd (equip / sell / buy)
+    //   client -> host   join (hero JSON) · input (axes + presses) · cmd (equip / sell / buy / waystone travel)
     //   host -> client   welcome (your player id) · snap (world snapshot) · char (your hero JSON)
     public sealed class NetSession
     {
@@ -303,6 +303,7 @@ namespace AshenVale
                 case 1: world.Sell(playerId, argument); break;
                 case 2: world.BuyPotion(playerId, argument != 0); break;
                 case 3: world.BuyGear(playerId, (Slot)Mathf.Clamp(argument, 0, (int)Slot.Boots)); break;
+                case 4: world.Travel(playerId, argument); break;
             }
             var p = world.GetPlayer(playerId);
             if (p != null) SendCharacter(sender, p);           // show the result right away
@@ -376,18 +377,24 @@ namespace AshenVale
                     w.WriteValueSafe(p.x); w.WriteValueSafe(p.y); w.WriteValueSafe(p.vx); w.WriteValueSafe(p.vy);
                     w.WriteValueSafe((sbyte)p.facing);
                     int flags = (p.grounded ? 1 : 0) | (p.climbing ? 2 : 0) | (p.crouching ? 4 : 0) | (p.dead ? 8 : 0)
-                              | (p.lastWasSkill ? 16 : 0) | (p.portalOpen ? 32 : 0);
+                              | (p.lastWasSkill ? 16 : 0) | (p.portalOpen ? 32 : 0) | (p.returnReady ? 64 : 0);
                     w.WriteValueSafe((byte)flags);
                     w.WriteValueSafe((byte)(p.comboStep & 255));
                     w.WriteValueSafe(p.attackVisual); w.WriteValueSafe(p.hurtVisual); w.WriteValueSafe(p.immunity);
                     w.WriteValueSafe((short)p.hp); w.WriteValueSafe((short)p.mp); w.WriteValueSafe((short)p.ch.level);
                     w.WriteValueSafe(p.deathClock); w.WriteValueSafe(p.portalCast);
                     w.WriteValueSafe((byte)p.portalMap); w.WriteValueSafe(p.portalX); w.WriteValueSafe(p.portalY);
+                    w.WriteValueSafe((byte)p.returnMap);
                 }
 
                 w.WriteValueSafe((byte)viewer.map);
                 w.WriteValueSafe(map.monsters.Count);
-                foreach (var m in map.monsters) { w.WriteValueSafe(m.id); w.WriteValueSafe((byte)m.def); w.WriteValueSafe(m.x); w.WriteValueSafe(m.y); }
+                foreach (var m in map.monsters)
+                {
+                    w.WriteValueSafe(m.id); w.WriteValueSafe((byte)m.def); w.WriteValueSafe(m.x); w.WriteValueSafe(m.y);
+                    w.WriteValueSafe((byte)Mathf.Clamp(Mathf.CeilToInt(255f * m.hp / Mathf.Max(1, m.Def.hp)), 0, 255));
+                    w.WriteValueSafe((sbyte)m.facing);
+                }
                 w.WriteValueSafe(map.drops.Count);
                 foreach (var d in map.drops)
                 {
@@ -491,6 +498,7 @@ namespace AshenVale
                 r.ReadValueSafe(out short hp); r.ReadValueSafe(out short mp); r.ReadValueSafe(out short level);
                 r.ReadValueSafe(out float deathClock); r.ReadValueSafe(out float portalCast);
                 r.ReadValueSafe(out byte portalMap); r.ReadValueSafe(out float portalX); r.ReadValueSafe(out float portalY);
+                r.ReadValueSafe(out byte returnMap);
 
                 seen.Add(id);
                 var p = world.GetPlayer(id);
@@ -508,11 +516,13 @@ namespace AshenVale
                 p.map = mapId; p.x = x; p.y = y; p.vx = vx; p.vy = vy; p.facing = facing < 0 ? -1 : 1;
                 p.grounded = (flags & 1) != 0; p.climbing = (flags & 2) != 0; p.crouching = (flags & 4) != 0;
                 p.dead = (flags & 8) != 0; p.lastWasSkill = (flags & 16) != 0; p.portalOpen = (flags & 32) != 0;
+                p.returnReady = (flags & 64) != 0;
                 p.comboStep = combo;
                 p.attackVisual = attackVisual; p.hurtVisual = hurtVisual; p.immunity = immunity;
                 p.hp = hp; p.mp = mp;
                 p.deathClock = deathClock; p.portalCast = portalCast;
                 p.portalMap = Mathf.Clamp(portalMap, 0, Maps.All.Length - 1); p.portalX = portalX; p.portalY = portalY;
+                p.returnMap = Mathf.Clamp(returnMap, 0, Maps.All.Length - 1);
                 p.ch.hero = Mathf.Clamp(hero, 0, Heroes.All.Length - 1);
                 p.ch.name = name;
                 p.ch.level = Mathf.Max(1, (int)level);
@@ -532,10 +542,17 @@ namespace AshenVale
             for (int i = 0; i < monsterCount; i++)
             {
                 r.ReadValueSafe(out int id); r.ReadValueSafe(out byte def); r.ReadValueSafe(out float x); r.ReadValueSafe(out float y);
+                r.ReadValueSafe(out byte health); r.ReadValueSafe(out sbyte facing);
                 MonsterState m;
                 if (monsterLookup.TryGetValue(id, out m)) { m.px = m.x; m.py = m.y; }
-                else m = new MonsterState { id = id, def = Mathf.Clamp(def, 0, Monsters.All.Length - 1), map = shown, px = x, py = y };
+                else
+                {
+                    int kind = Mathf.Clamp(def, 0, Monsters.All.Length - 1);
+                    m = new MonsterState { id = id, def = kind, level = Monsters.All[kind].level, map = shown, px = x, py = y };
+                }
                 m.x = x; m.y = y;
+                m.hp = health / 255f * m.Def.hp;
+                m.facing = facing < 0 ? -1 : 1;
                 runtime.monsters.Add(m);
             }
 
@@ -592,5 +609,6 @@ namespace AshenVale
         public void Sell(int inventoryIndex) { net.SendCommand(1, inventoryIndex); }
         public void BuyPotion(bool health) { net.SendCommand(2, health ? 1 : 0); }
         public void BuyGear(Slot slot) { net.SendCommand(3, (int)slot); }
+        public void Travel(int town) { net.SendCommand(4, town); }
     }
 }

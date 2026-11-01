@@ -3,16 +3,18 @@ using UnityEngine;
 
 namespace AshenVale
 {
-    // In-game IMGUI: status panel, key hints, inventory, shop and the Esc menu. Clicks become World commands
-    // (Equip, BuyPotion, BuyGear, Sell), which the world checks before applying.
+    // In-game IMGUI: status panel, key hints, map banner, labels over portals and town folk, monster health bars,
+    // inventory, shop, waystone and the Esc menu. Clicks become World commands (Equip, BuyPotion, BuyGear, Sell,
+    // Travel), which the world checks before applying.
     public sealed class GameHud
     {
-        const float MerchantReach = 2f;      // how close you must be to open the shop
-        const float MerchantLeaveReach = 3f; // walking further than this closes it
+        const float NpcReach = 2f;          // how close you must be to the merchant or waystone to open its window
+        const float NpcLeaveReach = 3f;     // walking further than this closes it
+        const float BannerTime = 3.2f;
 
         readonly World world;
-        public bool inventoryOpen, shopOpen, menuOpen;
-        public bool WindowOpen { get { return inventoryOpen || shopOpen || menuOpen; } }
+        public bool inventoryOpen, shopOpen, menuOpen, waystoneOpen;
+        public bool WindowOpen { get { return inventoryOpen || shopOpen || menuOpen || waystoneOpen; } }
 
         // Esc menu choices, handled by the game (they save first).
         public Action onCharacterSelect, onQuit;
@@ -20,26 +22,32 @@ namespace AshenVale
         public string status = "";          // top-right line: join code, players, connection state
         public bool online;                 // changes the Esc menu wording
 
-        GUIStyle titleText, barText, detailText, detailRight, bodyStyle, smallStyle, centeredStyle, menuButton, statusStyle, nameplate;
+        GUIStyle titleText, barText, detailText, detailRight, bodyStyle, smallStyle, centeredStyle, menuButton, statusStyle, nameplate,
+                 bannerTitle, bannerSub, worldLabel, mapLabel;
+        int bannerMap = -1;
+        float bannerClock;
 
         public GameHud(World world) { this.world = world; }
 
-        public void Close() { inventoryOpen = shopOpen = menuOpen = false; }
+        public void Close() { inventoryOpen = shopOpen = menuOpen = waystoneOpen = false; bannerMap = -1; }
 
-        // Window keys: I inventory, E or B at the merchant for the shop, Esc closes a window or opens the menu.
-        // The world keeps running while windows are open (as it will online); only attacks are blocked.
+        // Window keys: I inventory, E (or B) at the merchant for the shop, E at a waystone for travel,
+        // Esc closes a window or opens the menu. The world keeps running while windows are open; only attacks are blocked.
         public void HandleKeys(PlayerState me)
         {
-            if (me == null || me.dead) { Close(); return; }
+            if (me == null || me.dead) { inventoryOpen = shopOpen = menuOpen = waystoneOpen = false; return; }
             if (Input.GetKeyDown(KeyCode.Escape))
             {
-                if (inventoryOpen || shopOpen) { inventoryOpen = shopOpen = false; }
+                if (inventoryOpen || shopOpen || waystoneOpen) { inventoryOpen = shopOpen = waystoneOpen = false; }
                 else menuOpen = !menuOpen;
             }
             if (menuOpen) return;
-            if (Input.GetKeyDown(KeyCode.I)) { inventoryOpen = !inventoryOpen; shopOpen = false; }
-            if ((Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.B)) && world.NearMerchant(me, MerchantReach)) { shopOpen = !shopOpen; inventoryOpen = false; }
-            if (shopOpen && !world.NearMerchant(me, MerchantLeaveReach)) shopOpen = false;
+            if (Input.GetKeyDown(KeyCode.I)) { inventoryOpen = !inventoryOpen; shopOpen = waystoneOpen = false; }
+            bool use = Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.B);
+            if (use && world.NearMerchant(me, NpcReach)) { shopOpen = !shopOpen; inventoryOpen = waystoneOpen = false; }
+            else if (Input.GetKeyDown(KeyCode.E) && world.NearWaystone(me, NpcReach)) { waystoneOpen = !waystoneOpen; inventoryOpen = shopOpen = false; }
+            if (shopOpen && !world.NearMerchant(me, NpcLeaveReach)) shopOpen = false;
+            if (waystoneOpen && !world.NearWaystone(me, NpcLeaveReach)) waystoneOpen = false;
         }
 
         void InitStyles()
@@ -62,28 +70,109 @@ namespace AshenVale
             statusStyle.normal.textColor = new Color(.62f, .9f, 1f);
             nameplate = new GUIStyle(GUI.skin.label) { fontSize = 13, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
             nameplate.normal.textColor = new Color(1f, .93f, .75f);
+            bannerTitle = new GUIStyle(GUI.skin.label) { fontSize = 34, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
+            bannerSub = new GUIStyle(GUI.skin.label) { fontSize = 17, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
+            worldLabel = new GUIStyle(GUI.skin.label) { fontSize = 12, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
+            mapLabel = new GUIStyle(GUI.skin.label) { fontSize = 14, fontStyle = FontStyle.Bold, alignment = TextAnchor.UpperRight };
+            mapLabel.normal.textColor = new Color(1f, .9f, .68f);
         }
 
         public void Draw(PlayerState me)
         {
             if (me == null) return;
             InitStyles();
-            bool town = world.maps[me.map].def.kind == MapKind.Town;
+            var def = world.maps[me.map].def;
+            bool town = def.kind == MapKind.Town;
+            DrawWorldLabels(me, def);
+            DrawMonsterBars(me);
             DrawNameplates(me);
             DrawStatus(me);
             if (!string.IsNullOrEmpty(status)) GUI.Label(new Rect(Screen.width - 620, 12, 608, 24), status, statusStyle);
-            GUI.Box(new Rect(10, Screen.height - 48, Mathf.Min(Screen.width - 20, 920), 38), GUIContent.none);
+            GUI.Label(new Rect(Screen.width - 420, string.IsNullOrEmpty(status) ? 12 : 36, 408, 24), def.name.ToUpperInvariant() + "  ·  " + def.LevelText.ToUpperInvariant(), mapLabel);
+            GUI.Box(new Rect(10, Screen.height - 48, Mathf.Min(Screen.width - 20, 1000), 38), GUIContent.none);
             GUI.Label(new Rect(22, Screen.height - 42, 1250, 30), town
-                ? "A/D Move | W/Up at blue portal: Return | E at merchant: Shop | I Inventory"
-                : "A/D Move | S/Down Crouch/Crawl | SPACE Jump | W/S Ladder | J/K Attack | L Dash | Q/F Potions | E Loot | W/Up Portal | T Town | I Bag", smallStyle);
+                ? "A/D Move | SPACE Jump | DOWN+SPACE Drop | W/Up Portal | E Merchant / Waystone | I Inventory"
+                : "A/D Move | SPACE Jump | DOWN+SPACE Drop | W/S Ladder | J/K Attack | L Dash | Q/F Potions | E Loot | W/Up Portal | T Town | I Bag", smallStyle);
             if (inventoryOpen) DrawInventory(me);
-            if (shopOpen && town) DrawShop(me);
-            GUI.Label(new Rect(18, 218, 900, 35), world.maps[me.map].def.hint, bodyStyle);
-            if (me.portalCast > 0) GUI.Label(new Rect(18, 245, 500, 35), "Casting Town Portal...", bodyStyle);
+            if (shopOpen && town) DrawShop(me, def);
+            if (waystoneOpen && town) DrawWaystone(me);
+            if (me.portalCast > 0) GUI.Label(new Rect(18, 218, 500, 35), "Casting Town Portal...", bodyStyle);
+            DrawBanner(me, def);
             if (me.dead)
+            {
+                string townName = Maps.All[Maps.IsTown(me.ch.lastTown) ? me.ch.lastTown : Maps.FirstTown].name.ToUpperInvariant();
                 GUI.Label(new Rect(0, Screen.height / 2f - 25, Screen.width, 65),
-                          me.deathClock < Tuning.RespawnDelay ? "YOU FELL IN BATTLE" : "YOU FELL IN BATTLE — R: WAKE IN EMBERHAVEN   N: YOUR HEROES", centeredStyle);
+                          me.deathClock < Tuning.RespawnDelay ? "YOU FELL IN BATTLE" : "YOU FELL IN BATTLE — R: WAKE IN " + townName + "   N: YOUR HEROES", centeredStyle);
+            }
             if (menuOpen) DrawMenu();
+        }
+
+        // The map's name, big, for a few seconds after arriving.
+        void DrawBanner(PlayerState me, MapDef def)
+        {
+            if (me.map != bannerMap) { bannerMap = me.map; bannerClock = 0; }
+            bannerClock += Time.deltaTime;
+            if (bannerClock > BannerTime) return;
+            float fade = Mathf.Clamp01(Mathf.Min(bannerClock / .35f, (BannerTime - bannerClock) / .8f));
+            float y = Screen.height * .2f;
+            Fill(new Rect(Screen.width / 2f - 260, y - 8, 520, 86), new Color(.04f, .05f, .09f, .55f * fade));
+            bannerTitle.normal.textColor = new Color(1f, .9f, .66f, fade);
+            bannerSub.normal.textColor = new Color(.85f, .9f, 1f, fade);
+            GUI.Label(new Rect(0, y - 4, Screen.width, 46), def.name.ToUpperInvariant(), bannerTitle);
+            GUI.Label(new Rect(0, y + 42, Screen.width, 26), def.kind == MapKind.Town ? "TOWN" : "MONSTERS " + def.LevelText.ToUpperInvariant(), bannerSub);
+        }
+
+        // Screen position of a world point, in GUI coordinates (y down). False if it is off screen.
+        static bool ToScreen(Camera cam, float x, float y, out Vector2 point)
+        {
+            Vector3 s = cam.WorldToScreenPoint(new Vector3(x, y, 0));
+            point = new Vector2(s.x, Screen.height - s.y);
+            return s.z >= 0 && s.x > -150 && s.x < Screen.width + 150 && s.y > -50 && s.y < Screen.height + 50;
+        }
+
+        void Label(Camera cam, float x, float y, string text, Color color)
+        {
+            Vector2 at;
+            if (!ToScreen(cam, x, y, out at)) return;
+            var size = worldLabel.CalcSize(new GUIContent(text));
+            Fill(new Rect(at.x - size.x / 2f - 5, at.y - 10, size.x + 10, 20), new Color(.04f, .05f, .09f, .6f));
+            worldLabel.normal.textColor = color;
+            GUI.Label(new Rect(at.x - 150, at.y - 10, 300, 20), text, worldLabel);
+        }
+
+        // Where each portal leads, and who's who in town.
+        void DrawWorldLabels(PlayerState me, MapDef def)
+        {
+            var cam = Camera.main;
+            if (cam == null) return;
+            foreach (var portal in def.portals)
+                Label(cam, portal.x, portal.y + 2.35f, Maps.All[portal.targetMap].name.ToUpperInvariant() + "  [UP]", new Color(.75f, .9f, 1f));
+            if (def.kind != MapKind.Town) return;
+            if (me.returnReady && me.returnMap >= 0 && me.returnMap < Maps.All.Length)
+                Label(cam, def.returnX, def.returnY + 2.35f, "BACK TO " + Maps.All[me.returnMap].name.ToUpperInvariant() + "  [UP]", new Color(1f, .88f, .6f));
+            else
+                Label(cam, def.returnX, def.returnY + 2.35f, "RETURN PORTAL (OPENS WHEN YOU USE T IN THE FIELD)", new Color(.75f, .72f, .66f));
+            Label(cam, def.merchantX, def.merchantY + 2.5f, "MERCHANT  [E]", new Color(1f, .85f, .55f));
+            Label(cam, def.waystoneX, def.waystoneY + 2.35f, "WAYSTONE  [E]", new Color(.7f, .95f, 1f));
+        }
+
+        // A health bar and level over each monster that has been hurt (classic MapleStory shows its bar once you hit it).
+        void DrawMonsterBars(PlayerState me)
+        {
+            var cam = Camera.main;
+            if (cam == null) return;
+            foreach (var m in world.maps[me.map].monsters)
+            {
+                var d = m.Def;
+                if (m.hp >= d.hp - .01f) continue;
+                Vector2 at;
+                if (!ToScreen(cam, m.x, m.y + d.hover + d.height + .35f, out at)) continue;
+                float ratio = Mathf.Clamp01(m.hp / d.hp);
+                Fill(new Rect(at.x - 30, at.y - 4, 60, 8), new Color(.05f, .05f, .08f, .85f));
+                Fill(new Rect(at.x - 29, at.y - 3, 58 * ratio, 6), new Color(.9f, .25f, .25f));
+                worldLabel.normal.textColor = d.level > me.ch.level + 3 ? new Color(1f, .55f, .5f) : Color.white;
+                GUI.Label(new Rect(at.x - 100, at.y - 22, 200, 18), "Lv " + d.level + "  " + d.name, worldLabel);
+            }
         }
 
         // Names over the other heroes on your map (online play).
@@ -173,11 +262,11 @@ namespace AshenVale
             GUI.Label(new Rect(r.x + 18, r.y + 430, 570, 25), "Equipment drops use 75% Common / 20% Rare / 5% Epic.", smallStyle);
         }
 
-        void DrawShop(PlayerState me)
+        void DrawShop(PlayerState me, MapDef def)
         {
             var ch = me.ch;
             Rect r = PanelRect();
-            GUI.Box(r, "EMBERHAVEN GENERAL STORE — [B] Close");
+            GUI.Box(r, def.name.ToUpperInvariant() + " GENERAL STORE — [B] Close");
             GUI.Label(new Rect(r.x + 20, r.y + 32, 550, 28), "Gold: " + ch.gold + "   |   Sell unwanted gear for half its value", bodyStyle);
             if (GUI.Button(new Rect(r.x + 20, r.y + 70, 270, 42), "Buy HP Potion — " + Tuning.HpPotionPrice + " gold")) commands.BuyPotion(true);
             if (GUI.Button(new Rect(r.x + 320, r.y + 70, 270, 42), "Buy MP Potion — " + Tuning.MpPotionPrice + " gold")) commands.BuyPotion(false);
@@ -196,6 +285,26 @@ namespace AshenVale
                 int col = i % 2, row = i / 2;
                 if (GUI.Button(new Rect(r.x + 20 + col * 300, r.y + 297 + row * 31, 270, 29), "Sell " + item.name + " +" + Loot.SellPrice(item) + "g"))
                 { commands.Sell(i); break; }
+            }
+        }
+    
+        // Waystone: travel to any town you have found (walking into a town finds it).
+        void DrawWaystone(PlayerState me)
+        {
+            Rect r = new Rect((Screen.width - 420) / 2f, Mathf.Max(120, (Screen.height - 360) / 2f), 420, 360);
+            GUI.Box(r, "WAYSTONE — [E] Close");
+            GUI.Label(new Rect(r.x + 20, r.y + 28, 380, 24), "Travel to a town you have found.", smallStyle);
+            float y = r.y + 62;
+            for (int i = 0; i < Maps.All.Length; i++)
+            {
+                if (!Maps.IsTown(i)) continue;
+                var town = Maps.All[i];
+                bool known = me.ch.KnowsTown(i), here = i == me.map;
+                GUI.enabled = known && !here;
+                string text = here ? town.name + "  (you are here)" : known ? "Travel to " + town.name : "??? (not found yet)";
+                if (GUI.Button(new Rect(r.x + 30, y, 360, 40), text, menuButton)) { commands.Travel(i); waystoneOpen = false; }
+                GUI.enabled = true;
+                y += 48;
             }
         }
     }
