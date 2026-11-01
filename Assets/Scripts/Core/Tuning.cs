@@ -30,6 +30,9 @@ namespace AshenVale
         public const float ArrowSpeed = 15f;
         public const float ArrowLife = 1.2f;
         public const float MonsterAttackCooldown = 1.15f;
+        public const float MonsterAggroTime = 3f;           // after you hit a monster it chases you this long (if it can reach you)
+        public const float MonsterTargetStickiness = 1.5f;  // it only switches to another reachable player this much closer
+        public const float MonsterFloorTolerance = .5f;     // how close a player's floor must be to the monster's to count as reachable
         public const float FoeDamagePerLevel = .07f; // monster hits grow 7% per monster level (monster level = level of the player it spawned near)
         public const float ArmorBase = 10f;          // defense reduces damage by def / (def + ArmorBase + ArmorPerLevel * level)
         public const float ArmorPerLevel = 2f;       // so gear always helps but never makes you immune

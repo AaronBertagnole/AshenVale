@@ -337,6 +337,7 @@ namespace AshenVale
         {
             if (!map.monsters.Contains(m)) return;
             m.hp -= damage;
+            if (attacker != null) { m.target = attacker.id; m.aggroTime = Tuning.MonsterAggroTime; }   // it turns on whoever hit it
             events.Add(new SimEvent { kind = SimEventKind.MonsterHit, map = map.def.id, targetId = m.id, amount = damage,
                                       playerId = attacker != null ? attacker.id : 0, x = m.x, y = m.y });
             if (m.hp > 0) return;
@@ -384,24 +385,46 @@ namespace AshenVale
 
         // ---------------------------------------------------------------- monsters
 
-        PlayerState NearestLivingPlayer(int mapId, float x)
+        // A monster can reach a player standing on its own floor. Uses the floor the player last stood on,
+        // so a player jumping on the ground still counts as reachable.
+        static bool CanReach(MonsterState m, PlayerState p)
         {
-            PlayerState best = null;
-            float bestDist = float.MaxValue;
+            return Mathf.Abs(p.currentFloor - m.y) < Tuning.MonsterFloorTolerance;
+        }
+
+        // Who a monster goes after:
+        //  1. the player who hit it in the last few seconds, if it can reach them;
+        //  2. otherwise the nearest player it can reach (sticking with its current target unless someone is
+        //     clearly closer, so it doesn't flip back and forth);
+        //  3. only if nobody is reachable, the nearest player anywhere on the map (it waits under their platform).
+        PlayerState PickTarget(int mapId, MonsterState m, float dt)
+        {
+            m.aggroTime = Mathf.Max(0f, m.aggroTime - dt);
+            PlayerState current = null, nearestReachable = null, nearestAny = null;
+            float reachDist = float.MaxValue, anyDist = float.MaxValue;
             foreach (var p in players)
             {
                 if (p.dead || p.map != mapId) continue;
-                float d = Mathf.Abs(p.x - x);
-                if (d < bestDist) { bestDist = d; best = p; }
+                float d = Mathf.Abs(p.x - m.x);
+                if (p.id == m.target) current = p;
+                if (d < anyDist) { anyDist = d; nearestAny = p; }
+                if (CanReach(m, p) && d < reachDist) { reachDist = d; nearestReachable = p; }
             }
-            return best;
+            PlayerState pick;
+            if (current != null && CanReach(m, current) &&
+                (m.aggroTime > 0f || Mathf.Abs(current.x - m.x) <= reachDist + Tuning.MonsterTargetStickiness))
+                pick = current;
+            else
+                pick = nearestReachable ?? nearestAny;
+            m.target = pick != null ? pick.id : 0;
+            return pick;
         }
 
         void UpdateMonsters(MapRuntime map, float dt)
         {
             foreach (var m in map.monsters)
             {
-                var target = NearestLivingPlayer(map.def.id, m.x);
+                var target = PickTarget(map.def.id, m, dt);
                 if (target == null) continue;
                 float dist = target.x - m.x;
                 if (m.knockbackTime > 0f)

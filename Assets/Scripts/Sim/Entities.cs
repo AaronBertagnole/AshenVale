@@ -61,6 +61,8 @@ namespace AshenVale
         public int id, def, map, level;
         public float x, y, px, py, hp, speed, cooldown;
         public float knockbackVelocity, knockbackTime;
+        public int target;              // player id it is chasing (0 = none)
+        public float aggroTime;         // seconds it stays on the player who last hit it
         public MonsterDef Def { get { return Monsters.All[def]; } }
     }
 
