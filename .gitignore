@@ -36,3 +36,6 @@ crashlytics-build.properties
 # OS clutter
 .DS_Store
 Thumbs.db
+
+# Python tool caches
+__pycache__/

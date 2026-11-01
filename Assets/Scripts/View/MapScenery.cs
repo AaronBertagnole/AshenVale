@@ -71,6 +71,18 @@ namespace AshenVale
                     hanging = new Color(.36f, .46f, .18f),
                     flecks = new[] { new Color(.75f, .23f, .11f), new Color(.93f, .43f, .14f), new Color(.98f, .80f, .51f), new Color(.71f, .36f, .18f) },
                 };
+                case "mossgate": return new Theme   // Mossgate Hollow: autumn turning to moss on the way into Mosswood
+                {
+                    skyBottom = new Color(.82f, .90f, .78f), skyTop = new Color(.36f, .60f, .62f),
+                    far = new Color(.40f, .58f, .45f), farDark = new Color(.33f, .50f, .40f),
+                    mid = new Color(.30f, .52f, .32f), midDark = new Color(.36f, .27f, .18f),
+                    groundBody = new Color(.22f, .21f, .15f), groundTop = new Color(.50f, .66f, .30f),
+                    platformBody = new Color(.32f, .33f, .24f), platformTop = new Color(.52f, .68f, .32f),
+                    accent = new Color(.95f, .85f, .55f), farStyle = "pines", midStyle = "bigtrees",
+                    ladderRail = new Color(.37f, .28f, .18f), ladderRung = new Color(.58f, .42f, .26f),
+                    hanging = new Color(.30f, .48f, .22f),
+                    flecks = new[] { new Color(.55f, .72f, .30f), new Color(.38f, .60f, .28f), new Color(.93f, .50f, .18f), new Color(.75f, .30f, .12f) },
+                };
                 case "forest": return new Theme
                 {
                     skyBottom = new Color(.62f, .84f, .74f), skyTop = new Color(.22f, .46f, .50f),
@@ -181,20 +193,30 @@ namespace AshenVale
             return true;
         }
 
-        // The map's painted backdrop as a panorama layer (WorldView moves it). False if none or not in the project.
+        // Painted backdrops dropped in by map name use the same framing as the first ones: the path 116 px above the
+        // bottom of a 724 px tall picture, shown 42 units wide.
+        public const float DefaultBackdropFloor = 116f / 724f, DefaultBackdropWidth = 42f;
+
+        // The map's painted backdrop as a panorama layer (WorldView moves it). A picture named after the map
+        // (Art/Backdrops/<key>.png) wins; otherwise the one the map asks for. False if there is none.
         static bool BuildBackdrop(MapVisual visual, MapDef def)
         {
-            if (string.IsNullOrEmpty(def.backdrop)) return false;
-            var sprite = Sprites.Art(def.backdrop);
-            if (sprite == null) return false;
+            string own = "Art/Backdrops/" + def.key;
+            var sprite = Sprites.Art(own);
+            float floor = def.backdropFloor, width = def.backdropWidth;
+            bool flip = def.backdropFlip;
+            if (sprite != null && def.backdrop != own) { floor = DefaultBackdropFloor; width = DefaultBackdropWidth; flip = false; }
+            if (sprite == null && !string.IsNullOrEmpty(def.backdrop)) sprite = Sprites.Art(def.backdrop);
+            if (sprite == null || width <= 0f) return false;
             var t = new GameObject("Backdrop").transform;
             t.SetParent(visual.root.transform, false);
             var size = sprite.bounds.size;
-            float scale = def.backdropWidth / size.x;
+            float scale = width / size.x;
             var o = Sprites.Picture("Backdrop art", sprite, SkyOrder, t, 0, 0);
-            o.transform.localScale = new Vector3(scale, scale, 1);
-            o.transform.localPosition = new Vector3(-sprite.bounds.min.x * scale, -sprite.bounds.min.y * scale, 0);   // layer origin = picture's bottom-left
-            visual.layers.Add(new ParallaxLayer { transform = t, panorama = true, width = def.backdropWidth, height = size.y * scale, floor = def.backdropFloor });
+            // Layer origin = the picture's bottom-left corner (mirrored pictures are flipped about their middle).
+            o.transform.localScale = new Vector3(flip ? -scale : scale, scale, 1);
+            o.transform.localPosition = new Vector3(flip ? sprite.bounds.max.x * scale : -sprite.bounds.min.x * scale, -sprite.bounds.min.y * scale, 0);
+            visual.layers.Add(new ParallaxLayer { transform = t, panorama = true, width = width, height = size.y * scale, floor = floor });
             return true;
         }
 

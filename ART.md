@@ -51,7 +51,11 @@ It replaces the theme's sky / far / mid; ground and platforms are still drawn in
 
 | File | Map | Picture | Shown |
 |---|---|---|---|
-| `emberfields.png` | Emberfields | 2172 x 724, path 116 px above the bottom | 42 units wide |
+| `emberfields.png` | Emberfields (and Amberleaf Trail, mirrored, until it has its own) | 2172 x 724, path 116 px above the bottom | 42 units wide |
+
+**Adding one is just a file:** a picture named after the map (`amberleaf_trail.png`, `mossgate_hollow.png`,
+`mosswood.png`, ... the map's name in lower case with `_` for spaces) is picked up automatically, assuming the
+same framing as the Emberfields picture (2172 x 724, path 116 px above the bottom) and shown 42 units wide.
 
 The ground and platforms can be cut from the same picture so they match it:
 
@@ -62,8 +66,13 @@ The ground and platforms can be cut from the same picture so they match it:
 
 ### Map themes: `Art/Themes/<theme>/`
 
-Themes: `town` (Emberhaven), `autumn` (Emberfields), `forest` (Mosswood), `cave` (Hollow Den),
-`road` (Kingsroad), `rivertown` (Cinderford), `marsh` (Ashen Marsh); `meadow` is spare.
+Themes: `town` (Emberhaven), `autumn` (Emberfields, Amberleaf Trail), `mossgate` (Mossgate Hollow), `forest` (Mosswood),
+`cave` (Hollow Den), `road` (Kingsroad), `rivertown` (Cinderford), `marsh` (Ashen Marsh); `meadow` is spare.
+
+`mossgate` and `forest` ground and platforms are the `autumn` ones with the leaves recoloured to moss:
+
+    python Tools/recolor_theme.py autumn mossgate 62 0.85
+    python Tools/recolor_theme.py autumn forest 70 1.0
 
 | File | What it is | Suggested size | Lines up by |
 |---|---|---|---|
@@ -108,6 +117,9 @@ Body sizes (width x height, in px at 100 px per unit) from `Assets/Scripts/Data/
 | `bog_lurker` | Bog Lurker | 13 | 140 x 110 |
 | `ash_wisp` | Ash Wisp | 14 | 80 x 90 (floats) |
 | `sunken_chest` | Sunken Chest | 15 | 110 x 90 |
+| `leaf_beetle` | Leaf Beetle | 3 | 95 x 70 |
+| `mossling` | Mossling | 4 | 80 x 75 |
+| `ember_fox` | Ember Fox | 5 | 110 x 85 |
 
 The body size is what touches and gets hit; art can be a bit bigger (ears, tails, glow).
 
