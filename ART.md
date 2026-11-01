@@ -72,6 +72,8 @@ Per map, in picture pixels (x from the left, y from the top) so they line up wit
 - **Effects**, animated lights drawn with `Assets/Resources/Shaders/MapEffect.shader`: portal ripples (waystones,
   the Mossgate arch), flowing water (waterfalls, the Mosswood cascade, the Kingsroad river), drifting mist and fire
   flicker (forges, the Emberhaven waystone flame). An effect marked distant rides on the `_back` picture.
+  Glows and fire add light (they show over darker paint); water and mist are painted over the picture in bands
+  darker and paler than their tint, so they read over bright paint too. Each has a `strength` (1 = normal).
 - **Specks**: golden motes everywhere, falling leaves in Emberhaven / Emberfields / Amberleaf Trail, pollen on
   Kingsroad, ash in Ashen Marsh, chimney smoke and forge or waystone sparks at their spots.
 To move one, find its spot on the picture in an image editor and change its numbers.

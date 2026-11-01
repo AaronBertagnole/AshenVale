@@ -12,6 +12,7 @@ namespace AshenVale
         public Color color;
         public int mode;                    // 0 portal ripples, 1 flowing water, 2 drifting mist, 3 fire flicker
         public bool distant;                // on the distant (_back) picture, sliding with it, instead of the front one
+        public float strength;              // 1 = normal (0 reads as 1); raise it where the paint underneath is bright
     }
 
     // A group of drifting specks: motes, leaves, pollen, ash, sparks, smoke.
@@ -69,7 +70,7 @@ namespace AshenVale
                     Fx("Great falls", 1665, 442, 34, 100, new Color(.65f, .9f, 1f), 1, true),
                     Fx("Side falls", 1745, 420, 26, 64, new Color(.65f, .9f, 1f), 1, true),
                 },
-                ambient = new[] { Motes(), Leaves(55, new Color(1f, .45f, .08f, .9f)) },
+                ambient = new[] { Motes(), Leaves(55, new Color(.95f, .3f, .05f, 1f)) },
             };
             a[Maps.Emberfields] = autumn;
             a[Maps.AmberleafTrail] = autumn;        // shows the Emberfields pictures (mirrored) for now
@@ -78,17 +79,17 @@ namespace AshenVale
                 backTravel = .55f,
                 effects = new[]
                 {
-                    Fx("Waystone glow", 1060, 425, 165, 155, new Color(1f, .7f, .28f), 0),
+                    Fx("Waystone glow", 1060, 425, 165, 155, new Color(1f, .7f, .28f), 0, false, 1.3f),
                     Fx("Waystone flame", 1081, 426, 74, 143, new Color(1f, .6f, .1f), 3),
                     Fx("Forge glow", 1855, 478, 95, 106, new Color(1f, .4f, .08f), 3),
                 },
-                ambient = new[] { Motes(), Leaves(30, new Color(1f, .4f, .08f, .85f)), Smoke(503, 235), Smoke(1913, 256) },
+                ambient = new[] { Motes(), Leaves(30, new Color(.95f, .3f, .05f, 1f)), Smoke(503, 235), Smoke(1913, 256) },
             };
             a[Maps.MossgateHollow] = new MapArtDef
             {
                 effects = new[]
                 {
-                    Fx("Gate glow", 1059, 404, 191, 296, new Color(.6f, 1f, .35f), 0),
+                    Fx("Gate glow", 1059, 404, 191, 296, new Color(.6f, 1f, .35f), 0, false, 1.4f),
                     Fx("Waterfall", 1637, 325, 74, 212, new Color(.6f, .9f, 1f), 1, true),
                     Fx("Mist", 1086, 521, 1803, 116, new Color(.6f, .85f, .8f), 2),
                 },
@@ -130,16 +131,16 @@ namespace AshenVale
             return a;
         }
 
-        static EffectDef Fx(string name, float x, float y, float width, float height, Color color, int mode, bool distant = false)
+        static EffectDef Fx(string name, float x, float y, float width, float height, Color color, int mode, bool distant = false, float strength = 1f)
         {
-            return new EffectDef { name = name, x = x, y = y, width = width, height = height, color = color, mode = mode, distant = distant };
+            return new EffectDef { name = name, x = x, y = y, width = width, height = height, color = color, mode = mode, distant = distant, strength = strength };
         }
 
         // Specks that fill the screen (world units).
         static AmbientDef Motes()
         {
-            return new AmbientDef { name = "Motes", drift = Drift.Float, aroundView = true, count = 36, tint = new Color(1f, .85f, .45f, .65f),
-                                    sizeMin = .05f, sizeMax = .14f, sway = .35f, rate = .35f, order = 14 };
+            return new AmbientDef { name = "Motes", drift = Drift.Float, aroundView = true, count = 40, tint = new Color(1f, .9f, .55f, .9f),
+                                    sizeMin = .07f, sizeMax = .18f, sway = .35f, rate = .35f, order = 14 };
         }
 
         static AmbientDef Pollen()
@@ -151,7 +152,7 @@ namespace AshenVale
         static AmbientDef Leaves(int count, Color tint)
         {
             return new AmbientDef { name = "Falling leaves", drift = Drift.Fall, aroundView = true, count = count, tint = tint,
-                                    sizeMin = .08f, sizeMax = .17f, speed = .55f, sway = .35f, rate = .35f, leaf = true, order = 14 };
+                                    sizeMin = .14f, sizeMax = .26f, speed = .7f, sway = .4f, rate = .35f, leaf = true, order = 14 };
         }
 
         static AmbientDef Ash()

@@ -329,7 +329,11 @@ namespace AshenVale
         {
             if (look.effects.Length == 0) return;
             var shader = Resources.Load<Shader>(EffectShader);
-            if (shader == null || !shader.isSupported) return;
+            if (shader == null || !shader.isSupported)
+            {
+                Debug.LogWarning("Map effects are off: shader Resources/" + EffectShader + (shader == null ? " was not found" : " is not supported here"));
+                return;
+            }
             foreach (var fx in look.effects)
             {
                 var frame = fx.distant ? back : front;
@@ -337,6 +341,11 @@ namespace AshenVale
                 var material = new Material(shader);
                 material.SetColor("_Color", fx.color);
                 material.SetFloat("_Mode", fx.mode);
+                material.SetFloat("_Active", fx.strength <= 0f ? 1f : fx.strength);
+                // Water and mist are painted over the picture; glows and fire add light to it (see the shader).
+                bool over = fx.mode == 1 || fx.mode == 2;
+                material.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+                material.SetFloat("_DstBlend", (float)(over ? UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha : UnityEngine.Rendering.BlendMode.One));
                 int order = fx.distant ? SkyOrder + 5 : scene ? GlowOrder : FarOrder + 5;
                 var o = Sprites.Picture(fx.name, Sprites.FullQuad, order, frame.parent, 0, 0);
                 o.transform.localPosition = frame.At(fx.x, fx.y);
