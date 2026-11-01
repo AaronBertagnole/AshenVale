@@ -50,16 +50,14 @@ namespace AshenVale
         public bool hasSmithy;
         // Optional painted scene (Resources/<scene>.png) drawn behind the whole map instead of the theme's
         // placeholder backdrop. It is stretched to the map's width; sceneFloor is how far up the picture
-        // (as a share of its height) the walking line is, so feet land on the painted street.
+        // (as a share of its height) the walking line is, so feet land on the painted street. If <scene>_back.png
+        // exists, the scene is the see-through front and that picture is the distance sliding behind it (MapArt).
         public string scene;
         public float sceneFloor;
-        // Optional shimmer over the scene's waystone (Resources/Shaders/WaystoneGlow), with sparks around it:
-        // centre and size in pixels of the scene picture (x from the left, y from the top), and its colour.
-        public Rect sceneGlow;
-        public Color sceneGlowColor = new Color(.1f, 1f, .8f);
         // Optional painted backdrop (Resources/<backdrop>.png) for a map wider than the picture: shown backdropWidth
         // units wide behind everything, it slides slower than the map as the camera moves (always filling the view),
         // and at the lowest camera its painted path (backdropFloor, as for scenes) lines up with the ground.
+        // As for scenes, <backdrop>_back.png (if present) is a more distant layer that slides more slowly still.
         public string backdrop;
         public float backdropFloor, backdropWidth;
         public bool backdropFlip;               // show it mirrored (to reuse a neighbour's picture until the map has its own)
@@ -110,14 +108,6 @@ namespace AshenVale
             def.backdropFloor = floor;
             def.backdropWidth = width;
             def.backdropFlip = flip;
-            return def;
-        }
-
-        // Makes a painted scene's waystone shimmer (see MapDef.sceneGlow). x, y: centre in picture pixels, from the top left.
-        public static MapDef WithSceneGlow(MapDef def, float x, float y, float width, float height, Color color)
-        {
-            def.sceneGlow = new Rect(x, y, width, height);
-            def.sceneGlowColor = color;
             return def;
         }
 
@@ -261,12 +251,13 @@ namespace AshenVale
     {
         // Map ids are stored in save files: never renumber, only add.
         public const int Emberfields = 0, Mosswood = 1, Emberhaven = 2, HollowDen = 3, Kingsroad = 4, Cinderford = 5, AshenMarsh = 6,
-                         AmberleafTrail = 7, MossgateHollow = 8;
+                         AmberleafTrail = 7, MossgateHollow = 8, ShaleCliffs = 9;
         public const int FirstTown = Emberhaven;    // every hero knows it; where you wake if nothing else is known
 
         // The world so far (west to east):
         //   Emberhaven (town) - Emberfields - Amberleaf Trail - Mossgate Hollow - Mosswood - Kingsroad - Cinderford (town) - Ashen Marsh
-        //                                                                            '- secret ledge, top left: Hollow Den
+        //                                                        '- top ledge: Shale Cliffs     '- secret ledge, top left: Hollow Den
+        //                                                           (up the mountain)
         // In id order: All[i].id == i.
         public static readonly MapDef[] All =
         {
@@ -279,11 +270,10 @@ namespace AshenVale
                     new[] { MapLayout.S('a', Monsters.MossCrawler), MapLayout.S('b', Monsters.BrambleBoar), MapLayout.S('k', Monsters.MossyChest) },
                     new[] { MapLayout.L('B', MossgateHollow, 'B'), MapLayout.L('C', Kingsroad, 'C'), MapLayout.L('S', HollowDen, 'S') }),
                 "Art/Backdrops/mosswood", 130f / 724f, 42f),       // its path is a little higher: 130 px above the bottom
-            MapLayout.WithSceneGlow(MapLayout.WithScene(MapLayout.Build(Emberhaven, "Emberhaven", "town", MapKind.Town, EmberhavenLayout,
-                        new MapLayout.Spawn[0],
-                        new[] { MapLayout.L('A', Emberfields, 'A') }),
-                    "Art/Scenes/emberhaven", 116f / 724f),     // the painted street is 116 px above the bottom of the 724 px picture
-                1060, 425, 165, 155, new Color(1f, .7f, .28f)),   // a warm shimmer in the arch around the waystone flame
+            MapLayout.WithScene(MapLayout.Build(Emberhaven, "Emberhaven", "town", MapKind.Town, EmberhavenLayout,
+                    new MapLayout.Spawn[0],
+                    new[] { MapLayout.L('A', Emberfields, 'A') }),
+                "Art/Scenes/emberhaven", 116f / 724f),     // the painted street is 116 px above the bottom of the 724 px picture
             MapLayout.WithChests(MapLayout.Build(HollowDen, "Hollow Den", "cave", MapKind.Field, HollowDenLayout,
                     new[] { MapLayout.S('d', Monsters.DenShade), MapLayout.S('k', Monsters.MossyChest) },
                     new[] { MapLayout.L('S', Mosswood, 'S') }),
@@ -292,11 +282,10 @@ namespace AshenVale
                     new[] { MapLayout.S('b', Monsters.BrambleBoar), MapLayout.S('v', Monsters.VioletWraith), MapLayout.S('k', Monsters.MossyChest) },
                     new[] { MapLayout.L('C', Mosswood, 'C'), MapLayout.L('D', Cinderford, 'D') }),
                 "Art/Backdrops/kingsroad", 140f / 724f, 42f),      // its path is higher: 140 px above the bottom
-            MapLayout.WithSceneGlow(MapLayout.WithScene(MapLayout.Build(Cinderford, "Cinderford", "rivertown", MapKind.Town, CinderfordLayout,
-                        new MapLayout.Spawn[0],
-                        new[] { MapLayout.L('D', Kingsroad, 'D'), MapLayout.L('E', AshenMarsh, 'E') }),
-                    "Art/Scenes/cinderford", 144f / 724f),     // two pictures joined into one long street, 144 px above the bottom
-                3057, 429, 156, 206, new Color(.1f, 1f, .8f)),    // ripples in the waystone arch's teal portal
+            MapLayout.WithScene(MapLayout.Build(Cinderford, "Cinderford", "rivertown", MapKind.Town, CinderfordLayout,
+                    new MapLayout.Spawn[0],
+                    new[] { MapLayout.L('D', Kingsroad, 'D'), MapLayout.L('E', AshenMarsh, 'E') }),
+                "Art/Scenes/cinderford", 144f / 724f),     // two pictures joined into one long street, 144 px above the bottom
             MapLayout.Build(AshenMarsh, "Ashen Marsh", "marsh", MapKind.Field, AshenMarshLayout,
                 new[] { MapLayout.S('t', Monsters.MarshToad), MapLayout.S('l', Monsters.BogLurker),
                         MapLayout.S('w', Monsters.AshWisp), MapLayout.S('k', Monsters.SunkenChest) },
@@ -311,7 +300,12 @@ namespace AshenVale
             MapLayout.Build(MossgateHollow, "Mossgate Hollow", "mossgate", MapKind.Field, MossgateHollowLayout,
                 new[] { MapLayout.S('m', Monsters.Mossling), MapLayout.S('f', Monsters.EmberFox),
                         MapLayout.S('c', Monsters.MossCrawler), MapLayout.S('k', Monsters.MossyChest) },
-                new[] { MapLayout.L('F', AmberleafTrail, 'F'), MapLayout.L('B', Mosswood, 'B') }),
+                new[] { MapLayout.L('F', AmberleafTrail, 'F'), MapLayout.L('B', Mosswood, 'B'), MapLayout.L('G', ShaleCliffs, 'G') }),
+            // Up the mountain from Mossgate Hollow's top ledge: a steep climb of rock shelves to a summit lookout.
+            // The way on to Highspire will open from the summit later.
+            MapLayout.Build(ShaleCliffs, "Shale Cliffs", "cliffs", MapKind.Field, ShaleCliffsLayout,
+                new[] { MapLayout.S('g', Monsters.CragGoat), MapLayout.S('r', Monsters.RockMite), MapLayout.S('k', Monsters.MossyChest) },
+                new[] { MapLayout.L('G', MossgateHollow, 'G') }),
         };
 
         public static bool IsTown(int map) { return map >= 0 && map < All.Length && All[map].kind == MapKind.Town; }
@@ -401,6 +395,31 @@ namespace AshenVale
             ....D...........$.......$........%......@...&........^............E.....
             ########################################################################";
 
+        // Shale Cliffs: arrive at the bottom left, climb the shelves and ladders back and forth to the summit at the top
+        // right, where a chest may wait. Goats charge along the shelves; mites cling to the high rock.
+        const string ShaleCliffsLayout = @"
+            ..........................................................
+            ........................................r.....g...r....k..
+            ....................................=====================.
+            ..............................g.....r.....................
+            ............................===========...................
+            ......................r.....g.............................
+            ....................===========...........................
+            .................................g.....k..................
+            ..............................===========.................
+            ...............................|.............g..r.........
+            ...............................|........===========.......
+            ...............................|.....g...r................
+            ...............................|.==========...............
+            ............................g..|..........................
+            ........................===========.......................
+            .....................g....................................
+            ................===========...............................
+            ...............g..........................................
+            ..........===========.....................................
+            ..G.@.........g...........g...........g...........g....k..
+            ##########################################################";
+
         const string AshenMarshLayout = @"
             ....................................................................................
             ........................w...k...w...................................................
@@ -437,7 +456,7 @@ namespace AshenVale
         // A mossy dip: zigzag ledges on the left lead to a rope bridge across the top; the gate ledge on the right
         // (ladder from the floor) holds the portal into Mosswood. A hidden ledge at the top left has a chest.
         const string MossgateHollowLayout = @"
-            ....k..c..............................................................
+            ..G.k..c..............................................................
             ..=========...........................................................
             ........|.................f.......c.....k...f.........................
             ........|.........=================================...................

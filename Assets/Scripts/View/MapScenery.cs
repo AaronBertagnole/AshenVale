@@ -5,44 +5,90 @@ namespace AshenVale
 {
     // A backdrop layer that follows the camera by (fx, fy): 1 = fixed to the screen (sky), 0 = fixed to the world.
     // A panorama layer is one painted picture (width x height units, origin at its bottom-left) that WorldView
-    // slides so it always fills the view: its left edge shows at the map's left end, its right edge at the right end.
+    // slides so it always fills the view: with travel 1 its left edge shows at the map's left end and its right
+    // edge at the right end; with less travel it slides through less of its spare width (it stays nearer the
+    // camera), which makes it look further away. A map's distant picture uses that behind its front picture.
     public sealed class ParallaxLayer
     {
         public Transform transform;
         public float fx, fy;
         public bool panorama;
         public float width, height, floor;
+        public float travel = 1f;
     }
 
-    // A drifting, twinkling speck of light (town motes, waystone sparks).
-    public sealed class Sparkle
+    // Where a map picture's pixels are: picture pixel (x from the left, y from the top) -> a position under `parent`
+    // (the map itself for a scene, the panorama layer for a backdrop), so effects and specks ride along with it.
+    public struct PictureFrame
+    {
+        public Transform parent;
+        public float left, bottom, perPixel;    // perPixel: world units per picture pixel
+        public float width, height;             // the picture's size in pixels
+        public bool flip;
+        public bool Valid { get { return parent != null; } }
+        public Vector3 At(float x, float y) { return new Vector3(left + (flip ? width - x : x) * perPixel, bottom + (height - y) * perPixel, 0); }
+    }
+
+    // One drifting speck: a mote, leaf, spark or puff of smoke.
+    public sealed class Speck
     {
         public Transform transform;
         public SpriteRenderer sr;
-        public Vector3 start;
+        public Vector2 start;       // 0..1 across and up its group's box
         public float phase;
-        public Color tint;
+    }
+
+    // A group of specks from MapArt (AmbientDef), with its sizes turned into its parent's units.
+    public sealed class SpeckGroup
+    {
+        public AmbientDef def;
+        public Vector2 centre;                          // spot groups: centre of their box under the parent
+        public float width, height, sway, speed, fade;
+        public readonly List<Speck> specks = new List<Speck>();
     }
 
     // Everything drawn for one map: a root (switched on while the local player is on the map), its backdrop layers
-    // and its sparkles.
+    // and its drifting specks.
     public sealed class MapVisual
     {
         public GameObject root;
         public readonly List<ParallaxLayer> layers = new List<ParallaxLayer>();
-        public readonly List<Sparkle> sparkles = new List<Sparkle>();
+        public readonly List<SpeckGroup> ambient = new List<SpeckGroup>();
         public float cameraLowY;    // backdrop layers are laid out as seen with the camera at its lowest point
 
-        // Called every frame for the map on screen: each sparkle bobs around its spot and fades in and out.
-        public void Animate(float time)
+        // Called every frame for the map on screen, with the camera's centre and half the view's size.
+        // Screen-filling groups live in a box around the camera and wrap at its edges (off screen), so each speck
+        // keeps its place in the world as you walk; spot groups stay in their own box (a chimney, a forge).
+        public void Animate(float time, Vector3 camera, float halfWidth, float halfHeight)
         {
-            foreach (var s in sparkles)
+            foreach (var g in ambient)
             {
-                float t = time * .45f + s.phase;
-                s.transform.localPosition = s.start + new Vector3(Mathf.Sin(t) * .25f, Mathf.Cos(t * .7f) * .18f, 0);
-                Color c = s.tint;
-                c.a *= .35f + .65f * (Mathf.Sin(t * 2f) + 1f) * .5f;
-                s.sr.color = c;
+                var d = g.def;
+                bool around = d.aroundView;
+                float w = around ? 2f * halfWidth + 2f : g.width, h = around ? 2f * halfHeight + 2f : g.height;
+                float left = camera.x - w * .5f, bottom = camera.y - h * .5f;
+                foreach (var s in g.specks)
+                {
+                    float a = time * d.rate + s.phase;
+                    float x = s.start.x * w + Mathf.Sin(a) * g.sway, y = s.start.y * h, alpha;
+                    if (d.drift == Drift.Float)
+                    {
+                        y += Mathf.Cos(a * .7f) * g.sway * .7f;
+                        alpha = .4f + .6f * (Mathf.Sin(a * 2f) + 1f) * .5f;
+                    }
+                    else
+                    {
+                        y = Mathf.Repeat(y + (d.drift == Drift.Fall ? -g.speed : g.speed) * time, h);
+                        alpha = around ? 1f : Mathf.Clamp01(Mathf.Min(y, h - y) / g.fade);    // fades in and out at the box's ends
+                    }
+                    s.transform.localPosition = around
+                        ? new Vector3(left + Mathf.Repeat(x - left, w), bottom + Mathf.Repeat(y - bottom, h), 0)
+                        : new Vector3(g.centre.x - w * .5f + x, g.centre.y - h * .5f + y, 0);
+                    if (d.leaf) s.transform.localRotation = Quaternion.Euler(0, 0, a * 80f);
+                    Color c = d.tint;
+                    c.a *= alpha;
+                    s.sr.color = c;
+                }
             }
         }
     }
@@ -50,18 +96,20 @@ namespace AshenVale
     // Builds the look of a map from its MapDef and theme. Every piece first looks for real art under
     // Resources/Art (see ART.md) and falls back to placeholder shapes, so art can be dropped in one file at a time.
     //
-    //   Art/Scenes/<map>          a whole painted scene for one map (MapDef.scene), replacing the backdrop and ground;
-    //                             scenes get drifting motes, and a shimmer on the waystone if MapDef.sceneGlow is set
+    //   Art/Scenes/<map>          a whole painted scene for one map (MapDef.scene), replacing the backdrop and ground
     //   Art/Backdrops/<map>       a painted backdrop for a wider map (MapDef.backdrop), replacing sky / far / mid
+    //   ..._back                  either of those as a see-through front, with this distant picture sliding behind it
+    //   MapArt                    animated lights (Resources/Shaders/MapEffect) and drifting specks per map
     //   Art/Themes/<theme>/sky, far, mid, ground, ground_back, platform_left, platform_mid, platform_right, ladder
     //   Art/Props/portal, return_portal, waystone, merchant, smithy
     public static class MapScenery
     {
         // Sorting orders, back to front (ladders stand behind platforms). Monsters 7, drops 9, heroes 10-11,
         // slashes 12, arrows 13 (WorldView).
+        // A distant picture draws at SkyOrder and the front picture in front of it at FarOrder; effects on them at +5.
         public const int SkyOrder = -40, FarOrder = -30, MidOrder = -20, BackDecorOrder = -10, GroundOrder = 0,
-                         PlatformOrder = 2, LadderOrder = 0, GlowOrder = 4, PropOrder = 5, PortalOrder = 6, SparkleOrder = 14;
-        const string GlowShader = "Shaders/WaystoneGlow";
+                         PlatformOrder = 2, LadderOrder = 0, GlowOrder = 4, PropOrder = 5, PortalOrder = 6;
+        const string EffectShader = "Shaders/MapEffect";
 
         sealed class Theme
         {
@@ -137,6 +185,18 @@ namespace AshenVale
                     platformBody = new Color(.50f, .40f, .28f), platformTop = new Color(.62f, .76f, .36f),
                     accent = new Color(1f, .93f, .62f), farStyle = "mountains", midStyle = "fields",
                 };
+                case "cliffs": return new Theme     // Shale Cliffs: grey-blue rock, pines, snowy peaks far off
+                {
+                    skyBottom = new Color(.86f, .90f, .96f), skyTop = new Color(.38f, .56f, .86f),
+                    far = new Color(.62f, .68f, .80f), farDark = new Color(.52f, .58f, .72f),
+                    mid = new Color(.44f, .50f, .56f), midDark = new Color(.22f, .40f, .34f),
+                    groundBody = new Color(.40f, .42f, .46f), groundTop = new Color(.62f, .64f, .62f),
+                    platformBody = new Color(.46f, .48f, .52f), platformTop = new Color(.66f, .68f, .66f),
+                    accent = new Color(.95f, .97f, 1f), farStyle = "mountains", midStyle = "bigtrees",
+                    ladderRail = new Color(.42f, .32f, .22f), ladderRung = new Color(.6f, .46f, .3f),
+                    hanging = new Color(.30f, .34f, .38f),
+                    flecks = new[] { new Color(.78f, .80f, .78f), new Color(.35f, .55f, .40f) },
+                };
                 case "rivertown": return new Theme
                 {
                     skyBottom = new Color(.88f, .84f, .94f), skyTop = new Color(.42f, .52f, .78f),
@@ -172,6 +232,7 @@ namespace AshenVale
             var visual = new MapVisual { root = new GameObject("Map: " + def.name) };
             var root = visual.root.transform;
             var theme = ThemeFor(def.theme);
+            var look = MapArt.For(def.id);
             var rng = new System.Random(1000 + def.id * 37);
             float minX, maxX, minY, maxY;
             WorldView.CameraRange(def, 0f, out minX, out maxX, out minY, out maxY);
@@ -180,10 +241,11 @@ namespace AshenVale
 
             // A painted scene already shows the sky, ground, houses, waystone and shops: draw only what it lacks.
             // A painted backdrop replaces the sky and distant layers; the ground and platforms are still drawn.
-            bool painted = BuildScene(visual, def);
+            PictureFrame front, back;
+            bool painted = BuildScene(visual, def, look, out front, out back);
             if (!painted)
             {
-                if (!BuildBackdrop(visual, def))
+                if (!BuildBackdrop(visual, def, look, out front, out back))
                 {
                     Sky(visual, def, theme, art);
                     Far(visual, def, theme, art, rng);
@@ -191,6 +253,8 @@ namespace AshenVale
                 }
                 Ground(root, def, theme, art, rng);
             }
+            BuildEffects(look, front, back, painted);
+            BuildAmbient(visual, look, front);
             foreach (var plat in def.platforms) BuildPlatform(root, plat, theme, art, rng);
             foreach (var ladder in def.ladders) BuildLadder(root, ladder, theme, art);
             foreach (var portal in def.portals) BuildPortal(root, portal.x, portal.y, false);
@@ -204,94 +268,147 @@ namespace AshenVale
             return visual;
         }
 
-        // The map's painted scene, stretched to the map's width with its walking line on the ground. False if the map
-        // has none or its picture isn't in the project.
-        static bool BuildScene(MapVisual visual, MapDef def)
+        // The map's painted scene, stretched to the map's width with its walking line on the ground, plus the
+        // distant picture behind it if there is one (<scene>_back, at the same scale). False if the map has no scene
+        // or its picture isn't in the project.
+        static bool BuildScene(MapVisual visual, MapDef def, MapArtDef look, out PictureFrame front, out PictureFrame back)
         {
+            front = back = new PictureFrame();
             if (string.IsNullOrEmpty(def.scene)) return false;
             var sprite = Sprites.Art(def.scene);
             if (sprite == null) return false;
             var root = visual.root.transform;
             var size = sprite.bounds.size;
             float scale = def.columns / size.x, bottom = Tuning.Ground - def.sceneFloor * size.y * scale;
+            var far = Sprites.Art(def.scene + "_back");
             // Placed from the sprite's own bounds, so it lines up whatever pivot it was imported with.
-            var o = Sprites.Picture("Scene", sprite, SkyOrder, root,
+            var o = Sprites.Picture("Scene", sprite, far != null ? FarOrder : SkyOrder, root,
                                     def.columns * .5f - sprite.bounds.center.x * scale, bottom - sprite.bounds.min.y * scale);
             o.transform.localScale = new Vector3(scale, scale, 1);
-
-            // Golden motes drifting along the street.
-            Sparkles(visual, "Motes", def.columns * .5f, Tuning.Ground + 2.6f, def.columns, 4.4f,
-                     Mathf.RoundToInt(def.columns * 1.5f), new Color(1f, .85f, .4f, .7f), 83);
-
-            // The waystone's shimmer and sparks, placed by picture pixels (x from the left, y from the top).
-            if (def.sceneGlow.width > 0f)
+            float perPixel = def.columns / sprite.rect.width;
+            front = new PictureFrame { parent = root, left = 0f, bottom = bottom, perPixel = perPixel, width = sprite.rect.width, height = sprite.rect.height };
+            if (far != null)
             {
-                float perPixel = def.columns / sprite.rect.width;
-                float x = def.sceneGlow.x * perPixel, y = bottom + (sprite.rect.height - def.sceneGlow.y) * perPixel;
-                float w = def.sceneGlow.width * perPixel, h = def.sceneGlow.height * perPixel;
-                var shader = Resources.Load<Shader>(GlowShader);
-                if (shader != null && shader.isSupported)
-                {
-                    var material = new Material(shader);
-                    material.SetColor("_Color", def.sceneGlowColor);
-                    var glow = Sprites.Picture("Waystone glow", Sprites.FullQuad, GlowOrder, root, x, y);
-                    glow.GetComponent<SpriteRenderer>().sharedMaterial = material;
-                    glow.transform.localScale = new Vector3(w, h, 1);
-                }
-                Color spark = def.sceneGlowColor;
-                spark.a = .75f;
-                Sparkles(visual, "Waystone sparks", x, y, w * .55f, h * .65f, 24, spark, 41);
+                // Same scale as the scene, bottoms lined up, sliding a little behind it (MapArt.backTravel).
+                float width = far.rect.width * perPixel, height = far.rect.height * perPixel;
+                back = Panorama(visual, "Distance", far, width, (Tuning.Ground - bottom) / height, false, look.backTravel, SkyOrder);
             }
             return true;
-        }
-
-        // `count` sparkles scattered over a width x height area centred on (x, y); MapVisual.Animate moves them.
-        static void Sparkles(MapVisual visual, string name, float x, float y, float width, float height, int count, Color tint, int seed)
-        {
-            var group = new GameObject(name).transform;
-            group.SetParent(visual.root.transform, false);
-            group.localPosition = new Vector3(x, y, 0);
-            var rng = new System.Random(seed);
-            for (int i = 0; i < count; i++)
-            {
-                var o = new GameObject("Sparkle");
-                o.transform.SetParent(group, false);
-                var start = new Vector3(((float)rng.NextDouble() - .5f) * width, ((float)rng.NextDouble() - .5f) * height, 0);
-                o.transform.localPosition = start;
-                o.transform.localScale = Vector3.one * (.04f + (float)rng.NextDouble() * .06f);
-                var sr = o.AddComponent<SpriteRenderer>();
-                sr.sprite = Sprites.Glow;
-                sr.sortingOrder = SparkleOrder;
-                sr.color = tint;
-                visual.sparkles.Add(new Sparkle { transform = o.transform, sr = sr, start = start, phase = (float)rng.NextDouble() * 6.28f, tint = tint });
-            }
         }
 
         // Painted backdrops dropped in by map name use the same framing as the first ones: the path 116 px above the
         // bottom of a 724 px tall picture, shown 42 units wide.
         public const float DefaultBackdropFloor = 116f / 724f, DefaultBackdropWidth = 42f;
 
-        // The map's painted backdrop as a panorama layer (WorldView moves it). A picture named after the map
-        // (Art/Backdrops/<key>.png) wins; otherwise the one the map asks for. False if there is none.
-        static bool BuildBackdrop(MapVisual visual, MapDef def)
+        // The map's painted backdrop as a panorama layer (WorldView moves it), plus the distant picture behind it if
+        // there is one (<backdrop>_back), sliding less. A picture named after the map (Art/Backdrops/<key>.png) wins;
+        // otherwise the one the map asks for. False if there is none.
+        static bool BuildBackdrop(MapVisual visual, MapDef def, MapArtDef look, out PictureFrame front, out PictureFrame back)
         {
-            string own = "Art/Backdrops/" + def.key;
+            front = back = new PictureFrame();
+            string own = "Art/Backdrops/" + def.key, path = own;
             var sprite = Sprites.Art(own);
             float floor = def.backdropFloor, width = def.backdropWidth;
             bool flip = def.backdropFlip;
             if (sprite != null && def.backdrop != own) { floor = DefaultBackdropFloor; width = DefaultBackdropWidth; flip = false; }
-            if (sprite == null && !string.IsNullOrEmpty(def.backdrop)) sprite = Sprites.Art(def.backdrop);
+            if (sprite == null && !string.IsNullOrEmpty(def.backdrop)) { path = def.backdrop; sprite = Sprites.Art(path); }
             if (sprite == null || width <= 0f) return false;
-            var t = new GameObject("Backdrop").transform;
+            var far = Sprites.Art(path + "_back");
+            if (far != null) back = Panorama(visual, "Distance", far, width, floor, flip, look.backTravel, SkyOrder);
+            front = Panorama(visual, "Backdrop", sprite, width, floor, flip, 1f, far != null ? FarOrder : SkyOrder);
+            return true;
+        }
+
+        // A picture as a panorama layer `width` units wide (see ParallaxLayer); its origin is its bottom-left corner
+        // (mirrored pictures are flipped about their middle). Returns where its pixels are.
+        static PictureFrame Panorama(MapVisual visual, string name, Sprite sprite, float width, float floor, bool flip, float travel, int order)
+        {
+            var t = new GameObject(name).transform;
             t.SetParent(visual.root.transform, false);
             var size = sprite.bounds.size;
             float scale = width / size.x;
-            var o = Sprites.Picture("Backdrop art", sprite, SkyOrder, t, 0, 0);
-            // Layer origin = the picture's bottom-left corner (mirrored pictures are flipped about their middle).
+            var o = Sprites.Picture(name + " art", sprite, order, t, 0, 0);
             o.transform.localScale = new Vector3(flip ? -scale : scale, scale, 1);
             o.transform.localPosition = new Vector3(flip ? sprite.bounds.max.x * scale : -sprite.bounds.min.x * scale, -sprite.bounds.min.y * scale, 0);
-            visual.layers.Add(new ParallaxLayer { transform = t, panorama = true, width = width, height = size.y * scale, floor = floor });
-            return true;
+            visual.layers.Add(new ParallaxLayer { transform = t, panorama = true, width = width, height = size.y * scale, floor = floor, travel = travel });
+            return new PictureFrame { parent = t, left = 0f, bottom = 0f, perPixel = width / sprite.rect.width,
+                                      width = sprite.rect.width, height = sprite.rect.height, flip = flip };
+        }
+
+        // MapArt effects: animated lights on the front picture, or on the distant one (sliding with it). On a scene the
+        // front ones draw over the painting but behind heroes; on a backdrop, behind the ground and platforms.
+        static void BuildEffects(MapArtDef look, PictureFrame front, PictureFrame back, bool scene)
+        {
+            if (look.effects.Length == 0) return;
+            foreach (var fx in look.effects)
+            {
+                var frame = fx.distant ? back : front;
+                if (!frame.Valid) continue;             // a distant effect needs the distant picture
+                int order = fx.distant ? SkyOrder + 5 : scene ? GlowOrder : FarOrder + 5;
+                var at = frame.At(fx.x, fx.y);
+                Effect(fx.name, frame.parent, at.x, at.y, fx.width * frame.perPixel, fx.height * frame.perPixel, fx.color, fx.mode, fx.strength, order);
+            }
+        }
+
+        static bool effectShaderWarned;
+
+        // One animated light (see the shader): a width x height quad centred on (x, y) under `parent` (local units).
+        // Water and mist are painted over the picture; glows and fire add light to it. Null if the shader is missing.
+        public static GameObject Effect(string name, Transform parent, float x, float y, float width, float height, Color color, int mode, float strength, int order)
+        {
+            var shader = Resources.Load<Shader>(EffectShader);
+            if (shader == null || !shader.isSupported)
+            {
+                if (!effectShaderWarned) Debug.LogWarning("Map effects are off: shader Resources/" + EffectShader + (shader == null ? " was not found" : " is not supported here"));
+                effectShaderWarned = true;
+                return null;
+            }
+            var material = new Material(shader);
+            material.SetColor("_Color", color);
+            material.SetFloat("_Mode", mode);
+            material.SetFloat("_Active", strength <= 0f ? 1f : strength);
+            bool over = mode == 1 || mode == 2;
+            material.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            material.SetFloat("_DstBlend", (float)(over ? UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha : UnityEngine.Rendering.BlendMode.One));
+            var o = Sprites.Picture(name, Sprites.FullQuad, order, parent, 0, 0);
+            o.transform.localPosition = new Vector3(x, y, 0);
+            o.transform.localScale = new Vector3(width, height, 1);
+            o.GetComponent<SpriteRenderer>().sharedMaterial = material;
+            return o;
+        }
+
+        // MapArt specks: screen-filling groups (motes, leaves, pollen, ash) under the map; spot groups (smoke, sparks)
+        // on the front picture, in its pixels. MapVisual.Animate moves them.
+        static void BuildAmbient(MapVisual visual, MapArtDef look, PictureFrame front)
+        {
+            int seed = 83;
+            foreach (var d in look.ambient)
+            {
+                Transform parent;
+                float unit;
+                if (d.aroundView) { parent = visual.root.transform; unit = 1f; }
+                else if (front.Valid) { parent = front.parent; unit = front.perPixel; }
+                else continue;
+                var holder = new GameObject(d.name).transform;
+                holder.SetParent(parent, false);
+                var group = new SpeckGroup { def = d, width = d.width * unit, height = d.height * unit, sway = d.sway * unit, speed = d.speed * unit };
+                group.fade = Mathf.Max(.01f, group.height * .12f);
+                if (!d.aroundView) { var c = front.At(d.x, d.y); group.centre = new Vector2(c.x, c.y); }
+                var rng = new System.Random(seed++);
+                for (int i = 0; i < d.count; i++)
+                {
+                    var o = new GameObject(d.leaf ? "Leaf" : "Speck");
+                    o.transform.SetParent(holder, false);
+                    o.transform.localScale = Vector3.one * Mathf.Lerp(d.sizeMin, d.sizeMax, (float)rng.NextDouble()) * unit;
+                    var sr = o.AddComponent<SpriteRenderer>();
+                    sr.sprite = d.leaf ? Sprites.Leaf : Sprites.Glow;
+                    sr.sortingOrder = d.order;
+                    sr.color = d.tint;
+                    group.specks.Add(new Speck { transform = o.transform, sr = sr, phase = (float)rng.NextDouble() * 6.28f,
+                                                 start = new Vector2((float)rng.NextDouble(), (float)rng.NextDouble()) });
+                }
+                visual.ambient.Add(group);
+            }
         }
 
         static Transform Layer(MapVisual visual, string name, float fx, float fy)
@@ -522,7 +639,7 @@ namespace AshenVale
         static void BuildLadder(Transform root, Ladder l, Theme theme, string art)
         {
             float h = l.top - l.bottom;
-            var sprite = Sprites.Art(art + "ladder");
+            var sprite = Sprites.Art(art + "ladder") ?? Sprites.Art("Art/Props/ladder");   // a theme's own, else the shared one
             if (sprite != null) { Sprites.Tiled("Ladder", sprite, sprite.bounds.size.x, h, LadderOrder, root, l.x, l.bottom); return; }
             for (int side = -1; side <= 1; side += 2)
                 Sprites.Block("Ladder rail", theme.ladderRail, .11f, h, LadderOrder, root, l.x + side * .27f, (l.bottom + l.top) * .5f);
@@ -532,15 +649,29 @@ namespace AshenVale
 
         // ---------------------------------------------------------------- portals and town props
 
+        public static readonly Color MapPortalColor = new Color(.45f, .68f, 1f), ReturnPortalColor = new Color(1f, .78f, .38f),
+                                     TownPortalColor = new Color(.7f, .55f, 1f);
+
+        // A portal standing at (x, y): the painted oval (blue for map portals, gold for a town's return portal) with the
+        // rippling shimmer over it. Placeholder blobs if the picture is missing.
         static void BuildPortal(Transform root, float x, float y, bool townReturn)
         {
-            var sprite = Sprites.Art(townReturn ? "Art/Props/return_portal" : "Art/Props/portal");
-            if (sprite != null) { Sprites.Picture(townReturn ? "Return portal" : "Portal", sprite, PortalOrder, root, x, y); return; }
-            Color glow = townReturn ? new Color(1f, .78f, .35f, .45f) : new Color(.35f, .65f, 1f, .45f);
-            Color core = townReturn ? new Color(1f, .93f, .70f, .85f) : new Color(.78f, .92f, 1f, .85f);
-            Sprites.Blob("Portal glow", glow, 1.1f, 2.1f, PortalOrder, root, x, y + 1f);
-            Sprites.Blob("Portal core", core, .5f, 1.5f, PortalOrder + 1, root, x, y + 1f);
-            Sprites.Blob("Portal base", glow, 1.4f, .3f, PortalOrder, root, x, y + .05f);
+            Portal(root, x, y, townReturn ? "Art/Props/return_portal" : "Art/Props/portal", townReturn ? ReturnPortalColor : MapPortalColor, PortalOrder);
+        }
+
+        // Also the T town portal (WorldView, violet).
+        public static void Portal(Transform parent, float x, float y, string picture, Color color, int order)
+        {
+            var sprite = Sprites.Art(picture);
+            if (sprite != null) Sprites.Picture("Portal", sprite, order, parent, x, y);
+            else
+            {
+                Color glow = color; glow.a = .45f;
+                Color core = Color.Lerp(color, Color.white, .7f); core.a = .85f;
+                Sprites.Blob("Portal glow", glow, 1.1f, 2.1f, order, parent, x, y + 1f);
+                Sprites.Blob("Portal core", core, .5f, 1.5f, order + 1, parent, x, y + 1f);
+            }
+            Effect("Portal shimmer", parent, x, y + 1.15f, .8f, 1.7f, color, 0, 1f, order + 2);
         }
 
         // placeholder: draw stand-in shapes when there is no art (false on painted scenes, which show their own).

@@ -40,6 +40,8 @@ the painting: shops, waystone and portals go where the picture shows them (`Asse
 | `emberhaven.png` | Emberhaven | 2172 x 724, street 116 px above the bottom | merchant at the left house, waystone at the arch, smithy at the forge |
 | `cinderford.png` | Cinderford | 4140 x 724, street 144 px above the bottom | two pictures joined: west gate (Kingsroad), potion shop and outfitter (both merchants), smithy, waystone, east gate (Ashen Marsh) |
 
+Both scenes are see-through fronts with a distant `_back.png` behind them (see "Two layers" below).
+
 Emberhaven is 38 cells wide, so its picture shows at about 57 px per unit; Cinderford keeps the same scale at
 72 cells. A version twice the size (same framing) would look sharp on a 1080p screen: drop it in with the same name.
 
@@ -49,12 +51,32 @@ cuts a seam where they look most alike and blends across it. Cinderford was made
     python Tools/stitch_pictures.py west.png east.png 200 Assets/Resources/Art/Scenes/cinderford.png 1
 
 (200 px overlap; the last number crops one row off the top so both sides are multiples of 4, which Unity needs to
-compress the picture). Put `$` on every shop that should open the merchant window.
+compress the picture). Put `$` on every shop that should open the merchant window. See-through fronts join the
+same way (the current Cinderford front: the pack's arrival and plaza fronts, 198 px overlap, 1 row cropped).
 
-Painted scenes come alive a little in code: golden motes drift along the street, and the waystone can shimmer
-(`MapLayout.WithSceneGlow`: centre and size of the arch's opening in picture pixels, plus a colour). The shimmer is
-`Assets/Resources/Shaders/WaystoneGlow.shader`, adapted from the owner's Cinderford plaza pack; Emberhaven's is
-gold, Cinderford's teal.
+### Two layers: a see-through front and the distance behind it
+
+Any painted scene or backdrop can come as two pictures: the front (the usual file name, transparent where the
+distance shows through) and `<same name>_back.png` (the sky, hills and far-off town, opaque, with whatever the
+front hides painted in). The distance slides more slowly than the front as you walk, which gives depth. Both
+use the same size and framing (2172 x 724 for most; Cinderford's front is two fronts joined, 4140 x 724, with one
+distance behind the whole street). How far the distance slides is `backTravel` in `Assets/Scripts/Data/MapArt.cs`.
+
+Every painted map has both layers now (from the owner's "All Maps" pack). Its pictures were redrawn as layers,
+so they differ a little from the first versions; ground and platform tiles are still the ones cut before, which
+match closely and cover the painted path anyway.
+
+### Living extras: `Assets/Scripts/Data/MapArt.cs`
+
+Per map, in picture pixels (x from the left, y from the top) so they line up with the painting:
+- **Effects**, animated lights drawn with `Assets/Resources/Shaders/MapEffect.shader`: portal ripples (waystones,
+  the Mossgate arch), flowing water (waterfalls, the Mosswood cascade, the Kingsroad river), drifting mist and fire
+  flicker (forges, the Emberhaven waystone flame). An effect marked distant rides on the `_back` picture.
+  Glows and fire add light (they show over darker paint); water and mist are painted over the picture in bands
+  darker and paler than their tint, so they read over bright paint too. Each has a `strength` (1 = normal).
+- **Specks**: golden motes everywhere, falling leaves in Emberhaven / Emberfields / Amberleaf Trail, pollen on
+  Kingsroad, ash in Ashen Marsh, chimney smoke and forge or waystone sparks at their spots.
+To move one, find its spot on the picture in an image editor and change its numbers.
 
 ### Painted backdrops: `Art/Backdrops/<map>.png`
 
@@ -70,8 +92,10 @@ It replaces the theme's sky / far / mid; ground and platforms are still drawn in
 | `mosswood.png` | Mosswood | 2172 x 724, path 130 px above the bottom (set in MapDefs) | 42 units wide |
 | `kingsroad.png` | Kingsroad | 2172 x 724, path 140 px above the bottom (set in MapDefs) | 42 units wide |
 
+Each also has its distant `_back.png` (see "Two layers" above).
+
 **Adding one is just a file:** a picture named after the map (`amberleaf_trail.png`, `mossgate_hollow.png`,
-`mosswood.png`, ... the map's name in lower case with `_` for spaces) is picked up automatically, assuming the
+`mosswood.png`, `shale_cliffs.png`, ... the map's name in lower case with `_` for spaces) is picked up automatically, assuming the
 same framing as the Emberfields picture (2172 x 724, path 116 px above the bottom) and shown 42 units wide.
 
 The ground and platforms can be cut from the same picture so they match it:
@@ -151,11 +175,17 @@ Bottom centre of the image = where it stands.
 
 | File | What it is | Suggested size |
 |---|---|---|
-| `portal.png` | Map portal | 110 x 210 |
-| `return_portal.png` | Town return portal | 110 x 210 |
+| `portal.png` | Map portal: the owner's painted oval (blue) | 108 x 220 |
+| `return_portal.png` | The same, recoloured gold, for a town's return portal | 108 x 220 |
+| `town_portal.png` | The same, recoloured violet, for your own T portal | 108 x 220 |
+| `ladder.png` | One section of the owner's painted ladder (two rungs), tiles upward; a theme's own `ladder.png` wins | 72 x 84 |
 | `waystone.png` | Town waystone | 90 x 190 |
 | `merchant.png` | Merchant and stall | 300 x 230 |
 | `smithy.png` | Smith, anvil and forge | 320 x 230 |
+
+The portal and ladder files are cut from the owner's painted pictures by `Tools/cut_props.py` (it scales the portal
+to 2.2 units, recolours the glow for the other two, and cuts a seamless two-rung ladder section). Portals also get
+the rippling shimmer from the effect shader.
 
 On a painted scene these are optional: the painting already shows the shops, so nothing is drawn there
 unless one of these files exists (a merchant or smith character standing in front of the painting, for example).

@@ -33,9 +33,10 @@ namespace AshenVale
                 Place(s, Maps.Emberhaven,     .06f, .62f);
                 Place(s, Maps.Emberfields,    .18f, .48f);
                 Place(s, Maps.AmberleafTrail, .29f, .62f);
-                Place(s, Maps.MossgateHollow, .40f, .47f);
+                Place(s, Maps.MossgateHollow, .40f, .44f);
                 Place(s, Maps.Mosswood,       .52f, .34f);
                 Place(s, Maps.HollowDen,      .45f, .10f, true);
+                Place(s, Maps.ShaleCliffs,    .33f, .16f);
                 Place(s, Maps.Kingsroad,      .65f, .47f);
                 Place(s, Maps.Cinderford,     .79f, .58f);
                 Place(s, Maps.AshenMarsh,     .93f, .74f);

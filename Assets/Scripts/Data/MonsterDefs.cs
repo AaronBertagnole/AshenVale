@@ -42,7 +42,7 @@ namespace AshenVale
         public const int Emberling = 0, EliteEmberling = 1, MossCrawler = 2, VioletWraith = 3,
                          AshSprout = 4, OldChest = 5, BrambleBoar = 6, MossyChest = 7, DenShade = 8,
                          MarshToad = 9, BogLurker = 10, AshWisp = 11, SunkenChest = 12,
-                         LeafBeetle = 13, EmberFox = 14, Mossling = 15;
+                         LeafBeetle = 13, EmberFox = 14, Mossling = 15, CragGoat = 16, RockMite = 17;
 
         public static readonly MonsterDef[] All =
         {
@@ -103,6 +103,13 @@ namespace AshenVale
             new MonsterDef { key = "mossling", name = "Mossling", level = 4, color = new Color(.42f, .66f, .36f),
                 width = .8f, height = .75f, hp = 100, speed = 1.2f, damage = 10, xp = 15, goldMin = 10, goldRange = 8,
                 part = Parts.MossTuft, partChance = .3f },
+            new MonsterDef { key = "crag_goat", name = "Crag Goat", level = 9, color = new Color(.72f, .66f, .58f),
+                width = 1.3f, height = 1.1f, hp = 230, speed = 2.9f, damage = 21, xp = 30, goldMin = 20, goldRange = 13,
+                aggressive = true,
+                part = Parts.BoarTusk },           // its horn works as tusk does
+            new MonsterDef { key = "rock_mite", name = "Rock Mite", level = 10, color = new Color(.45f, .5f, .58f),
+                width = .9f, height = .7f, hp = 300, speed = .9f, damage = 25, xp = 34, goldMin = 24, goldRange = 14,
+                part = Parts.ShadeEssence, partChance = .25f },   // a second source of Shade Essence outside the den
         };
     }
 }

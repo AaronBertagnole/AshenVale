@@ -8,6 +8,8 @@ overlap: how many pixels of the two pictures lie on top of each other (100-250 w
 crop_top: rows to cut off the top, e.g. 1 to turn a 725 px tall picture into 724 (Unity compresses
 pictures whose sides are multiples of 4). Pick the overlap so the joined width is a multiple of 4 too.
 Needs opencv-python and numpy.
+Pictures with transparency (cut-out front layers) are joined the same way, blending colour and transparency
+together, so the see-through parts stay see-through.
 """
 import sys
 import numpy as np
@@ -56,17 +58,23 @@ def pyramid_blend(a, b, mask, levels):
 def main():
     west_path, east_path, ov, out_path = sys.argv[1], sys.argv[2], int(sys.argv[3]), sys.argv[4]
     crop_top = int(sys.argv[5]) if len(sys.argv) > 5 else 0
-    west = cv2.imread(west_path, cv2.IMREAD_COLOR)[crop_top:].astype(np.float32)
-    east = cv2.imread(east_path, cv2.IMREAD_COLOR)[crop_top:].astype(np.float32)
+    west = cv2.imread(west_path, cv2.IMREAD_UNCHANGED)[crop_top:].astype(np.float32)
+    east = cv2.imread(east_path, cv2.IMREAD_UNCHANGED)[crop_top:].astype(np.float32)
+    alpha = west.shape[2] == 4 and east.shape[2] == 4
+    if alpha:
+        # Work on premultiplied colour so transparent pixels carry no colour into the blend.
+        for img in (west, east): img[..., :3] *= img[..., 3:4] / 255.0
+    else:
+        west, east = west[..., :3], east[..., :3]
     h, W = west.shape[:2]
     E = east.shape[1]
     total = W + E - ov
 
-    # Seam through the overlap: colour difference plus difference of edges, slightly smoothed.
+    # Seam through the overlap: colour (and transparency) difference plus difference of edges, slightly smoothed.
     A, B = west[:, W - ov:], east[:, :ov]
     diff = np.abs(A - B).sum(2)
-    ga = cv2.Laplacian(cv2.cvtColor(A, cv2.COLOR_BGR2GRAY), cv2.CV_32F)
-    gb = cv2.Laplacian(cv2.cvtColor(B, cv2.COLOR_BGR2GRAY), cv2.CV_32F)
+    ga = cv2.Laplacian(cv2.cvtColor(np.ascontiguousarray(A[..., :3]), cv2.COLOR_BGR2GRAY), cv2.CV_32F)
+    gb = cv2.Laplacian(cv2.cvtColor(np.ascontiguousarray(B[..., :3]), cv2.COLOR_BGR2GRAY), cv2.CV_32F)
     cost = cv2.GaussianBlur(diff + 2 * np.abs(ga - gb), (0, 0), 2)
     # keep the seam off the very edges of the overlap so the blend has room on both sides
     margin = min(24, ov // 6)
@@ -89,10 +97,14 @@ def main():
     mask = (xs < seam[:, None]).astype(np.float32)
     blended = pyramid_blend(wa, wb, mask, 6)
 
-    out = np.zeros((h, total, 3), np.float32)
+    out = np.zeros((h, total, west.shape[2]), np.float32)
     out[:, :W] = west
     out[:, W - ov:] = np.where((np.arange(W - ov, total)[None, :, None] < seam[:, None, None]), out[:, W - ov:], east)
     out[:, x0:x1] = blended
+    if alpha:
+        a = np.clip(out[..., 3:4], 0, 255)
+        out[..., :3] = np.where(a > 0, out[..., :3] * 255.0 / np.maximum(a, 1e-3), 0)
+        out[..., 3:4] = a
     cv2.imwrite(out_path, np.clip(out + .5, 0, 255).astype(np.uint8))
     print('size', total, 'x', h, '; seam columns', seam.min(), '-', seam.max())
 
