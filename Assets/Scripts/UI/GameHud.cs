@@ -16,8 +16,11 @@ namespace AshenVale
 
         // Esc menu choices, handled by the game (they save first).
         public Action onCharacterSelect, onQuit;
+        public IGameCommands commands;      // local World, or the host when playing as a client
+        public string status = "";          // top-right line: join code, players, connection state
+        public bool online;                 // changes the Esc menu wording
 
-        GUIStyle titleText, barText, detailText, detailRight, bodyStyle, smallStyle, centeredStyle, menuButton;
+        GUIStyle titleText, barText, detailText, detailRight, bodyStyle, smallStyle, centeredStyle, menuButton, statusStyle, nameplate;
 
         public GameHud(World world) { this.world = world; }
 
@@ -55,6 +58,10 @@ namespace AshenVale
             smallStyle = new GUIStyle(GUI.skin.label) { fontSize = 14 };
             smallStyle.normal.textColor = new Color(.82f, .85f, .9f);
             centeredStyle = new GUIStyle(bodyStyle) { alignment = TextAnchor.MiddleCenter, fontSize = 21 };
+            statusStyle = new GUIStyle(GUI.skin.label) { fontSize = 15, fontStyle = FontStyle.Bold, alignment = TextAnchor.UpperRight };
+            statusStyle.normal.textColor = new Color(.62f, .9f, 1f);
+            nameplate = new GUIStyle(GUI.skin.label) { fontSize = 13, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
+            nameplate.normal.textColor = new Color(1f, .93f, .75f);
         }
 
         public void Draw(PlayerState me)
@@ -62,7 +69,9 @@ namespace AshenVale
             if (me == null) return;
             InitStyles();
             bool town = world.maps[me.map].def.kind == MapKind.Town;
+            DrawNameplates(me);
             DrawStatus(me);
+            if (!string.IsNullOrEmpty(status)) GUI.Label(new Rect(Screen.width - 620, 12, 608, 24), status, statusStyle);
             GUI.Box(new Rect(10, Screen.height - 48, Mathf.Min(Screen.width - 20, 920), 38), GUIContent.none);
             GUI.Label(new Rect(22, Screen.height - 42, 1250, 30), town
                 ? "A/D Move | W/Up at blue portal: Return | E at merchant: Shop | I Inventory"
@@ -77,13 +86,27 @@ namespace AshenVale
             if (menuOpen) DrawMenu();
         }
 
+        // Names over the other heroes on your map (online play).
+        void DrawNameplates(PlayerState me)
+        {
+            var cam = Camera.main;
+            if (cam == null || world.players.Count < 2) return;
+            foreach (var p in world.players)
+            {
+                if (p == me || p.map != me.map) continue;
+                Vector3 s = cam.WorldToScreenPoint(new Vector3(p.x, p.y + 2.3f, 0));
+                if (s.z < 0) continue;
+                GUI.Label(new Rect(s.x - 90, Screen.height - s.y - 11, 180, 22), (p.ch.name ?? "") + "  Lv " + p.ch.level, nameplate);
+            }
+        }
+
         void DrawMenu()
         {
             Rect r = new Rect((Screen.width - 320) / 2f, (Screen.height - 250) / 2f, 320, 250);
             GUI.Box(r, "MENU   [ESC] Close");
             GUI.Label(new Rect(r.x + 20, r.y + 30, 280, 24), "Your hero saves automatically.", smallStyle);
             if (GUI.Button(new Rect(r.x + 30, r.y + 66, 260, 44), "RESUME", menuButton)) menuOpen = false;
-            if (GUI.Button(new Rect(r.x + 30, r.y + 120, 260, 44), "SAVE & YOUR HEROES", menuButton)) { menuOpen = false; if (onCharacterSelect != null) onCharacterSelect(); }
+            if (GUI.Button(new Rect(r.x + 30, r.y + 120, 260, 44), online ? "SAVE & LEAVE GAME" : "SAVE & YOUR HEROES", menuButton)) { menuOpen = false; if (onCharacterSelect != null) onCharacterSelect(); }
             if (GUI.Button(new Rect(r.x + 30, r.y + 174, 260, 44), "SAVE & QUIT", menuButton)) { menuOpen = false; if (onQuit != null) onQuit(); }
         }
 
@@ -145,7 +168,7 @@ namespace AshenVale
                 GUI.color = Loot.RarityColor(item.rarity);
                 bool clicked = GUI.Button(cell, item.name + "\n+" + item.attack + " ATK / +" + item.defense + " DEF\n+" + item.health + " HP");
                 GUI.color = old;
-                if (clicked) { world.Equip(me.id, i); break; }   // the list changed: redraw next frame
+                if (clicked) { commands.Equip(i); break; }   // the list changed: redraw next frame
             }
             GUI.Label(new Rect(r.x + 18, r.y + 430, 570, 25), "Equipment drops use 75% Common / 20% Rare / 5% Epic.", smallStyle);
         }
@@ -156,15 +179,15 @@ namespace AshenVale
             Rect r = PanelRect();
             GUI.Box(r, "EMBERHAVEN GENERAL STORE — [B] Close");
             GUI.Label(new Rect(r.x + 20, r.y + 32, 550, 28), "Gold: " + ch.gold + "   |   Sell unwanted gear for half its value", bodyStyle);
-            if (GUI.Button(new Rect(r.x + 20, r.y + 70, 270, 42), "Buy HP Potion — " + Tuning.HpPotionPrice + " gold")) world.BuyPotion(me.id, true);
-            if (GUI.Button(new Rect(r.x + 320, r.y + 70, 270, 42), "Buy MP Potion — " + Tuning.MpPotionPrice + " gold")) world.BuyPotion(me.id, false);
+            if (GUI.Button(new Rect(r.x + 20, r.y + 70, 270, 42), "Buy HP Potion — " + Tuning.HpPotionPrice + " gold")) commands.BuyPotion(true);
+            if (GUI.Button(new Rect(r.x + 320, r.y + 70, 270, 42), "Buy MP Potion — " + Tuning.MpPotionPrice + " gold")) commands.BuyPotion(false);
             GUI.Label(new Rect(r.x + 20, r.y + 123, 560, 25), "Merchant equipment (reliable Common gear)", smallStyle);
             for (int i = 0; i < 4; i++)
             {
                 Slot slot = (Slot)i;
                 int cost = Loot.ShopGearCost(slot, ch.level);
                 if (GUI.Button(new Rect(r.x + 20 + (i % 2) * 300, r.y + 154 + (i / 2) * 49, 270, 40), "Buy Common " + Loot.SlotName(slot, me.Hero) + " — " + cost + "g"))
-                    world.BuyGear(me.id, slot);
+                    commands.BuyGear(slot);
             }
             GUI.Label(new Rect(r.x + 20, r.y + 269, 550, 25), "Sell inventory items", smallStyle);
             for (int i = 0; i < ch.inventory.Count && i < 10; i++)
@@ -172,7 +195,7 @@ namespace AshenVale
                 Item item = ch.inventory[i];
                 int col = i % 2, row = i / 2;
                 if (GUI.Button(new Rect(r.x + 20 + col * 300, r.y + 297 + row * 31, 270, 29), "Sell " + item.name + " +" + Loot.SellPrice(item) + "g"))
-                { world.Sell(me.id, i); break; }
+                { commands.Sell(i); break; }
             }
         }
     }

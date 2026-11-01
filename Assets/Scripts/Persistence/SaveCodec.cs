@@ -8,7 +8,9 @@ namespace AshenVale
     {
         public const int Version = 1;
 
-        public static CharacterData ToData(PlayerState p)
+        // forSave: true for the save file (a fallen hero is stored as woken in town); false for sending a
+        // hero's live data to its player online.
+        public static CharacterData ToData(PlayerState p, bool forSave = true)
         {
             var ch = p.ch;
             var d = new CharacterData
@@ -17,7 +19,7 @@ namespace AshenVale
                 hpPotions = ch.hpPotions, mpPotions = ch.mpPotions, playSeconds = ch.playSeconds,
                 map = p.map, hp = p.hp, mp = p.mp, savedAt = DateTime.UtcNow.ToString("o"),
             };
-            if (p.dead)
+            if (p.dead && forSave)
             {
                 // Quitting while fallen counts as waking in town: same XP cost as pressing R.
                 d.xp = Mathf.Max(0, ch.xp - Mathf.RoundToInt(Tuning.XpNeeded(ch.level) * Tuning.DeathXpLoss));

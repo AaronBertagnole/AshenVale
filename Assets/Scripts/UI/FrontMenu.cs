@@ -4,11 +4,11 @@ using UnityEngine;
 
 namespace AshenVale
 {
-    // Title, your saved heroes, new-hero creation and the controls screen
+    // Title, your saved heroes, how to play (solo / host / join), new-hero creation and the controls screen
     // (IMGUI, drawn in a fixed 900 x 610 reference space).
     public sealed class FrontMenu
     {
-        public enum Screen { Title, Characters, Select, Tutorial }
+        public enum Screen { Title, Characters, Select, Tutorial, Mode }
 
         public Screen screen = Screen.Title;
         public int pendingHero;
@@ -17,21 +17,40 @@ namespace AshenVale
         int selected;
         string pendingDelete;           // id of the hero whose Delete was clicked once (click again to confirm)
         Vector2 scroll;
-        bool nameFocused;
+        bool nameFocused, textFocused;
+
+        // How-to-play screen
+        CharacterData modeHero;
+        public string joinCode = "";
+        public string joinAddress = "127.0.0.1";
+        public string status = "";      // connection progress or the last error, shown on the hero screens
+        public bool busy;               // connecting: buttons are disabled
 
         readonly MusicPlayer music;
         readonly Action<int, string> createHero;
-        readonly Action<CharacterData> playSaved, deleteSaved;
-        GUIStyle heading, subtitle, body, small, button, card, selectedCard, rowName, rowDetail, nameField;
+        readonly Action<CharacterData> playSolo, deleteSaved;
+        readonly Action<CharacterData, bool> hostGame;            // hero, online
+        readonly Action<CharacterData, bool, string> joinGame;    // hero, online, join code or IP address
+        GUIStyle heading, subtitle, body, small, button, card, selectedCard, rowName, rowDetail, nameField, statusText, sectionText;
 
         static readonly string[] NameIdeas = { "Rowan", "Ember", "Wren", "Kestrel", "Bram", "Sable", "Lark", "Fen", "Orin", "Thistle", "Corvin", "Isolde" };
 
-        public FrontMenu(MusicPlayer music, Action<int, string> createHero, Action<CharacterData> playSaved, Action<CharacterData> deleteSaved)
+        public FrontMenu(MusicPlayer music, Action<int, string> createHero, Action<CharacterData> playSolo,
+                         Action<CharacterData, bool> hostGame, Action<CharacterData, bool, string> joinGame, Action<CharacterData> deleteSaved)
         {
             this.music = music;
             this.createHero = createHero;
-            this.playSaved = playSaved;
+            this.playSolo = playSolo;
+            this.hostGame = hostGame;
+            this.joinGame = joinGame;
             this.deleteSaved = deleteSaved;
+        }
+
+        void OpenMode(CharacterData hero)
+        {
+            modeHero = hero;
+            status = "";
+            screen = Screen.Mode;
         }
 
         public void SetSaved(List<CharacterData> list)
@@ -69,7 +88,7 @@ namespace AshenVale
                     int last = Mathf.Max(0, saved.Count - 1);
                     if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W)) { selected = Mathf.Clamp(selected - 1, 0, last); pendingDelete = null; }
                     if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S)) { selected = Mathf.Clamp(selected + 1, 0, last); pendingDelete = null; }
-                    if (Input.GetKeyDown(KeyCode.Return) && selected >= 0 && selected < saved.Count) playSaved(saved[selected]);
+                    if (Input.GetKeyDown(KeyCode.Return) && selected >= 0 && selected < saved.Count) OpenMode(saved[selected]);
                     else if (Input.GetKeyDown(KeyCode.N)) PrepareNewHero();
                     else if (Input.GetKeyDown(KeyCode.Escape)) screen = Screen.Title;
                     break;
@@ -82,6 +101,9 @@ namespace AshenVale
                 case Screen.Tutorial:
                     if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space)) Create();
                     else if (Input.GetKeyDown(KeyCode.Escape)) screen = Screen.Select;
+                    break;
+                case Screen.Mode:
+                    if (!busy && !textFocused && Input.GetKeyDown(KeyCode.Escape)) screen = Screen.Characters;
                     break;
             }
         }
@@ -104,6 +126,10 @@ namespace AshenVale
             rowName.normal.textColor = new Color(1f, .9f, .72f);
             rowDetail = new GUIStyle(GUI.skin.label) { fontSize = 14, alignment = TextAnchor.MiddleLeft };
             rowDetail.normal.textColor = new Color(.82f, .86f, .92f);
+            statusText = new GUIStyle(GUI.skin.label) { fontSize = 15, alignment = TextAnchor.MiddleCenter, wordWrap = true };
+            statusText.normal.textColor = new Color(1f, .8f, .55f);
+            sectionText = new GUIStyle(GUI.skin.label) { fontSize = 14, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleLeft };
+            sectionText.normal.textColor = new Color(.62f, .9f, 1f);
             nameField = new GUIStyle(GUI.skin.textField) { fontSize = 18, alignment = TextAnchor.MiddleCenter };
         }
 
@@ -119,12 +145,14 @@ namespace AshenVale
             GUI.Box(panel, GUIContent.none);
             float left = panel.x, top = panel.y;
             nameFocused = false;
+            textFocused = false;
 
             switch (screen)
             {
                 case Screen.Title: DrawTitle(left, top); break;
                 case Screen.Characters: DrawCharacters(left, top); break;
                 case Screen.Select: DrawSelect(left, top); break;
+                case Screen.Mode: DrawMode(left, top); break;
                 default: DrawTutorial(left, top); break;
             }
             GUI.matrix = oldMatrix;
@@ -169,7 +197,7 @@ namespace AshenVale
                 GUI.Label(new Rect(row.x + 70, row.y + 30, 400, 24),
                           hero.name + "  ·  Level " + d.level + "  ·  " + where + "  ·  " + SaveCodec.FormatPlayTime(d.playSeconds), rowDetail);
 
-                if (GUI.Button(new Rect(row.x + 480, row.y + 12, 100, 36), "PLAY", button)) { playSaved(d); break; }
+                if (GUI.Button(new Rect(row.x + 480, row.y + 12, 100, 36), "PLAY", button)) { OpenMode(d); break; }
                 bool confirming = pendingDelete == d.id;
                 if (GUI.Button(new Rect(row.x + 590, row.y + 12, 100, 36), confirming ? "SURE?" : "DELETE"))
                 {
@@ -183,9 +211,42 @@ namespace AshenVale
             }
             GUI.EndScrollView();
             if (saved.Count == 0) GUI.Label(new Rect(left + 60, top + 230, 720, 40), "No heroes yet. Create your first one.", body);
+            if (!string.IsNullOrEmpty(status)) GUI.Label(new Rect(left + 40, top + 410, 760, 20), status, statusText);
 
             if (GUI.Button(new Rect(left + 290, top + 432, 260, 47), "NEW HERO  [N]", button)) PrepareNewHero();
             if (GUI.Button(new Rect(left + 342, top + 492, 156, 32), "BACK  [ESC]")) screen = Screen.Title;
+        }
+
+        void DrawMode(float left, float top)
+        {
+            if (modeHero == null) { screen = Screen.Characters; return; }
+            var hero = Heroes.All[Mathf.Clamp(modeHero.hero, 0, Heroes.All.Length - 1)];
+            GUI.Label(new Rect(left + 40, top + 18, 760, 50), "HOW DO YOU WANT TO PLAY?", heading);
+            GUI.Label(new Rect(left + 40, top + 70, 760, 26), modeHero.name + "  ·  " + hero.name + "  ·  Level " + modeHero.level, subtitle);
+
+            bool wasEnabled = GUI.enabled;
+            GUI.enabled = !busy;
+            float x = left + 150, w = 540;
+            if (GUI.Button(new Rect(x, top + 108, w, 42), "PLAY SOLO", button)) playSolo(modeHero);
+
+            GUI.Label(new Rect(x, top + 160, w, 22), "ONLINE  —  friends anywhere join with a code (needs Unity Cloud set up, see README)", sectionText);
+            if (GUI.Button(new Rect(x, top + 186, w, 40), "HOST ONLINE GAME", button)) hostGame(modeHero, true);
+            GUI.SetNextControlName("JoinCode");
+            joinCode = GUI.TextField(new Rect(x, top + 234, 200, 36), joinCode ?? "", 12, nameField);
+            if (GUI.Button(new Rect(x + 210, top + 234, w - 210, 36), "JOIN WITH CODE", button) && (joinCode ?? "").Trim().Length > 0)
+                joinGame(modeHero, true, joinCode);
+
+            GUI.Label(new Rect(x, top + 284, w, 22), "THIS PC / LOCAL NETWORK  —  for testing with Multiplayer Play Mode, or LAN", sectionText);
+            if (GUI.Button(new Rect(x, top + 310, w, 40), "HOST ON THIS PC", button)) hostGame(modeHero, false);
+            GUI.SetNextControlName("JoinAddress");
+            joinAddress = GUI.TextField(new Rect(x, top + 358, 200, 36), joinAddress ?? "", 40, nameField);
+            if (GUI.Button(new Rect(x + 210, top + 358, w - 210, 36), "JOIN BY IP ADDRESS", button)) joinGame(modeHero, false, joinAddress);
+            string focused = GUI.GetNameOfFocusedControl();
+            textFocused = focused == "JoinCode" || focused == "JoinAddress";
+
+            if (!string.IsNullOrEmpty(status)) GUI.Label(new Rect(left + 40, top + 404, 760, 44), status, statusText);
+            if (GUI.Button(new Rect(left + 342, top + 470, 156, 32), "BACK  [ESC]")) screen = Screen.Characters;
+            GUI.enabled = wasEnabled;
         }
 
         void DrawSelect(float left, float top)
