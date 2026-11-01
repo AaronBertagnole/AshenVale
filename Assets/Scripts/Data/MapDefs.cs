@@ -253,9 +253,10 @@ namespace AshenVale
                             MapLayout.S('c', Monsters.EliteEmberling), MapLayout.S('k', Monsters.OldChest) },
                     new[] { MapLayout.L('A', Emberhaven, 'A'), MapLayout.L('B', AmberleafTrail, 'B') }),
                 "Art/Backdrops/emberfields", 116f / 724f, 42f),   // path 116 px above the bottom of the 724 px picture
-            MapLayout.Build(Mosswood, "Mosswood", "forest", MapKind.Field, MosswoodLayout,
-                new[] { MapLayout.S('a', Monsters.MossCrawler), MapLayout.S('b', Monsters.BrambleBoar), MapLayout.S('k', Monsters.MossyChest) },
-                new[] { MapLayout.L('B', MossgateHollow, 'B'), MapLayout.L('C', Kingsroad, 'C'), MapLayout.L('S', HollowDen, 'S') }),
+            MapLayout.WithBackdrop(MapLayout.Build(Mosswood, "Mosswood", "forest", MapKind.Field, MosswoodLayout,
+                    new[] { MapLayout.S('a', Monsters.MossCrawler), MapLayout.S('b', Monsters.BrambleBoar), MapLayout.S('k', Monsters.MossyChest) },
+                    new[] { MapLayout.L('B', MossgateHollow, 'B'), MapLayout.L('C', Kingsroad, 'C'), MapLayout.L('S', HollowDen, 'S') }),
+                "Art/Backdrops/mosswood", 130f / 724f, 42f),       // its path is a little higher: 130 px above the bottom
             MapLayout.WithScene(MapLayout.Build(Emberhaven, "Emberhaven", "town", MapKind.Town, EmberhavenLayout,
                     new MapLayout.Spawn[0],
                     new[] { MapLayout.L('A', Emberfields, 'A') }),
@@ -263,9 +264,10 @@ namespace AshenVale
             MapLayout.Build(HollowDen, "Hollow Den", "cave", MapKind.Field, HollowDenLayout,
                 new[] { MapLayout.S('d', Monsters.DenShade), MapLayout.S('k', Monsters.MossyChest) },
                 new[] { MapLayout.L('S', Mosswood, 'S') }),
-            MapLayout.Build(Kingsroad, "Kingsroad", "road", MapKind.Field, KingsroadLayout,
-                new[] { MapLayout.S('b', Monsters.BrambleBoar), MapLayout.S('v', Monsters.VioletWraith) },
-                new[] { MapLayout.L('C', Mosswood, 'C'), MapLayout.L('D', Cinderford, 'D') }),
+            MapLayout.WithBackdrop(MapLayout.Build(Kingsroad, "Kingsroad", "road", MapKind.Field, KingsroadLayout,
+                    new[] { MapLayout.S('b', Monsters.BrambleBoar), MapLayout.S('v', Monsters.VioletWraith) },
+                    new[] { MapLayout.L('C', Mosswood, 'C'), MapLayout.L('D', Cinderford, 'D') }),
+                "Art/Backdrops/kingsroad", 140f / 724f, 42f),      // its path is higher: 140 px above the bottom
             MapLayout.Build(Cinderford, "Cinderford", "rivertown", MapKind.Town, CinderfordLayout,
                 new MapLayout.Spawn[0],
                 new[] { MapLayout.L('D', Kingsroad, 'D'), MapLayout.L('E', AshenMarsh, 'E') }),

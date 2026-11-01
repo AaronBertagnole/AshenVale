@@ -53,6 +53,8 @@ It replaces the theme's sky / far / mid; ground and platforms are still drawn in
 |---|---|---|---|
 | `emberfields.png` | Emberfields (and Amberleaf Trail, mirrored, until it has its own) | 2172 x 724, path 116 px above the bottom | 42 units wide |
 | `mossgate_hollow.png` | Mossgate Hollow | 2172 x 724, path 116 px above the bottom | 42 units wide |
+| `mosswood.png` | Mosswood | 2172 x 724, path 130 px above the bottom (set in MapDefs) | 42 units wide |
+| `kingsroad.png` | Kingsroad | 2172 x 724, path 140 px above the bottom (set in MapDefs) | 42 units wide |
 
 **Adding one is just a file:** a picture named after the map (`amberleaf_trail.png`, `mossgate_hollow.png`,
 `mosswood.png`, ... the map's name in lower case with `_` for spaces) is picked up automatically, assuming the
@@ -70,11 +72,15 @@ The ground and platforms can be cut from the same picture so they match it:
 Themes: `town` (Emberhaven), `autumn` (Emberfields, Amberleaf Trail), `mossgate` (Mossgate Hollow), `forest` (Mosswood),
 `cave` (Hollow Den), `road` (Kingsroad), `rivertown` (Cinderford), `marsh` (Ashen Marsh); `meadow` is spare.
 
-`mossgate` ground and platforms are cut from the Mossgate Hollow picture; `forest` (Mosswood) is the `autumn` set
-with its leaves recoloured to moss:
+Each map with a painted picture has its ground and platforms cut from that picture (row = walking line):
 
+    python Tools/make_ground_tiles.py Assets/Resources/Art/Backdrops/emberfields.png 608 42 autumn
     python Tools/make_ground_tiles.py Assets/Resources/Art/Backdrops/mossgate_hollow.png 608 42 mossgate
-    python Tools/recolor_theme.py autumn forest 70 1.0
+    python Tools/make_ground_tiles.py Assets/Resources/Art/Backdrops/mosswood.png 594 42 forest
+    python Tools/make_ground_tiles.py Assets/Resources/Art/Backdrops/kingsroad.png 584 42 road
+
+`Tools/recolor_theme.py` can make a theme from another by recolouring its leaves, for maps without a picture yet.
+If a picture's path is not 116 px above the bottom, give the map its own `MapLayout.WithBackdrop(...)` line in MapDefs.
 
 | File | What it is | Suggested size | Lines up by |
 |---|---|---|---|
