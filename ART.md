@@ -52,7 +52,7 @@ It replaces the theme's sky / far / mid; ground and platforms are still drawn in
 | File | Map | Picture | Shown |
 |---|---|---|---|
 | `emberfields.png` | Emberfields (and Amberleaf Trail, mirrored, until it has its own) | 2172 x 724, path 116 px above the bottom | 42 units wide |
-| `mossgate_hollow.jpg` | Mossgate Hollow (painted by `Tools/paint_mossgate_backdrop.py`) | 4344 x 1448 (same framing at 2x) | 42 units wide |
+| `mossgate_hollow.png` | Mossgate Hollow | 2172 x 724, path 116 px above the bottom | 42 units wide |
 
 **Adding one is just a file:** a picture named after the map (`amberleaf_trail.png`, `mossgate_hollow.png`,
 `mosswood.png`, ... the map's name in lower case with `_` for spaces) is picked up automatically, assuming the
@@ -70,9 +70,10 @@ The ground and platforms can be cut from the same picture so they match it:
 Themes: `town` (Emberhaven), `autumn` (Emberfields, Amberleaf Trail), `mossgate` (Mossgate Hollow), `forest` (Mosswood),
 `cave` (Hollow Den), `road` (Kingsroad), `rivertown` (Cinderford), `marsh` (Ashen Marsh); `meadow` is spare.
 
-`mossgate` and `forest` ground and platforms are the `autumn` ones with the leaves recoloured to moss:
+`mossgate` ground and platforms are cut from the Mossgate Hollow picture; `forest` (Mosswood) is the `autumn` set
+with its leaves recoloured to moss:
 
-    python Tools/recolor_theme.py autumn mossgate 62 0.85
+    python Tools/make_ground_tiles.py Assets/Resources/Art/Backdrops/mossgate_hollow.png 608 42 mossgate
     python Tools/recolor_theme.py autumn forest 70 1.0
 
 | File | What it is | Suggested size | Lines up by |
