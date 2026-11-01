@@ -24,6 +24,8 @@ Walk into a town to find it; its waystone then lets you travel between found tow
 your last town, and that town's return portal takes you back.
 
 Maps are text pictures in `Assets/Scripts/Data/MapDefs.cs` (the legend is in the comment above `MapLayout`).
+After editing one, run `python Tools/check_maps.py`: it checks that every platform can really be reached,
+every ladder and marker stands on something, and every portal leads somewhere and back.
 
 ## Art
 
