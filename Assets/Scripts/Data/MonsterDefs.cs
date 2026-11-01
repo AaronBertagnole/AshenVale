@@ -38,7 +38,8 @@ namespace AshenVale
         // The first four keep their old numbers.
         public const int Emberling = 0, EliteEmberling = 1, MossCrawler = 2, VioletWraith = 3,
                          AshSprout = 4, OldChest = 5, BrambleBoar = 6, MossyChest = 7, DenShade = 8,
-                         MarshToad = 9, BogLurker = 10, AshWisp = 11, SunkenChest = 12;
+                         MarshToad = 9, BogLurker = 10, AshWisp = 11, SunkenChest = 12,
+                         LeafBeetle = 13, EmberFox = 14, Mossling = 15;
 
         public static readonly MonsterDef[] All =
         {
@@ -90,6 +91,15 @@ namespace AshenVale
                 width = 1.1f, height = .9f, hp = 500, speed = 0f, damage = 0, xp = 70, goldMin = 120, goldRange = 60,
                 harmless = true, respawn = 45f, itemChance = .6f,
                 chestParts = new[] { Parts.ToadSlime, Parts.LurkerScale, Parts.ToadSlime, Parts.LurkerScale, Parts.WispEmber } },
+            new MonsterDef { key = "leaf_beetle", name = "Leaf Beetle", level = 3, color = new Color(.62f, .45f, .2f),
+                width = .95f, height = .7f, hp = 85, speed = 1.1f, damage = 8, xp = 13, goldMin = 8, goldRange = 8,
+                part = Parts.SproutLeaf },
+            new MonsterDef { key = "ember_fox", name = "Ember Fox", level = 5, color = new Color(.95f, .5f, .18f),
+                width = 1.1f, height = .85f, hp = 120, speed = 2.6f, damage = 13, xp = 18, goldMin = 12, goldRange = 9,
+                aggressive = true, part = Parts.EmberCore, partChance = .25f },
+            new MonsterDef { key = "mossling", name = "Mossling", level = 4, color = new Color(.42f, .66f, .36f),
+                width = .8f, height = .75f, hp = 100, speed = 1.2f, damage = 10, xp = 15, goldMin = 10, goldRange = 8,
+                part = Parts.MossTuft, partChance = .3f },
         };
     }
 }
