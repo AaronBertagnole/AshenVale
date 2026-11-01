@@ -159,7 +159,7 @@ namespace AshenVale
                 Label(cam, def.returnX, def.returnY + 2.35f, "BACK TO " + Maps.All[me.returnMap].name.ToUpperInvariant() + "  [UP]", new Color(1f, .88f, .6f));
             else
                 Label(cam, def.returnX, def.returnY + 2.35f, "RETURN PORTAL (OPENS WHEN YOU USE T IN THE FIELD)", new Color(.75f, .72f, .66f));
-            Label(cam, def.merchantX, def.merchantY + 2.5f, "MERCHANT  [E]", new Color(1f, .85f, .55f));
+            foreach (var stand in def.merchants) Label(cam, stand.x, stand.y + 2.5f, "MERCHANT  [E]", new Color(1f, .85f, .55f));
             Label(cam, def.waystoneX, def.waystoneY + 2.35f, "WAYSTONE  [E]", new Color(.7f, .95f, 1f));
             if (def.hasSmithy) Label(cam, def.smithyX, def.smithyY + 2.5f, "SMITHY  [E]", new Color(1f, .7f, .45f));
         }

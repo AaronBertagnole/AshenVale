@@ -627,8 +627,9 @@ namespace AshenVale
         public bool NearMerchant(PlayerState p, float reach)
         {
             if (!InTown(p)) return false;
-            var def = maps[p.map].def;
-            return Mathf.Abs(p.x - def.merchantX) < reach && Mathf.Abs(p.y - def.merchantY) < 1.5f;
+            foreach (var stand in maps[p.map].def.merchants)
+                if (Mathf.Abs(p.x - stand.x) < reach && Mathf.Abs(p.y - stand.y) < 1.5f) return true;
+            return false;
         }
 
         public bool NearWaystone(PlayerState p, float reach)

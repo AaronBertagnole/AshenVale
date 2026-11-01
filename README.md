@@ -24,7 +24,9 @@ Every monster kind has a fixed level, like classic MapleStory, and monsters far 
 Walk into a town to find it; its waystone then lets you travel between found towns. **T** opens a portal to
 your last town, and that town's return portal takes you back.
 
-Monsters also drop parts (chests spill several). Emberhaven's smithy spends parts and gold to upgrade gear
+Cinderford, the second town, is a long walled street with a gate at each end, two shops, a smithy and a waystone.
+
+Monsters also drop parts (chests spill several). The smithies in Emberhaven and Cinderford spend parts and gold to upgrade gear
 from +1 to +5, about 12% of the item's base stats each time. Which parts depends on the item's level band and slot.
 
 Maps are text pictures in `Assets/Scripts/Data/MapDefs.cs` (the legend is in the comment above `MapLayout`).

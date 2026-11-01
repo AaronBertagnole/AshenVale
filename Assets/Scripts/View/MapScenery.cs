@@ -171,7 +171,7 @@ namespace AshenVale
             {
                 BuildPortal(root, def.returnX, def.returnY, true);
                 BuildWaystone(root, def.waystoneX, def.waystoneY, !painted);
-                BuildMerchant(root, def.merchantX, def.merchantY, !painted);
+                foreach (var stand in def.merchants) BuildMerchant(root, stand.x, stand.y, !painted);
             }
             if (def.hasSmithy) BuildSmithy(root, def.smithyX, def.smithyY, !painted);
             return visual;

@@ -43,7 +43,7 @@ namespace AshenVale
         public int columns, rows;               // size in cells; one cell is one world unit
         public float minX, maxX;                // how far players can walk
         public float startX, startY;            // @  where you arrive on a new hero, after loading, or after waking up
-        public float merchantX, merchantY;      // $  towns
+        public Vector2[] merchants = new Vector2[0];    // $  towns: every merchant stand (a town may have several)
         public float waystoneX, waystoneY;      // ^  towns: travel to other towns you have found
         public float returnX, returnY;          // &  towns: town portals (T) and waking up arrive here; it leads back out
         public float smithyX, smithyY;          // %  towns with a smithy: upgrade gear with monster parts
@@ -86,7 +86,7 @@ namespace AshenVale
     //   |      ladder: from the floor under its lowest cell up to the floor above its highest cell
     //   .      empty
     // Markers stand in the cell just above the floor they are on:
-    //   @ start   $ merchant   ^ waystone   & town return portal   % smithy
+    //   @ start   $ merchant (one or more)   ^ waystone   & town return portal   % smithy
     //   A-Z portal (linked by letter, see Link)   a-z monster spawn point (see Spawn)
     // A jump reaches about 2.4 units, so a platform 2 lines up can be jumped to; 3 or more needs a ladder.
     // Layouts were checked with a script (every floor reachable, every portal two-way) before going in.
@@ -165,6 +165,7 @@ namespace AshenVale
 
             var portals = new List<Portal>();
             var spawns = new List<SpawnPoint>();
+            var merchants = new List<Vector2>();
             for (int r = 1; r < rows; r++)
                 for (int c = 0; c < cols; c++)
                 {
@@ -174,7 +175,7 @@ namespace AshenVale
                     while (floor > 0 && grid[floor, c] != '=') floor--;
                     float x = c + .5f, y = G + floor;
                     if (ch == '@') { def.startX = x; def.startY = y; }
-                    else if (ch == '$') { def.merchantX = x; def.merchantY = y; }
+                    else if (ch == '$') merchants.Add(new Vector2(x, y));
                     else if (ch == '^') { def.waystoneX = x; def.waystoneY = y; }
                     else if (ch == '&') { def.returnX = x; def.returnY = y; }
                     else if (ch == '%') { def.smithyX = x; def.smithyY = y; def.hasSmithy = true; }
@@ -231,6 +232,7 @@ namespace AshenVale
             }
             def.portals = portals.ToArray();
             def.spawns = spawns.ToArray();
+            def.merchants = merchants.ToArray();
             return def;
         }
     }
@@ -268,9 +270,10 @@ namespace AshenVale
                     new[] { MapLayout.S('b', Monsters.BrambleBoar), MapLayout.S('v', Monsters.VioletWraith) },
                     new[] { MapLayout.L('C', Mosswood, 'C'), MapLayout.L('D', Cinderford, 'D') }),
                 "Art/Backdrops/kingsroad", 140f / 724f, 42f),      // its path is higher: 140 px above the bottom
-            MapLayout.Build(Cinderford, "Cinderford", "rivertown", MapKind.Town, CinderfordLayout,
-                new MapLayout.Spawn[0],
-                new[] { MapLayout.L('D', Kingsroad, 'D'), MapLayout.L('E', AshenMarsh, 'E') }),
+            MapLayout.WithScene(MapLayout.Build(Cinderford, "Cinderford", "rivertown", MapKind.Town, CinderfordLayout,
+                    new MapLayout.Spawn[0],
+                    new[] { MapLayout.L('D', Kingsroad, 'D'), MapLayout.L('E', AshenMarsh, 'E') }),
+                "Art/Scenes/cinderford", 144f / 724f),     // two pictures joined into one long street, 144 px above the bottom
             MapLayout.Build(AshenMarsh, "Ashen Marsh", "marsh", MapKind.Field, AshenMarshLayout,
                 new[] { MapLayout.S('t', Monsters.MarshToad), MapLayout.S('l', Monsters.BogLurker),
                         MapLayout.S('w', Monsters.AshWisp), MapLayout.S('k', Monsters.SunkenChest) },
@@ -362,17 +365,18 @@ namespace AshenVale
             .C..@...........b.............b..............v............b...............v.........b.....D.
             ############################################################################################";
 
+        // Matches the painted street, west to east: the Kingsroad gate, the potion shop and the outfitter (both
+        // merchants), the smithy's forge, the waystone arch, and the east gate out to Ashen Marsh.
         const string CinderfordLayout = @"
-            ..............................................................
-            ..............................................................
-            ..............................................................
-            ..............................................................
-            .................................^............................
-            ............................===========.......................
-            .........................$....................................
-            ......................=======================.................
-            ..D...@....&...............................................E..
-            ##############################################################";
+            ........................................................................
+            ........................................................................
+            ........................................................................
+            ........................................................................
+            ........................................................................
+            ........................................................................
+            ........................................................................
+            ....D...........$.......$........%......@...&........^............E.....
+            ########################################################################";
 
         const string AshenMarshLayout = @"
             ....................................................................................

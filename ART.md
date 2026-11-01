@@ -38,9 +38,18 @@ the painting: shops, waystone and portals go where the picture shows them (`Asse
 | File | Map | Picture | Notes |
 |---|---|---|---|
 | `emberhaven.png` | Emberhaven | 2172 x 724, street 116 px above the bottom | merchant at the left house, waystone at the arch, smithy at the forge |
+| `cinderford.png` | Cinderford | 4140 x 724, street 144 px above the bottom | two pictures joined: west gate (Kingsroad), potion shop and outfitter (both merchants), smithy, waystone, east gate (Ashen Marsh) |
 
-Emberhaven is 38 cells wide, so this picture shows at about 57 px per unit. A version twice the size
-(4344 x 1448, same framing) would look sharp on a 1080p screen: drop it in with the same name.
+Emberhaven is 38 cells wide, so its picture shows at about 57 px per unit; Cinderford keeps the same scale at
+72 cells. A version twice the size (same framing) would look sharp on a 1080p screen: drop it in with the same name.
+
+A bigger town can be made from several pictures of the same street: `Tools/stitch_pictures.py` overlaps them,
+cuts a seam where they look most alike and blends across it. Cinderford was made with
+
+    python Tools/stitch_pictures.py west.png east.png 200 Assets/Resources/Art/Scenes/cinderford.png 1
+
+(200 px overlap; the last number crops one row off the top so both sides are multiples of 4, which Unity needs to
+compress the picture). Put `$` on every shop that should open the merchant window.
 
 ### Painted backdrops: `Art/Backdrops/<map>.png`
 
