@@ -52,6 +52,11 @@ namespace AshenVale
         // (as a share of its height) the walking line is, so feet land on the painted street.
         public string scene;
         public float sceneFloor;
+        // Optional painted backdrop (Resources/<backdrop>.png) for a map wider than the picture: shown backdropWidth
+        // units wide behind everything, it slides slower than the map as the camera moves (always filling the view),
+        // and at the lowest camera its painted path (backdropFloor, as for scenes) lines up with the ground.
+        public string backdrop;
+        public float backdropFloor, backdropWidth;
         public Platform[] platforms = new Platform[0];
         public Ladder[] ladders = new Ladder[0];
         public Portal[] portals = new Portal[0];
@@ -90,6 +95,15 @@ namespace AshenVale
 
         public static Spawn S(char mark, int monster) { return new Spawn { mark = mark, monster = monster }; }
         public static Link L(char key, int targetMap, char targetKey) { return new Link { key = key, targetMap = targetMap, targetKey = targetKey }; }
+
+        // Gives a map a painted backdrop (see MapDef.backdrop).
+        public static MapDef WithBackdrop(MapDef def, string backdrop, float floor, float width)
+        {
+            def.backdrop = backdrop;
+            def.backdropFloor = floor;
+            def.backdropWidth = width;
+            return def;
+        }
 
         // Gives a map a painted scene (see MapDef.scene).
         public static MapDef WithScene(MapDef def, string scene, float floor)
@@ -229,10 +243,11 @@ namespace AshenVale
         // In id order: All[i].id == i.
         public static readonly MapDef[] All =
         {
-            MapLayout.Build(Emberfields, "Emberfields", "meadow", MapKind.Field, EmberfieldsLayout,
-                new[] { MapLayout.S('a', Monsters.Emberling), MapLayout.S('b', Monsters.AshSprout),
-                        MapLayout.S('c', Monsters.EliteEmberling), MapLayout.S('k', Monsters.OldChest) },
-                new[] { MapLayout.L('A', Emberhaven, 'A'), MapLayout.L('B', Mosswood, 'B') }),
+            MapLayout.WithBackdrop(MapLayout.Build(Emberfields, "Emberfields", "autumn", MapKind.Field, EmberfieldsLayout,
+                    new[] { MapLayout.S('a', Monsters.Emberling), MapLayout.S('b', Monsters.AshSprout),
+                            MapLayout.S('c', Monsters.EliteEmberling), MapLayout.S('k', Monsters.OldChest) },
+                    new[] { MapLayout.L('A', Emberhaven, 'A'), MapLayout.L('B', Mosswood, 'B') }),
+                "Art/Backdrops/emberfields", 116f / 724f, 42f),   // path 116 px above the bottom of the 724 px picture
             MapLayout.Build(Mosswood, "Mosswood", "forest", MapKind.Field, MosswoodLayout,
                 new[] { MapLayout.S('a', Monsters.MossCrawler), MapLayout.S('b', Monsters.BrambleBoar), MapLayout.S('k', Monsters.MossyChest) },
                 new[] { MapLayout.L('B', Emberfields, 'B'), MapLayout.L('C', Kingsroad, 'C'), MapLayout.L('S', HollowDen, 'S') }),

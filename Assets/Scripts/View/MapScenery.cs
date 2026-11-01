@@ -4,10 +4,14 @@ using UnityEngine;
 namespace AshenVale
 {
     // A backdrop layer that follows the camera by (fx, fy): 1 = fixed to the screen (sky), 0 = fixed to the world.
+    // A panorama layer is one painted picture (width x height units, origin at its bottom-left) that WorldView
+    // slides so it always fills the view: its left edge shows at the map's left end, its right edge at the right end.
     public sealed class ParallaxLayer
     {
         public Transform transform;
         public float fx, fy;
+        public bool panorama;
+        public float width, height, floor;
     }
 
     // Everything drawn for one map: a root (switched on while the local player is on the map) and its backdrop layers.
@@ -22,7 +26,8 @@ namespace AshenVale
     // Resources/Art (see ART.md) and falls back to placeholder shapes, so art can be dropped in one file at a time.
     //
     //   Art/Scenes/<map>          a whole painted scene for one map (MapDef.scene), replacing the backdrop and ground
-    //   Art/Themes/<theme>/sky, far, mid, ground, platform_left, platform_mid, platform_right, ladder
+    //   Art/Backdrops/<map>       a painted backdrop for a wider map (MapDef.backdrop), replacing sky / far / mid
+    //   Art/Themes/<theme>/sky, far, mid, ground, ground_back, platform_left, platform_mid, platform_right, ladder
     //   Art/Props/portal, return_portal, waystone, merchant, smithy
     public static class MapScenery
     {
@@ -36,6 +41,9 @@ namespace AshenVale
             public Color skyBottom, skyTop, far, farDark, mid, midDark, groundBody, groundTop, platformBody, platformTop, accent;
             public string farStyle, midStyle;
             public bool outdoors = true;
+            public Color ladderRail = new Color(.55f, .35f, .19f), ladderRung = new Color(.72f, .51f, .28f);
+            public Color hanging = Color.clear;     // what hangs under platforms (clear: a darker shade of the platform)
+            public Color[] flecks;                  // little leaves scattered on platform tops (null: none)
         }
 
         static Theme ThemeFor(string name)
@@ -50,6 +58,18 @@ namespace AshenVale
                     groundBody = new Color(.40f, .33f, .28f), groundTop = new Color(.76f, .64f, .46f),
                     platformBody = new Color(.52f, .36f, .23f), platformTop = new Color(.80f, .60f, .36f),
                     accent = new Color(1f, .78f, .42f), farStyle = "hills", midStyle = "houses",
+                };
+                case "autumn": return new Theme     // Emberfields: colours taken from its painted backdrop
+                {
+                    skyBottom = new Color(.97f, .88f, .70f), skyTop = new Color(.45f, .66f, .90f),
+                    far = new Color(.80f, .42f, .22f), farDark = new Color(.68f, .30f, .16f),
+                    mid = new Color(.75f, .23f, .11f), midDark = new Color(.37f, .28f, .18f),
+                    groundBody = new Color(.25f, .24f, .15f), groundTop = new Color(.90f, .61f, .33f),
+                    platformBody = new Color(.33f, .32f, .21f), platformTop = new Color(.90f, .61f, .33f),
+                    accent = new Color(.98f, .80f, .51f), farStyle = "hills", midStyle = "roundtrees",
+                    ladderRail = new Color(.37f, .28f, .18f), ladderRung = new Color(.58f, .42f, .26f),
+                    hanging = new Color(.36f, .46f, .18f),
+                    flecks = new[] { new Color(.75f, .23f, .11f), new Color(.93f, .43f, .14f), new Color(.98f, .80f, .51f), new Color(.71f, .36f, .18f) },
                 };
                 case "forest": return new Theme
                 {
@@ -120,16 +140,20 @@ namespace AshenVale
             string art = "Art/Themes/" + def.theme + "/";
 
             // A painted scene already shows the sky, ground, houses, waystone and shops: draw only what it lacks.
+            // A painted backdrop replaces the sky and distant layers; the ground and platforms are still drawn.
             bool painted = BuildScene(root, def);
             if (!painted)
             {
-                Sky(visual, def, theme, art);
-                Far(visual, def, theme, art, rng);
-                Mid(visual, def, theme, art, rng);
+                if (!BuildBackdrop(visual, def))
+                {
+                    Sky(visual, def, theme, art);
+                    Far(visual, def, theme, art, rng);
+                    Mid(visual, def, theme, art, rng);
+                }
                 Ground(root, def, theme, art, rng);
             }
             foreach (var plat in def.platforms) BuildPlatform(root, plat, theme, art, rng);
-            foreach (var ladder in def.ladders) BuildLadder(root, ladder, art);
+            foreach (var ladder in def.ladders) BuildLadder(root, ladder, theme, art);
             foreach (var portal in def.portals) BuildPortal(root, portal.x, portal.y, false);
             if (def.kind == MapKind.Town)
             {
@@ -154,6 +178,23 @@ namespace AshenVale
             var o = Sprites.Picture("Scene", sprite, SkyOrder, root,
                                     def.columns * .5f - sprite.bounds.center.x * scale, bottom - sprite.bounds.min.y * scale);
             o.transform.localScale = new Vector3(scale, scale, 1);
+            return true;
+        }
+
+        // The map's painted backdrop as a panorama layer (WorldView moves it). False if none or not in the project.
+        static bool BuildBackdrop(MapVisual visual, MapDef def)
+        {
+            if (string.IsNullOrEmpty(def.backdrop)) return false;
+            var sprite = Sprites.Art(def.backdrop);
+            if (sprite == null) return false;
+            var t = new GameObject("Backdrop").transform;
+            t.SetParent(visual.root.transform, false);
+            var size = sprite.bounds.size;
+            float scale = def.backdropWidth / size.x;
+            var o = Sprites.Picture("Backdrop art", sprite, SkyOrder, t, 0, 0);
+            o.transform.localScale = new Vector3(scale, scale, 1);
+            o.transform.localPosition = new Vector3(-sprite.bounds.min.x * scale, -sprite.bounds.min.y * scale, 0);   // layer origin = picture's bottom-left
+            visual.layers.Add(new ParallaxLayer { transform = t, panorama = true, width = def.backdropWidth, height = size.y * scale, floor = def.backdropFloor });
             return true;
         }
 
@@ -328,7 +369,13 @@ namespace AshenVale
             float G = Tuning.Ground, w = def.columns + 40f, mid = def.columns * .5f;
             var sprite = Sprites.Art(art + "ground");
             float body = 0f;
-            if (sprite != null) { Sprites.Tiled("Ground art", sprite, w, sprite.bounds.size.y, GroundOrder + 1, root, mid, G); body = sprite.bounds.size.y; }
+            if (sprite != null)
+            {
+                Sprites.Tiled("Ground art", sprite, w, sprite.bounds.size.y, GroundOrder + 1, root, mid, G);
+                body = sprite.bounds.size.y;
+                var back = Sprites.Art(art + "ground_back");   // optional strip behind your feet that fades into the backdrop
+                if (back != null) Sprites.Tiled("Ground back", back, w, back.bounds.size.y, GroundOrder + 1, root, mid, G);
+            }
             else
             {
                 Sprites.Block("Ground top", theme.groundTop, w, .32f, GroundOrder + 1, root, mid, G - .16f);
@@ -365,19 +412,26 @@ namespace AshenVale
             Sprites.Blob("Platform top end", theme.platformTop, .34f, .22f, PlatformOrder + 1, root, p.left, p.top - .11f);
             Sprites.Blob("Platform top end", theme.platformTop, .34f, .22f, PlatformOrder + 1, root, p.right, p.top - .11f);
             Sprites.Block("Platform shine", Color.Lerp(theme.platformTop, Color.white, .3f), width - .2f, .05f, PlatformOrder + 1, root, mid, p.top - .03f);
+            Color hanging = theme.hanging.a > 0 ? theme.hanging : Color.Lerp(theme.platformBody, Color.black, .2f);
             for (float x = p.left + .7f; x < p.right - .4f; x += 1.2f + (float)rng.NextDouble() * 1.4f)
-                Sprites.Blob("Hanging root", Color.Lerp(theme.platformBody, Color.black, .2f), .22f, .45f, PlatformOrder - 1, root, x, p.top - .66f);
+                Sprites.Blob("Hanging vine", hanging, .22f, .45f + (float)rng.NextDouble() * .3f, PlatformOrder - 1, root, x, p.top - .7f);
+            if (theme.flecks == null) return;
+            for (float x = p.left + .25f; x < p.right - .15f; x += .3f + (float)rng.NextDouble() * .45f)
+            {
+                var leaf = Sprites.Blob("Leaf", theme.flecks[rng.Next(theme.flecks.Length)], .2f, .1f, PlatformOrder + 1, root, x, p.top - .06f - (float)rng.NextDouble() * .1f);
+                leaf.transform.rotation = Quaternion.Euler(0, 0, (float)rng.NextDouble() * 60f - 30f);
+            }
         }
 
-        static void BuildLadder(Transform root, Ladder l, string art)
+        static void BuildLadder(Transform root, Ladder l, Theme theme, string art)
         {
             float h = l.top - l.bottom;
             var sprite = Sprites.Art(art + "ladder");
             if (sprite != null) { Sprites.Tiled("Ladder", sprite, sprite.bounds.size.x, h, LadderOrder, root, l.x, l.bottom); return; }
             for (int side = -1; side <= 1; side += 2)
-                Sprites.Block("Ladder rail", new Color(.55f, .35f, .19f), .11f, h, LadderOrder, root, l.x + side * .27f, (l.bottom + l.top) * .5f);
+                Sprites.Block("Ladder rail", theme.ladderRail, .11f, h, LadderOrder, root, l.x + side * .27f, (l.bottom + l.top) * .5f);
             for (float y = l.bottom + .24f; y < l.top; y += .38f)
-                Sprites.Block("Ladder rung", new Color(.72f, .51f, .28f), .65f, .09f, LadderOrder + 1, root, l.x, y);
+                Sprites.Block("Ladder rung", theme.ladderRung, .65f, .09f, LadderOrder + 1, root, l.x, y);
         }
 
         // ---------------------------------------------------------------- portals and town props

@@ -277,6 +277,7 @@ namespace AshenVale
                 Color dark = Color.Lerp(d.color, Color.black, .35f);
                 if (d.speed <= 0f)
                 {
+                    Part("Chest outline", Sprites.Block("Chest outline", Color.Lerp(d.color, Color.black, .65f), w + .08f, h * .7f + .08f, 0), v.body, 0, h * .35f);
                     Part("Chest", Sprites.Block("Chest", d.color, w, h * .7f, 0), v.body, 0, h * .35f);
                     Part("Lid", Sprites.Block("Lid", dark, w * 1.06f, h * .32f, 1), v.body, 0, h * .78f);
                     Part("Latch", Sprites.Block("Latch", new Color(1f, .82f, .3f), w * .16f, h * .24f, 2), v.body, 0, h * .6f);
@@ -284,13 +285,15 @@ namespace AshenVale
                 else
                 {
                     Part("Shadow", Sprites.Blob("Shadow", new Color(0, 0, 0, .25f), w * 1.05f, .18f, 0, null, 0, 0), root, 0, -d.hover + .04f);
-                    Part("Body", Sprites.Blob("Body", d.color, w, h, 1, null, 0, 0), v.body, 0, h * .5f);
-                    Part("Shine", Sprites.Blob("Shine", new Color(1, 1, 1, .22f), w * .45f, h * .3f, 2, null, 0, 0), v.body, -w * .15f, h * .72f);
+                    // A dark rim keeps placeholder monsters readable against busy painted backgrounds.
+                    Part("Outline", Sprites.Blob("Outline", Color.Lerp(d.color, Color.black, .65f), w + .1f, h + .1f, 1, null, 0, 0), v.body, 0, h * .5f);
+                    Part("Body", Sprites.Blob("Body", d.color, w, h, 2, null, 0, 0), v.body, 0, h * .5f);
+                    Part("Shine", Sprites.Blob("Shine", new Color(1, 1, 1, .22f), w * .45f, h * .3f, 3, null, 0, 0), v.body, -w * .15f, h * .72f);
                     for (int i = 0; i < 2; i++)
                     {
                         float ex = w * (.12f + i * .2f), ey = h * .6f;
-                        Part("Eye", Sprites.Blob("Eye", Color.white, .17f, .21f, 2, null, 0, 0), v.body, ex, ey);
-                        Part("Pupil", Sprites.Blob("Pupil", new Color(.12f, .1f, .14f), .09f, .12f, 3, null, 0, 0), v.body, ex + .03f, ey - .01f);
+                        Part("Eye", Sprites.Blob("Eye", Color.white, .17f, .21f, 3, null, 0, 0), v.body, ex, ey);
+                        Part("Pupil", Sprites.Blob("Pupil", new Color(.12f, .1f, .14f), .09f, .12f, 4, null, 0, 0), v.body, ex + .03f, ey - .01f);
                     }
                 }
             }
@@ -430,8 +433,24 @@ namespace AshenVale
                 cam.position = pos;
             }
             var visual = visuals[shownMap];
+            Vector3 c = cam.position;
+            float halfWidth = ViewHalfHeight * camera.aspect;
             foreach (var layer in visual.layers)
-                layer.transform.position = new Vector3(cam.position.x * layer.fx, (cam.position.y - visual.cameraLowY) * layer.fy, 0);
+            {
+                if (!layer.panorama)
+                {
+                    layer.transform.position = new Vector3(c.x * layer.fx, (c.y - visual.cameraLowY) * layer.fy, 0);
+                    continue;
+                }
+                // Across: the picture's left edge shows at the map's left end and its right edge at the right end.
+                // Up: at the lowest camera its painted path sits on the ground; at the highest its top meets the view's top.
+                float tx = maxX > minX ? Mathf.InverseLerp(minX, maxX, c.x) : .5f;
+                float ty = maxY > minY ? Mathf.InverseLerp(minY, maxY, c.y) : 0f;
+                float left = layer.width > 2f * halfWidth ? c.x - halfWidth - tx * (layer.width - 2f * halfWidth) : c.x - layer.width * .5f;
+                float low = Tuning.Ground - layer.floor * layer.height;
+                float high = Mathf.Max(low, maxY + ViewHalfHeight - layer.height);
+                layer.transform.position = new Vector3(left, Mathf.Lerp(low, high, ty), 0);
+            }
         }
     }
 }

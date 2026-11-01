@@ -61,7 +61,7 @@ public class AshenValeGame : MonoBehaviour
     void CreateHero(int hero, string name)
     {
         var ch = new Character { id = SaveStore.NewId(), name = name, hero = hero };
-        StartRun(ch, Maps.Emberfields, -1, -1);
+        StartRun(ch, Maps.Emberhaven, -1, -1);     // new heroes start in town; Emberfields is through the portal on the right
         SaveNow();
     }
 

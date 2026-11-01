@@ -266,7 +266,7 @@ namespace AshenVale
         void DrawTutorial(float left, float top)
         {
             GUI.Label(new Rect(left + 30, top + 19, 780, 54), "YOUR FIRST ADVENTURE", heading);
-            GUI.Label(new Rect(left + 55, top + 78, 730, 30), "A few essentials before you enter Emberfields", subtitle);
+            GUI.Label(new Rect(left + 55, top + 78, 730, 30), "A few essentials before you set out from Emberhaven", subtitle);
             string[] keys = { "A / D  or  ← / →", "SPACE  ·  DOWN + SPACE", "W / S", "J / K", "Q / F", "E / I", "W / UP", "T", "L / ESC" };
             string[] actions = { "Move", "Jump  ·  Drop through a platform", "Climb ladders", "Attack / Special attack", "HP / MP potions",
                                  "Loot, talk / Inventory", "Use a portal", "Open a portal back to town", "Dash / Menu" };

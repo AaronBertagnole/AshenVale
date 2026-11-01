@@ -42,10 +42,28 @@ the painting: shops, waystone and portals go where the picture shows them (`Asse
 Emberhaven is 38 cells wide, so this picture shows at about 57 px per unit. A version twice the size
 (4344 x 1448, same framing) would look sharp on a 1080p screen: drop it in with the same name.
 
+### Painted backdrops: `Art/Backdrops/<map>.png`
+
+For a map wider than the picture (most hunting maps). The picture is shown `MapDef.backdropWidth` units wide behind
+everything and slides more slowly than the map, always filling the screen: its left edge shows at the map's left
+end and its right edge at the right end. At the lowest camera its painted path (`backdropFloor`) sits on the ground.
+It replaces the theme's sky / far / mid; ground and platforms are still drawn in front.
+
+| File | Map | Picture | Shown |
+|---|---|---|---|
+| `emberfields.png` | Emberfields | 2172 x 724, path 116 px above the bottom | 42 units wide |
+
+The ground and platforms can be cut from the same picture so they match it:
+
+    python Tools/make_ground_tiles.py Assets/Resources/Art/Backdrops/emberfields.png 608 42 autumn
+
+(arguments: picture, pixel row of the walking line, backdrop width, theme). It writes the theme's `ground.png`,
+`ground_back.png` and the three platform pieces, already seamless and at 100 px per unit.
+
 ### Map themes: `Art/Themes/<theme>/`
 
-Themes: `town` (Emberhaven), `meadow` (Emberfields), `forest` (Mosswood), `cave` (Hollow Den),
-`road` (Kingsroad), `rivertown` (Cinderford), `marsh` (Ashen Marsh).
+Themes: `town` (Emberhaven), `autumn` (Emberfields), `forest` (Mosswood), `cave` (Hollow Den),
+`road` (Kingsroad), `rivertown` (Cinderford), `marsh` (Ashen Marsh); `meadow` is spare.
 
 | File | What it is | Suggested size | Lines up by |
 |---|---|---|---|
@@ -53,6 +71,7 @@ Themes: `town` (Emberhaven), `meadow` (Emberfields), `forest` (Mosswood), `cave`
 | `far.png` | Distant hills, mountains, trees. Tiles sideways; transparent above the silhouettes | 2048 x 1000 | bottom edge, about at ground level |
 | `mid.png` | Nearer trees, houses, rocks. Tiles sideways; transparent above | 2048 x 700 | bottom edge, about at ground level |
 | `ground.png` | The ground strip. Tiles sideways; its **top edge is the walking surface** | 256 x 160 | top edge |
+| `ground_back.png` | Optional strip just behind your feet, fading out at its top, so the ground blends into a backdrop | 256 x 70 | bottom edge, on the walking surface |
 | `platform_mid.png` | Middle of a platform, tiles sideways; **top edge is the walking surface** | 100 x 70 | top edge |
 | `platform_left.png`, `platform_right.png` | Optional rounded ends for platforms | 100 x 70 each | top edge |
 | `ladder.png` | One section of ladder (or rope), tiles upward | 60 x 100 | bottom edge |
