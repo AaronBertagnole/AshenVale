@@ -363,10 +363,18 @@ namespace AshenVale
 
             events.Add(new SimEvent { kind = SimEventKind.Slash, map = map.def.id, playerId = p.id, heavy = skill, facing = p.facing,
                                       x = p.x + p.facing * (skill ? 1.5f : 1.1f), y = p.y + 1.1f });
+            // Reach is measured to the monster's near edge, not its centre (so a wide boss can be hit from where you
+            // touch it), and the weapon's height band (knees to above the head) must overlap the monster's body, so a
+            // tall boss can be hit from a ledge level with its trunk.
             float range = skill ? hero.skillRange : hero.meleeRange;
             var targets = new List<MonsterState>();
             foreach (var m in map.monsters)
-                if (Mathf.Abs(m.x - p.x) <= range && Mathf.Abs(m.y - p.y) < 1.5f && (m.x - p.x) * p.facing >= -.3f) targets.Add(m);
+            {
+                var d = m.Def;
+                float edge = Mathf.Max(0f, Mathf.Abs(m.x - p.x) - d.width * .5f);
+                float bottom = m.y + d.hover, top = bottom + d.height;
+                if (edge <= range && p.y + 1.7f > bottom - .3f && p.y + .3f < top + .3f && (m.x - p.x) * p.facing >= -d.width * .5f) targets.Add(m);
+            }
             targets.Sort((a, b) => ((a.x - p.x) * p.facing).CompareTo((b.x - p.x) * p.facing));
             for (int i = 0; i < targets.Count; i++)
             {

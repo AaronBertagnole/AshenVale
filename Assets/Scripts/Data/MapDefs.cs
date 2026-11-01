@@ -209,9 +209,11 @@ namespace AshenVale
                         var point = new SpawnPoint { monster = monster, x = x, y = y };
                         if (floor == 0)
                         {
-                            // Ground monsters roam a stretch around their spawn point, so they stay spread out.
-                            point.left = Mathf.Max(def.minX, x - Tuning.GroundRoam);
-                            point.right = Mathf.Min(def.maxX, x + Tuning.GroundRoam);
+                            // Ground monsters roam a stretch around their spawn point, so they stay spread out;
+                            // a boss has the run of the whole floor (bar the calm stretch by the portal).
+                            float roam = Monsters.All[monster].boss ? def.columns : Tuning.GroundRoam;
+                            point.left = Mathf.Max(def.minX, x - roam);
+                            point.right = Mathf.Min(def.maxX, x + roam);
                         }
                         else
                         {
