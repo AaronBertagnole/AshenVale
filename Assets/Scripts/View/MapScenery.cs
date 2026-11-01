@@ -245,10 +245,10 @@ namespace AshenVale
             BuildAmbient(visual, look, front);
             foreach (var plat in def.platforms) BuildPlatform(root, plat, theme, art, rng);
             foreach (var ladder in def.ladders) BuildLadder(root, ladder, theme, art);
-            foreach (var portal in def.portals) BuildPortal(root, portal.x, portal.y, false);
+            foreach (var portal in def.portals) BuildPortal(root, portal.x, portal.y, false, !painted);
             if (def.kind == MapKind.Town)
             {
-                BuildPortal(root, def.returnX, def.returnY, true);
+                BuildPortal(root, def.returnX, def.returnY, true, !painted);
                 BuildWaystone(root, def.waystoneX, def.waystoneY, !painted);
                 foreach (var stand in def.merchants) BuildMerchant(root, stand.x, stand.y, !painted);
             }
@@ -328,30 +328,41 @@ namespace AshenVale
         static void BuildEffects(MapArtDef look, PictureFrame front, PictureFrame back, bool scene)
         {
             if (look.effects.Length == 0) return;
-            var shader = Resources.Load<Shader>(EffectShader);
-            if (shader == null || !shader.isSupported)
-            {
-                Debug.LogWarning("Map effects are off: shader Resources/" + EffectShader + (shader == null ? " was not found" : " is not supported here"));
-                return;
-            }
             foreach (var fx in look.effects)
             {
                 var frame = fx.distant ? back : front;
                 if (!frame.Valid) continue;             // a distant effect needs the distant picture
-                var material = new Material(shader);
-                material.SetColor("_Color", fx.color);
-                material.SetFloat("_Mode", fx.mode);
-                material.SetFloat("_Active", fx.strength <= 0f ? 1f : fx.strength);
-                // Water and mist are painted over the picture; glows and fire add light to it (see the shader).
-                bool over = fx.mode == 1 || fx.mode == 2;
-                material.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
-                material.SetFloat("_DstBlend", (float)(over ? UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha : UnityEngine.Rendering.BlendMode.One));
                 int order = fx.distant ? SkyOrder + 5 : scene ? GlowOrder : FarOrder + 5;
-                var o = Sprites.Picture(fx.name, Sprites.FullQuad, order, frame.parent, 0, 0);
-                o.transform.localPosition = frame.At(fx.x, fx.y);
-                o.transform.localScale = new Vector3(fx.width * frame.perPixel, fx.height * frame.perPixel, 1);
-                o.GetComponent<SpriteRenderer>().sharedMaterial = material;
+                var at = frame.At(fx.x, fx.y);
+                Effect(fx.name, frame.parent, at.x, at.y, fx.width * frame.perPixel, fx.height * frame.perPixel, fx.color, fx.mode, fx.strength, order);
             }
+        }
+
+        static bool effectShaderWarned;
+
+        // One animated light (see the shader): a width x height quad centred on (x, y) under `parent` (local units).
+        // Water and mist are painted over the picture; glows and fire add light to it. Null if the shader is missing.
+        public static GameObject Effect(string name, Transform parent, float x, float y, float width, float height, Color color, int mode, float strength, int order)
+        {
+            var shader = Resources.Load<Shader>(EffectShader);
+            if (shader == null || !shader.isSupported)
+            {
+                if (!effectShaderWarned) Debug.LogWarning("Map effects are off: shader Resources/" + EffectShader + (shader == null ? " was not found" : " is not supported here"));
+                effectShaderWarned = true;
+                return null;
+            }
+            var material = new Material(shader);
+            material.SetColor("_Color", color);
+            material.SetFloat("_Mode", mode);
+            material.SetFloat("_Active", strength <= 0f ? 1f : strength);
+            bool over = mode == 1 || mode == 2;
+            material.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            material.SetFloat("_DstBlend", (float)(over ? UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha : UnityEngine.Rendering.BlendMode.One));
+            var o = Sprites.Picture(name, Sprites.FullQuad, order, parent, 0, 0);
+            o.transform.localPosition = new Vector3(x, y, 0);
+            o.transform.localScale = new Vector3(width, height, 1);
+            o.GetComponent<SpriteRenderer>().sharedMaterial = material;
+            return o;
         }
 
         // MapArt specks: screen-filling groups (motes, leaves, pollen, ash) under the map; spot groups (smoke, sparks)
@@ -626,15 +637,35 @@ namespace AshenVale
 
         // ---------------------------------------------------------------- portals and town props
 
-        static void BuildPortal(Transform root, float x, float y, bool townReturn)
+        public static readonly Color MapPortalColor = new Color(.45f, .68f, 1f), ReturnPortalColor = new Color(1f, .78f, .38f),
+                                     TownPortalColor = new Color(.7f, .55f, 1f);
+
+        // A portal standing at (x, y): the stone arch (framed; left out on painted towns, whose gates frame them already),
+        // a tinted swirl in the opening and the rippling shimmer over it.
+        static void BuildPortal(Transform root, float x, float y, bool townReturn, bool framed)
         {
-            var sprite = Sprites.Art(townReturn ? "Art/Props/return_portal" : "Art/Props/portal");
-            if (sprite != null) { Sprites.Picture(townReturn ? "Return portal" : "Portal", sprite, PortalOrder, root, x, y); return; }
-            Color glow = townReturn ? new Color(1f, .78f, .35f, .45f) : new Color(.35f, .65f, 1f, .45f);
-            Color core = townReturn ? new Color(1f, .93f, .70f, .85f) : new Color(.78f, .92f, 1f, .85f);
-            Sprites.Blob("Portal glow", glow, 1.1f, 2.1f, PortalOrder, root, x, y + 1f);
-            Sprites.Blob("Portal core", core, .5f, 1.5f, PortalOrder + 1, root, x, y + 1f);
-            Sprites.Blob("Portal base", glow, 1.4f, .3f, PortalOrder, root, x, y + .05f);
+            var frame = Sprites.Art(townReturn ? "Art/Props/return_portal" : "Art/Props/portal");
+            if (framed && frame != null) Sprites.Picture(townReturn ? "Return portal" : "Portal", frame, PortalOrder, root, x, y);
+            Swirl(root, x, y, townReturn ? ReturnPortalColor : MapPortalColor, PortalOrder + 1);
+        }
+
+        // The glowing part of a portal (also the T town portal, WorldView): swirl art if present, else placeholder blobs.
+        public static void Swirl(Transform parent, float x, float y, Color color, int order)
+        {
+            var swirl = Sprites.Art("Art/Props/portal_swirl");
+            if (swirl != null)
+            {
+                var o = Sprites.Picture("Portal swirl", swirl, order, parent, x, y);
+                o.GetComponent<SpriteRenderer>().color = color;
+            }
+            else
+            {
+                Color glow = color; glow.a = .45f;
+                Color core = Color.Lerp(color, Color.white, .7f); core.a = .85f;
+                Sprites.Blob("Portal glow", glow, 1.1f, 2.1f, order, parent, x, y + 1f);
+                Sprites.Blob("Portal core", core, .5f, 1.5f, order + 1, parent, x, y + 1f);
+            }
+            Effect("Portal shimmer", parent, x, y + .95f, .75f, 1.55f, color, 0, 1.2f, order + 2);
         }
 
         // placeholder: draw stand-in shapes when there is no art (false on painted scenes, which show their own).

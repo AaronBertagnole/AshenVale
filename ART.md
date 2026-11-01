@@ -175,11 +175,16 @@ Bottom centre of the image = where it stands.
 
 | File | What it is | Suggested size |
 |---|---|---|
-| `portal.png` | Map portal | 110 x 210 |
-| `return_portal.png` | Town return portal | 110 x 210 |
+| `portal.png` | Map portal: a stone arch (hunting maps only; painted towns have their own gates) | 120 x 230 |
+| `return_portal.png` | The same arch in warmer stone, for town return portals | 120 x 230 |
+| `portal_swirl.png` | White mist and swirl in the opening, tinted in code (blue map portal, gold return, violet town portal) | 90 x 190 |
 | `waystone.png` | Town waystone | 90 x 190 |
 | `merchant.png` | Merchant and stall | 300 x 230 |
 | `smithy.png` | Smith, anvil and forge | 320 x 230 |
+
+The ladders (`Themes/<theme>/ladder.png`), portal arches and swirl are painted by `Tools/make_props.py` in the
+style of the map pictures (moss, autumn leaves or rope on the ladders by theme); replace any of them with a hand-made
+file of the same size. Portals also get the rippling shimmer from the effect shader.
 
 On a painted scene these are optional: the painting already shows the shops, so nothing is drawn there
 unless one of these files exists (a merchant or smith character standing in front of the painting, for example).
