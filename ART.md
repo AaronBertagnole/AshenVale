@@ -52,6 +52,7 @@ It replaces the theme's sky / far / mid; ground and platforms are still drawn in
 | File | Map | Picture | Shown |
 |---|---|---|---|
 | `emberfields.png` | Emberfields (and Amberleaf Trail, mirrored, until it has its own) | 2172 x 724, path 116 px above the bottom | 42 units wide |
+| `mossgate_hollow.jpg` | Mossgate Hollow (painted by `Tools/paint_mossgate_backdrop.py`) | 4344 x 1448 (same framing at 2x) | 42 units wide |
 
 **Adding one is just a file:** a picture named after the map (`amberleaf_trail.png`, `mossgate_hollow.png`,
 `mosswood.png`, ... the map's name in lower case with `_` for spaces) is picked up automatically, assuming the
