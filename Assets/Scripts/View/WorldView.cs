@@ -369,7 +369,7 @@ namespace AshenVale
                 if (!portalViews.TryGetValue(p.id, out go))
                 {
                     go = new GameObject("Town Portal (Up)");
-                    MapScenery.Swirl(go.transform, 0, 0, MapScenery.TownPortalColor, MapScenery.PortalOrder);
+                    MapScenery.Portal(go.transform, 0, 0, "Art/Props/town_portal", MapScenery.TownPortalColor, MapScenery.PortalOrder);
                     portalViews[p.id] = go;
                 }
                 go.transform.position = new Vector3(p.portalX, p.portalY, 0);

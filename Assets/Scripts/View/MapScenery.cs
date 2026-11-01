@@ -245,10 +245,10 @@ namespace AshenVale
             BuildAmbient(visual, look, front);
             foreach (var plat in def.platforms) BuildPlatform(root, plat, theme, art, rng);
             foreach (var ladder in def.ladders) BuildLadder(root, ladder, theme, art);
-            foreach (var portal in def.portals) BuildPortal(root, portal.x, portal.y, false, !painted);
+            foreach (var portal in def.portals) BuildPortal(root, portal.x, portal.y, false);
             if (def.kind == MapKind.Town)
             {
-                BuildPortal(root, def.returnX, def.returnY, true, !painted);
+                BuildPortal(root, def.returnX, def.returnY, true);
                 BuildWaystone(root, def.waystoneX, def.waystoneY, !painted);
                 foreach (var stand in def.merchants) BuildMerchant(root, stand.x, stand.y, !painted);
             }
@@ -627,7 +627,7 @@ namespace AshenVale
         static void BuildLadder(Transform root, Ladder l, Theme theme, string art)
         {
             float h = l.top - l.bottom;
-            var sprite = Sprites.Art(art + "ladder");
+            var sprite = Sprites.Art(art + "ladder") ?? Sprites.Art("Art/Props/ladder");   // a theme's own, else the shared one
             if (sprite != null) { Sprites.Tiled("Ladder", sprite, sprite.bounds.size.x, h, LadderOrder, root, l.x, l.bottom); return; }
             for (int side = -1; side <= 1; side += 2)
                 Sprites.Block("Ladder rail", theme.ladderRail, .11f, h, LadderOrder, root, l.x + side * .27f, (l.bottom + l.top) * .5f);
@@ -640,24 +640,18 @@ namespace AshenVale
         public static readonly Color MapPortalColor = new Color(.45f, .68f, 1f), ReturnPortalColor = new Color(1f, .78f, .38f),
                                      TownPortalColor = new Color(.7f, .55f, 1f);
 
-        // A portal standing at (x, y): the stone arch (framed; left out on painted towns, whose gates frame them already),
-        // a tinted swirl in the opening and the rippling shimmer over it.
-        static void BuildPortal(Transform root, float x, float y, bool townReturn, bool framed)
+        // A portal standing at (x, y): the painted oval (blue for map portals, gold for a town's return portal) with the
+        // rippling shimmer over it. Placeholder blobs if the picture is missing.
+        static void BuildPortal(Transform root, float x, float y, bool townReturn)
         {
-            var frame = Sprites.Art(townReturn ? "Art/Props/return_portal" : "Art/Props/portal");
-            if (framed && frame != null) Sprites.Picture(townReturn ? "Return portal" : "Portal", frame, PortalOrder, root, x, y);
-            Swirl(root, x, y, townReturn ? ReturnPortalColor : MapPortalColor, PortalOrder + 1);
+            Portal(root, x, y, townReturn ? "Art/Props/return_portal" : "Art/Props/portal", townReturn ? ReturnPortalColor : MapPortalColor, PortalOrder);
         }
 
-        // The glowing part of a portal (also the T town portal, WorldView): swirl art if present, else placeholder blobs.
-        public static void Swirl(Transform parent, float x, float y, Color color, int order)
+        // Also the T town portal (WorldView, violet).
+        public static void Portal(Transform parent, float x, float y, string picture, Color color, int order)
         {
-            var swirl = Sprites.Art("Art/Props/portal_swirl");
-            if (swirl != null)
-            {
-                var o = Sprites.Picture("Portal swirl", swirl, order, parent, x, y);
-                o.GetComponent<SpriteRenderer>().color = color;
-            }
+            var sprite = Sprites.Art(picture);
+            if (sprite != null) Sprites.Picture("Portal", sprite, order, parent, x, y);
             else
             {
                 Color glow = color; glow.a = .45f;
@@ -665,7 +659,7 @@ namespace AshenVale
                 Sprites.Blob("Portal glow", glow, 1.1f, 2.1f, order, parent, x, y + 1f);
                 Sprites.Blob("Portal core", core, .5f, 1.5f, order + 1, parent, x, y + 1f);
             }
-            Effect("Portal shimmer", parent, x, y + .95f, .75f, 1.55f, color, 0, 1.2f, order + 2);
+            Effect("Portal shimmer", parent, x, y + 1.15f, .8f, 1.7f, color, 0, 1f, order + 2);
         }
 
         // placeholder: draw stand-in shapes when there is no art (false on painted scenes, which show their own).
