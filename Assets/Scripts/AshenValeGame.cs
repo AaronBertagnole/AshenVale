@@ -7,18 +7,22 @@ public class AshenValeGame : MonoBehaviour
 {
     const float Ground = -3.15f;
     const float Gravity = -24f;
+    // Balance tuning (kept together so it is easy to adjust).
+    const float DeathXpLoss = .10f;        // share of the current level's XP lost on death (never loses a level)
+    const float FoeDamagePerLevel = .07f;  // monster hits grow 7% per player level, the way monster HP already does
+    const float ArmorBase = 10f;           // defense reduces damage by def / (def + ArmorBase + ArmorPerLevel * level)
+    const float ArmorPerLevel = 2f;        // so gear always helps but never makes you immune
+    const float RespawnDelay = .6f;        // seconds of the death animation before R / N are accepted
     enum Phase { Title, Select, Tutorial, Playing, Dead }
     enum Zone { Field, Town }
     int fieldIndex=0;
     bool crouching;
-    float savedFieldX, savedFieldY;
     readonly List<GameObject> secondScenery = new List<GameObject>();
     readonly List<Platform> secondPlatforms = new List<Platform>();
     readonly List<Ladder> secondLadders = new List<Ladder>();
     readonly List<Foe> secondFoes = new List<Foe>();
     readonly List<Drop> secondDrops = new List<Drop>();
     readonly List<Projectile> secondShots = new List<Projectile>();
-    float firstFieldX = 19f, firstFieldY = Ground;
     Zone zone = Zone.Field;
     bool inventoryOpen, shopOpen, portalOpen;
     float portalCast, returnX, returnY, portalX, portalY;
@@ -29,7 +33,7 @@ public class AshenValeGame : MonoBehaviour
     readonly List<Item> inventory = new List<Item>();
     readonly Item[] equipped = new Item[4];
     int bonusAttack, bonusDefense, bonusHealth;
-    GameObject portalObject, townObject;
+    GameObject portalObject;
     readonly List<GameObject> fieldScenery = new List<GameObject>();
     readonly List<GameObject> townScenery = new List<GameObject>();
     bool buildingField;
@@ -68,7 +72,8 @@ public class AshenValeGame : MonoBehaviour
     System.Random rng = new System.Random();
     class Foe { public GameObject obj; public SpriteRenderer sr; public float x, y, hp, speed, cooldown; public int tier; public float knockbackVelocity, knockbackTime; }
     class Drop { public GameObject obj; public float x, y; public int value; public bool equipment; public int potionType; public Item item; }
-    class Projectile { public GameObject obj; public float x, y, direction, life; public int damage, pierce; }
+    // hitSet is shared by every arrow of one volley, so a monster takes at most one arrow per volley.
+    class Projectile { public GameObject obj; public float x, y, direction, life; public int damage, pierce; public HashSet<Foe> hitSet; }
 
     void Awake()
     {
@@ -97,9 +102,19 @@ public class AshenValeGame : MonoBehaviour
     }
     Sprite[] Frames(string anim)
     {
-        string key = (hero == 0 ? "DragonKnight/" : "ElvenRanger/") + anim;
-        if (!sprites.ContainsKey(key)) sprites[key] = Resources.LoadAll<Sprite>("Heroes/" + key);
-        return sprites[key];
+        return LoadFrames((hero == 0 ? "DragonKnight/" : "ElvenRanger/") + anim);
+    }
+    // Resources.LoadAll does not promise any order, so frames are sorted by file name (00, 01, 02...).
+    Sprite[] LoadFrames(string key)
+    {
+        Sprite[] frames;
+        if (!sprites.TryGetValue(key, out frames))
+        {
+            frames = Resources.LoadAll<Sprite>("Heroes/" + key);
+            Array.Sort(frames, (a, b) => string.CompareOrdinal(a.name, b.name));
+            sprites[key] = frames;
+        }
+        return frames;
     }
     void StartHero(int index)
     {
@@ -134,7 +149,14 @@ public class AshenValeGame : MonoBehaviour
             if(Input.GetKeyDown(KeyCode.Escape))phase=Phase.Select;
             return;
         }
-        if (Input.GetKeyDown(KeyCode.R)) { StartHero(hero); return; }
+        // Handled before anything else, so a fallen hero can no longer cast a portal, enter town or change maps.
+        if (phase == Phase.Dead)
+        {
+            deathClock+=dt; AnimateHero(dt); UpdateSlashes(dt);
+            if (deathClock>=RespawnDelay && Input.GetKeyDown(KeyCode.R)) Respawn();
+            else if (deathClock>=RespawnDelay && Input.GetKeyDown(KeyCode.N)) ReturnToHeroSelect();
+            return;
+        }
         if (Input.GetKeyDown(KeyCode.I)) { inventoryOpen=!inventoryOpen; shopOpen=false; }
         if (Input.GetKeyDown(KeyCode.Escape)) { inventoryOpen=false; shopOpen=false; }
         if (zone==Zone.Town) { UpdateTown(dt); AnimateHero(dt); return; }
@@ -142,7 +164,6 @@ public class AshenValeGame : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.T) && !portalOpen && portalCast<=0) portalCast=1.2f;
         if (portalCast>0) { portalCast-=dt; if(portalCast<=0) CreatePortal(); }
         if ((Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow)) && portalOpen && Mathf.Abs(x-portalX)<1.5f && Mathf.Abs(y-portalY)<1.8f) { EnterTown(); return; }
-        if (phase == Phase.Dead) { deathClock+=dt; AnimateHero(dt); UpdateSlashes(dt); return; }
         elapsed+=dt; hurtVisual=Mathf.Max(0,hurtVisual-dt);
         attackCooldown=Mathf.Max(0,attackCooldown-dt); attackVisual=Mathf.Max(0,attackVisual-dt);
         dashCooldown=Mathf.Max(0,dashCooldown-dt); immunity=Mathf.Max(0,immunity-dt);
@@ -190,7 +211,7 @@ public class AshenValeGame : MonoBehaviour
         if(!crouching && !inventoryOpen && !shopOpen && Input.GetKeyDown(KeyCode.J)) Attack(false);
         if(!crouching && !inventoryOpen && !shopOpen && Input.GetKeyDown(KeyCode.K)) Attack(true);
         if(Input.GetKeyDown(KeyCode.E)) Pickup();
-        string next=hurtVisual>0?"hurt":attackVisual>0?(hero==0?(lastAttack==0?(comboStep%2==0?"attack_thrust":"attack_sweep"):"dragon_strike"):(lastAttack==0?"quick_shot":"power_shot")):
+        string next=hurtVisual>0?"hurt":attackVisual>0?(hero==0?(lastAttack==0?(comboStep%2==0?"attack_thrust":"attack_sweep"):"dragon_strike"):(lastAttack==0?"quick_shot":"multi_shot")):
             (climbing?"run":(crouching?"idle":(!grounded?(vy>0?"jump":"fall"):(Mathf.Abs(vx)>.2f?"run":"idle"))));
         SetAnimation(next); AnimateHero(dt);
         cam.transform.position=Vector3.Lerp(cam.transform.position,new Vector3(Mathf.Clamp(x,-14,14),0,-10),dt*4);
@@ -250,10 +271,13 @@ public class AshenValeGame : MonoBehaviour
         if(hero==1)
         {
             int count=skill?3:1;
+            // The three Multi Shot arrows used to land on the same monster together (triple damage).
+            // Now the volley shares one hit list: each monster takes one arrow, the rest fly on to the next.
+            var volley=new HashSet<Foe>();
             for(int i=0;i<count;i++)
             {
                 var o=MakeSquare("Arrow",new Color(.72f,1,.43f),.52f,.11f,13);
-                shots.Add(new Projectile{obj=o,x=x+facing*.7f,y=y+1.1f+(i-1)*.17f,direction=facing,damage=damage,pierce=skill?2:1,life=1.2f});
+                shots.Add(new Projectile{obj=o,x=x+facing*.7f,y=y+1.1f+(i-1)*.17f,direction=facing,damage=damage,pierce=skill?2:1,life=1.2f,hitSet=volley});
             }
         }
         else
@@ -289,8 +313,12 @@ public class AshenValeGame : MonoBehaviour
         {
             var p=shots[i];p.x+=p.direction*15*dt;p.life-=dt;
             p.obj.transform.position=new Vector3(p.x,p.y,0);
-            foreach(var f in foes.ToArray()) if(Mathf.Abs(f.x-p.x)<.5f&&Mathf.Abs((f.y+.7f)-p.y)<1f)
-            { Hit(f,p.damage);p.pierce--;p.x+=p.direction*.65f;break; }
+            for(int j=0;j<foes.Count;j++)
+            {
+                var f=foes[j];
+                if(p.hitSet.Contains(f) || Mathf.Abs(f.x-p.x)>=.5f || Mathf.Abs((f.y+.7f)-p.y)>=1f) continue;
+                p.hitSet.Add(f); Hit(f,p.damage); p.pierce--; break;
+            }
             if(p.life<=0||p.pierce<=0) {Destroy(p.obj);shots.RemoveAt(i);}
         }
     }
@@ -317,8 +345,17 @@ public class AshenValeGame : MonoBehaviour
             else if(Mathf.Abs(dist)>.95f)f.x+=Mathf.Sign(dist)*f.speed*dt;
             f.obj.transform.position=new Vector3(f.x,f.y+.6f,0);
             f.cooldown-=dt;
-            if(Mathf.Abs(dist)<1.1f && Mathf.Abs(f.y-y)<1.4f && f.cooldown<=0) {f.cooldown=1.15f;if(immunity<=0){hp-=Mathf.Max(1,(f.tier==3?23:f.tier==2?13:f.tier==1?19:10)-bonusDefense);immunity=.7f;hurtVisual=.23f;if(hp<=0){hp=0;phase=Phase.Dead;deathClock=0;SetAnimation("death");}}}
+            if(Mathf.Abs(dist)<1.1f && Mathf.Abs(f.y-y)<1.4f && f.cooldown<=0) {f.cooldown=1.15f;if(immunity<=0){hp-=DamageTaken(f.tier==3?23:f.tier==2?13:f.tier==1?19:10);immunity=.7f;hurtVisual=.23f;if(hp<=0){hp=0;phase=Phase.Dead;deathClock=0;SetAnimation("death");}}}
         }
+    }
+    // Monster HP already grows with your level, so their hits do too. Defense used to be subtracted flat,
+    // which made most monsters hit for 1 by about level 10 with Rare gear. It is now a percentage that
+    // shrinks as you level: two Epic armor pieces give roughly 35-40% reduction, never immunity.
+    int DamageTaken(int raw)
+    {
+        float scaled=raw*(1f+FoeDamagePerLevel*(level-1));
+        float reduction=bonusDefense/(bonusDefense+ArmorBase+ArmorPerLevel*level);
+        return Mathf.Max(1,Mathf.RoundToInt(scaled*(1f-reduction)));
     }
     void Hit(Foe f,int damage)
     {
@@ -420,7 +457,6 @@ public class AshenValeGame : MonoBehaviour
     {
         // Swap world objects and enemy/drop state, preserving both hunting maps.
         if(target==fieldIndex)return;
-        if(fieldIndex==0){firstFieldX=x;firstFieldY=y;}
         foreach(var o in fieldScenery)if(o)o.SetActive(false);
         foreach(var f in foes)if(f.obj)f.obj.SetActive(false);
         foreach(var d in drops)if(d.obj)d.obj.SetActive(false);
@@ -469,7 +505,7 @@ public class AshenValeGame : MonoBehaviour
         double roll=rng.NextDouble(); Rarity rarity=roll<.05?Rarity.Epic:roll<.25?Rarity.Rare:Rarity.Common;
         int mult=rarity==Rarity.Epic?3:rarity==Rarity.Rare?2:1;
         int power=1+level/3;
-        string[] names={"Spear", "Helmet", "Armor", "Boots"};
+        string[] names={hero==1?"Bow":"Spear", "Helmet", "Armor", "Boots"};
         return new Item { name=rarity+" "+names[(int)slot],slot=slot,rarity=rarity,
             attack=slot==Slot.Weapon?mult*(2+power):0,
             defense=slot==Slot.Helmet||slot==Slot.Chest?mult*(1+power/2):0,
@@ -559,6 +595,29 @@ public class AshenValeGame : MonoBehaviour
         foreach(var fx in slashes)if(fx.obj)fx.obj.SetActive(true);
         cam.transform.position=new Vector3(Mathf.Clamp(x,-14,14),0,-10);
         spawnTime=Mathf.Max(1,spawnTime);
+    }
+    // Death used to offer only "R to restart", which wiped the hero back to level 1 with no gear.
+    // Now you wake up in Emberhaven with full HP / MP, lose part of this level's XP, and keep everything else.
+    void Respawn()
+    {
+        xp=Mathf.Max(0,xp-Mathf.RoundToInt(XpNeeded()*DeathXpLoss));
+        hp=maxHp; mp=maxMp;
+        phase=Phase.Playing;
+        deathClock=hurtVisual=immunity=dashTime=portalCast=0;
+        vx=vy=0; crouching=false;
+        if(portalObject){Destroy(portalObject);portalObject=null;}
+        portalOpen=false;
+        EnterTown();
+        // The town's return portal leads to the start of the map you fell on, not into the monsters that beat you.
+        returnX=fieldIndex==0?-3f:-19.5f; returnY=Ground;
+    }
+    // N on the death screen: back to hero select (choosing a hero there starts a fresh run, as R used to).
+    void ReturnToHeroSelect()
+    {
+        phase=Phase.Select; pendingHero=Mathf.Max(0,hero);
+        inventoryOpen=shopOpen=false;
+        playerRenderer.enabled=false;
+        if(introSource!=null && introSource.clip!=null && !introSource.isPlaying) introSource.Play();
     }
     void UpdateTown(float dt)
     {
@@ -662,8 +721,8 @@ public class AshenValeGame : MonoBehaviour
         string name=index==0?"DRAGON KNIGHT":"ELVEN RANGER";
         GUI.Label(new Rect(r.x+10,r.y+10,r.width-20,29),name,menuSubtitle);
         // Preview uses the same Resources sprites as the playable character, when available.
-        string resource=index==0?"Heroes/DragonKnight/idle":"Heroes/ElvenRanger/idle";
-        Sprite[] preview=Resources.LoadAll<Sprite>(resource);
+        // Cached and sorted (this used to reload the sprites every frame the menu was drawn).
+        Sprite[] preview=LoadFrames(index==0?"DragonKnight/idle":"ElvenRanger/idle");
         if(preview.Length>0 && preview[0]!=null)
         {
             Sprite sprite=preview[0];
@@ -795,6 +854,6 @@ public class AshenValeGame : MonoBehaviour
             if(zone==Zone.Town) GUI.Label(new Rect(18,218,800,35),"EMBERHAVEN — WALK TO MERCHANT (RIGHT) OR BLUE PORTAL (LEFT), PRESS UP AT PORTAL / E AT MERCHANT",bodyStyle);
             if(zone==Zone.Field)GUI.Label(new Rect(18,218,850,35),fieldIndex==0?"EMBERFIELDS — GREEN GATE AT FAR RIGHT: UP TO MOSSWOOD":"MOSSWOOD — BLUE GATE AT FAR LEFT: UP TO EMBERFIELDS",bodyStyle);
             if(portalCast>0) GUI.Label(new Rect(18,245,500,35),"Casting Town Portal...",bodyStyle);
-            if(phase==Phase.Dead)GUI.Label(new Rect(0,Screen.height/2f-25,Screen.width,65),"YOU FELL IN BATTLE — PRESS R TO RESTART",centeredStyle);
+            if(phase==Phase.Dead)GUI.Label(new Rect(0,Screen.height/2f-25,Screen.width,65),deathClock<RespawnDelay?"YOU FELL IN BATTLE":"YOU FELL IN BATTLE — R: WAKE IN EMBERHAVEN   N: NEW HERO",centeredStyle);
     }
 }
