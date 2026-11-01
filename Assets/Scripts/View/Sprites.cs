@@ -11,7 +11,7 @@ namespace AshenVale
         static readonly Dictionary<string, Sprite[]> frames = new Dictionary<string, Sprite[]>();
         static readonly Dictionary<string, Sprite> singles = new Dictionary<string, Sprite>();
         static readonly Dictionary<string, Sprite> gradients = new Dictionary<string, Sprite>();
-        static Sprite square, disc, quad, glow;
+        static Sprite square, disc, quad, glow, leaf;
 
         // Frames of Resources/Heroes/<path>, sorted by file name.
         public static Sprite[] Hero(string path) { return Frames("Heroes/" + path); }
@@ -99,6 +99,34 @@ namespace AshenVale
                     glow = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(.5f, .5f), size);
                 }
                 return glow;
+            }
+        }
+
+        // A white leaf with a grey vein, 1 unit across, lying corner to corner (tinted for falling autumn leaves).
+        public static Sprite Leaf
+        {
+            get
+            {
+                if (leaf == null)
+                {
+                    const int size = 32;
+                    var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+                    tex.filterMode = FilterMode.Bilinear;
+                    tex.wrapMode = TextureWrapMode.Clamp;
+                    for (int y = 0; y < size; y++)
+                        for (int x = 0; x < size; x++)
+                        {
+                            float px = (x + .5f) / size * 2f - 1f, py = (y + .5f) / size * 2f - 1f;
+                            float along = (px + py) * .7071f, across = (py - px) * .7071f;     // along the diagonal, and across it
+                            float half = .42f * Mathf.Max(0f, 1f - along * along);             // half the leaf's width here
+                            float a = Mathf.Abs(along) > .98f ? 0f : Mathf.Clamp01((half - Mathf.Abs(across)) * size * .5f);
+                            float shade = Mathf.Abs(across) < .035f && Mathf.Abs(along) < .85f ? .72f : 1f;
+                            tex.SetPixel(x, y, new Color(shade, shade, shade, a));
+                        }
+                    tex.Apply();
+                    leaf = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(.5f, .5f), size);
+                }
+                return leaf;
             }
         }
 

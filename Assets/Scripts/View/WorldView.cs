@@ -442,16 +442,18 @@ namespace AshenVale
                     layer.transform.position = new Vector3(c.x * layer.fx, (c.y - visual.cameraLowY) * layer.fy, 0);
                     continue;
                 }
-                // Across: the picture's left edge shows at the map's left end and its right edge at the right end.
+                // Across: the picture's left edge shows at the map's left end and its right edge at the right end
+                // (travel 1); a distant picture slides through less of its spare width, centred, so it seems further away.
                 // Up: at the lowest camera its painted path sits on the ground; at the highest its top meets the view's top.
                 float tx = maxX > minX ? Mathf.InverseLerp(minX, maxX, c.x) : .5f;
                 float ty = maxY > minY ? Mathf.InverseLerp(minY, maxY, c.y) : 0f;
-                float left = layer.width > 2f * halfWidth ? c.x - halfWidth - tx * (layer.width - 2f * halfWidth) : c.x - layer.width * .5f;
+                float spare = layer.width - 2f * halfWidth;
+                float left = spare > 0f ? c.x - halfWidth - (.5f + (tx - .5f) * layer.travel) * spare : c.x - layer.width * .5f;
                 float low = Tuning.Ground - layer.floor * layer.height;
                 float high = Mathf.Max(low, maxY + ViewHalfHeight - layer.height);
                 layer.transform.position = new Vector3(left, Mathf.Lerp(low, high, ty), 0);
             }
-            visual.Animate(Time.time);      // motes and waystone sparks
+            visual.Animate(Time.time, c, halfWidth, ViewHalfHeight);     // motes, leaves, sparks, smoke
         }
     }
 }

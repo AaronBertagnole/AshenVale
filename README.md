@@ -44,8 +44,11 @@ every ladder and marker stands on something, and every portal leads somewhere an
 
 ## Art
 
-Everything you see is placeholder shapes until real art is added. See [ART.md](ART.md) for sizes, file names
-and folders: drop a PNG in the right place and it replaces that placeholder.
+The towns (Emberhaven, Cinderford) and the road from Emberfields to Kingsroad are painted, each as a see-through
+front with a distant picture sliding behind it for depth, plus animated touches: waystone and forge glows,
+waterfalls and river glints, mist, falling leaves, smoke and drifting motes (`Assets/Scripts/Data/MapArt.cs`).
+Hollow Den, Ashen Marsh, monsters and town folk are still placeholder shapes. See [ART.md](ART.md) for sizes,
+file names and folders: drop a PNG in the right place and it replaces that placeholder.
 
 ## Playing together
 
