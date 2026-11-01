@@ -26,6 +26,15 @@ your last town, and that town's return portal takes you back.
 
 Cinderford, the second town, is a long walled street with a gate at each end, two shops, a smithy and a waystone.
 
+**M** opens the world map: every place you have been, "???" for the places next door, the roads between them,
+where you are and where the rest of your party is (hover a place for its monsters). Secret places stay hidden
+until you find them. The minimap in the top right corner (**Tab** hides it) shows the map you are on: floors,
+ladders, portals, monsters (red), chests (gold), other heroes (green) and you (yellow).
+
+Chests turn up at random: each hunting map has a few chest spots (`k` in the layouts), and a chest appears at
+one of them now and then (never the same spot twice in a row), moving on if nobody opens it within 3 minutes.
+One chest per map at a time; the secret Hollow Den allows two. Numbers in `Tuning.cs` (Chest...).
+
 Monsters also drop parts (chests spill several). The smithies in Emberhaven and Cinderford spend parts and gold to upgrade gear
 from +1 to +5, about 12% of the item's base stats each time. Which parts depends on the item's level band and slot.
 

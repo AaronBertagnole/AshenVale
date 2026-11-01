@@ -231,7 +231,7 @@ namespace AshenVale
 
             stale.Clear();
             foreach (var kv in monsterViews) if (!seen.Contains(kv.Key)) stale.Add(kv.Key);
-            foreach (var id in stale) { dying.Add(monsterViews[id]); monsterViews.Remove(id); }   // monsters only leave by dying
+            foreach (var id in stale) { dying.Add(monsterViews[id]); monsterViews.Remove(id); }   // killed, or a chest moving on: fade out
 
             for (int i = dying.Count - 1; i >= 0; i--)
             {

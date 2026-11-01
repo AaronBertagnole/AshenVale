@@ -17,8 +17,12 @@ namespace AshenVale
         public int lastTown = Maps.FirstTown;           // where town portals (T) and waking up take you
         public int towns = 1 << Maps.FirstTown;         // towns found so far, one bit per map id (waystones travel between them)
 
+        public long mapsSeen = 1L << Maps.FirstTown;     // maps visited, one bit per map id (the world map shows these)
+
         public bool KnowsTown(int map) { return map >= 0 && map < 32 && (towns & (1 << map)) != 0; }
         public void FindTown(int map) { if (Maps.IsTown(map)) { towns |= 1 << map; lastTown = map; } }
+        public bool HasSeen(int map) { return map >= 0 && map < 64 && (mapsSeen & (1L << map)) != 0; }
+        public void SeeMap(int map) { if (map >= 0 && map < 64) mapsSeen |= 1L << map; }
 
         public HeroDef Def { get { return Heroes.All[hero]; } }
         public int BonusAttack { get { int n = 0; foreach (var i in equipped) if (i != null) n += i.Attack; return n; } }
@@ -78,6 +82,7 @@ namespace AshenVale
         public float knockbackVelocity, knockbackTime;
         public int target;              // player id it is chasing (0 = none)
         public float aggroTime;         // seconds it stays on the player who last hit it
+        public float life;              // chests: seconds before it moves on if nobody opens it
         public MonsterDef Def { get { return Monsters.All[def]; } }
     }
 

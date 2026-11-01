@@ -8,7 +8,8 @@ namespace AshenVale
     {
         // 1: first save format.  2: adds lastTown, towns, monster parts, item level and upgrade
         //    (older files start with Emberhaven only, no parts, items at level 1 +0).
-        public const int Version = 2;
+        // 3: adds maps visited, for the world map (older files: the towns found and the map the hero is on).
+        public const int Version = 3;
 
         // forSave: true for the save file (a fallen hero is stored as woken in town); false for sending a
         // hero's live data to its player online.
@@ -20,7 +21,7 @@ namespace AshenVale
                 id = ch.id, name = ch.name, hero = ch.hero, level = ch.level, xp = ch.xp, gold = ch.gold, kills = ch.kills,
                 hpPotions = ch.hpPotions, mpPotions = ch.mpPotions, playSeconds = ch.playSeconds,
                 map = p.map, hp = p.hp, mp = p.mp, lastTown = ch.lastTown, towns = ch.towns, savedAt = DateTime.UtcNow.ToString("o"),
-                parts = (int[])ch.parts.Clone(),
+                parts = (int[])ch.parts.Clone(), maps = ch.mapsSeen,
             };
             if (p.dead && forSave)
             {
@@ -61,6 +62,11 @@ namespace AshenVale
                     if ((d.towns & (1 << i)) != 0 && Maps.IsTown(i)) towns |= 1 << i;
             ch.towns = towns;
             ch.lastTown = d.version >= 2 && Maps.IsTown(d.lastTown) && ch.KnowsTown(d.lastTown) ? d.lastTown : Maps.FirstTown;
+            // Maps visited: keep only real map ids; towns found and the map the hero stands on count as visited.
+            long seen = 1L << Maps.FirstTown;
+            for (int i = 0; i < Maps.All.Length && i < 64; i++)
+                if ((d.version >= 3 && (d.maps & (1L << i)) != 0) || ch.KnowsTown(i) || i == d.map) seen |= 1L << i;
+            ch.mapsSeen = seen;
             if (d.parts != null)
                 for (int i = 0; i < d.parts.Length && i < ch.parts.Length; i++) ch.parts[i] = Mathf.Clamp(d.parts[i], 0, Tuning.MaxParts);
             if (d.inventory != null)

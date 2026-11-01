@@ -1,10 +1,11 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace AshenVale
 {
-    // In-game IMGUI: status panel, key hints, map banner, labels over portals and town folk, monster health bars,
-    // inventory, shop, waystone, smithy and the Esc menu. Clicks become World commands (Equip, BuyPotion, BuyGear, Sell,
+    // In-game IMGUI: status panel, key hints, map banner, minimap, labels over portals and town folk, monster health bars,
+    // inventory, shop, waystone, smithy, world map and the Esc menu. Clicks become World commands (Equip, BuyPotion, BuyGear, Sell,
     // Travel, Upgrade), which the world checks before applying.
     public sealed class GameHud
     {
@@ -12,10 +13,13 @@ namespace AshenVale
         const float NpcLeaveReach = 3f;     // walking further than this closes it
         const float BannerTime = 3.2f;
         const float SmithyRowHeight = 58f;
+        const float MinimapWidth = 300f, MinimapMaxHeight = 160f;
+        const string WorldMapArt = "Art/UI/world_map";     // optional painted world map (see WorldAtlas)
 
         readonly World world;
-        public bool inventoryOpen, shopOpen, menuOpen, waystoneOpen, smithyOpen;
-        public bool WindowOpen { get { return inventoryOpen || shopOpen || menuOpen || waystoneOpen || smithyOpen; } }
+        public bool inventoryOpen, shopOpen, menuOpen, waystoneOpen, smithyOpen, worldMapOpen;
+        public bool minimapShown = true;    // Tab
+        public bool WindowOpen { get { return inventoryOpen || shopOpen || menuOpen || waystoneOpen || smithyOpen || worldMapOpen; } }
 
         // Esc menu choices, handled by the game (they save first).
         public Action onCharacterSelect, onQuit;
@@ -24,33 +28,37 @@ namespace AshenVale
         public bool online;                 // changes the Esc menu wording
 
         GUIStyle titleText, barText, detailText, detailRight, bodyStyle, smallStyle, centeredStyle, menuButton, statusStyle, nameplate,
-                 bannerTitle, bannerSub, worldLabel, mapLabel;
+                 bannerTitle, bannerSub, worldLabel, mapLabel, minimapTitle, minimapHint, tooltipText,
+                 atlasTitle, atlasCorner, atlasName, atlasSub, atlasSmall;
+        static Texture2D dotTexture;
         int bannerMap = -1;
         float bannerClock;
         Vector2 smithyScroll;
 
         public GameHud(World world) { this.world = world; }
 
-        public void Close() { inventoryOpen = shopOpen = menuOpen = waystoneOpen = smithyOpen = false; bannerMap = -1; }
+        public void Close() { inventoryOpen = shopOpen = menuOpen = waystoneOpen = smithyOpen = worldMapOpen = false; bannerMap = -1; }
 
-        // Window keys: I inventory, E (or B) at the merchant for the shop, E at a waystone for travel, E at a smithy
-        // for upgrades, Esc closes a window or opens the menu. The world keeps running while windows are open;
-        // only attacks are blocked.
+        // Window keys: I inventory, M world map, Tab shows / hides the minimap, E (or B) at the merchant for the shop,
+        // E at a waystone for travel, E at a smithy for upgrades, Esc closes a window or opens the menu. The world
+        // keeps running while windows are open; only attacks are blocked.
         public void HandleKeys(PlayerState me)
         {
-            if (me == null || me.dead) { inventoryOpen = shopOpen = menuOpen = waystoneOpen = smithyOpen = false; return; }
+            if (me == null || me.dead) { inventoryOpen = shopOpen = menuOpen = waystoneOpen = smithyOpen = worldMapOpen = false; return; }
             if (Input.GetKeyDown(KeyCode.Escape))
             {
-                if (inventoryOpen || shopOpen || waystoneOpen || smithyOpen) { inventoryOpen = shopOpen = waystoneOpen = smithyOpen = false; }
+                if (inventoryOpen || shopOpen || waystoneOpen || smithyOpen || worldMapOpen) { inventoryOpen = shopOpen = waystoneOpen = smithyOpen = worldMapOpen = false; }
                 else menuOpen = !menuOpen;
             }
             if (menuOpen) return;
-            if (Input.GetKeyDown(KeyCode.I)) { inventoryOpen = !inventoryOpen; shopOpen = waystoneOpen = smithyOpen = false; }
+            if (Input.GetKeyDown(KeyCode.Tab)) minimapShown = !minimapShown;
+            if (Input.GetKeyDown(KeyCode.M)) { worldMapOpen = !worldMapOpen; inventoryOpen = shopOpen = waystoneOpen = smithyOpen = false; }
+            if (Input.GetKeyDown(KeyCode.I)) { inventoryOpen = !inventoryOpen; shopOpen = waystoneOpen = smithyOpen = worldMapOpen = false; }
             bool use = Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.B);
             bool talk = Input.GetKeyDown(KeyCode.E);
-            if (use && world.NearMerchant(me, NpcReach)) { shopOpen = !shopOpen; inventoryOpen = waystoneOpen = smithyOpen = false; }
-            else if (talk && world.NearWaystone(me, NpcReach)) { waystoneOpen = !waystoneOpen; inventoryOpen = shopOpen = smithyOpen = false; }
-            else if (talk && world.NearSmithy(me, NpcReach)) { smithyOpen = !smithyOpen; inventoryOpen = shopOpen = waystoneOpen = false; }
+            if (use && world.NearMerchant(me, NpcReach)) { shopOpen = !shopOpen; inventoryOpen = waystoneOpen = smithyOpen = worldMapOpen = false; }
+            else if (talk && world.NearWaystone(me, NpcReach)) { waystoneOpen = !waystoneOpen; inventoryOpen = shopOpen = smithyOpen = worldMapOpen = false; }
+            else if (talk && world.NearSmithy(me, NpcReach)) { smithyOpen = !smithyOpen; inventoryOpen = shopOpen = waystoneOpen = worldMapOpen = false; }
             if (shopOpen && !world.NearMerchant(me, NpcLeaveReach)) shopOpen = false;
             if (waystoneOpen && !world.NearWaystone(me, NpcLeaveReach)) waystoneOpen = false;
             if (smithyOpen && !world.NearSmithy(me, NpcLeaveReach)) smithyOpen = false;
@@ -81,6 +89,22 @@ namespace AshenVale
             worldLabel = new GUIStyle(GUI.skin.label) { fontSize = 12, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
             mapLabel = new GUIStyle(GUI.skin.label) { fontSize = 14, fontStyle = FontStyle.Bold, alignment = TextAnchor.UpperRight };
             mapLabel.normal.textColor = new Color(1f, .9f, .68f);
+            minimapTitle = new GUIStyle(GUI.skin.label) { fontSize = 13, fontStyle = FontStyle.Bold };
+            minimapTitle.normal.textColor = new Color(1f, .9f, .68f);
+            minimapHint = new GUIStyle(GUI.skin.label) { fontSize = 10, alignment = TextAnchor.UpperRight };
+            minimapHint.normal.textColor = new Color(.7f, .74f, .8f);
+            tooltipText = new GUIStyle(smallStyle) { fontSize = 13, wordWrap = true };
+            // World map text: dark ink on parchment.
+            atlasTitle = new GUIStyle(GUI.skin.label) { fontSize = 24, fontStyle = FontStyle.Bold, alignment = TextAnchor.UpperCenter };
+            atlasTitle.normal.textColor = new Color(.30f, .19f, .10f);
+            atlasCorner = new GUIStyle(GUI.skin.label) { fontSize = 12, fontStyle = FontStyle.Bold, alignment = TextAnchor.UpperRight };
+            atlasCorner.normal.textColor = new Color(.38f, .26f, .15f);
+            atlasName = new GUIStyle(GUI.skin.label) { fontSize = 13, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
+            atlasName.normal.textColor = new Color(.24f, .15f, .08f);
+            atlasSub = new GUIStyle(GUI.skin.label) { fontSize = 11, alignment = TextAnchor.MiddleCenter };
+            atlasSub.normal.textColor = new Color(.42f, .30f, .18f);
+            atlasSmall = new GUIStyle(GUI.skin.label) { fontSize = 12 };
+            atlasSmall.normal.textColor = new Color(.32f, .22f, .12f);
         }
 
         public void Draw(PlayerState me)
@@ -94,15 +118,18 @@ namespace AshenVale
             DrawNameplates(me);
             DrawStatus(me);
             if (!string.IsNullOrEmpty(status)) GUI.Label(new Rect(Screen.width - 620, 12, 608, 24), status, statusStyle);
-            GUI.Label(new Rect(Screen.width - 420, string.IsNullOrEmpty(status) ? 12 : 36, 408, 24), def.name.ToUpperInvariant() + "  ·  " + def.LevelText.ToUpperInvariant(), mapLabel);
-            GUI.Box(new Rect(10, Screen.height - 48, Mathf.Min(Screen.width - 20, 1000), 38), GUIContent.none);
+            float corner = string.IsNullOrEmpty(status) ? 10 : 36;
+            if (minimapShown) DrawMinimap(me, def, corner);
+            else GUI.Label(new Rect(Screen.width - 420, corner + 2, 408, 24), def.name.ToUpperInvariant() + "  ·  " + def.LevelText.ToUpperInvariant(), mapLabel);
+            GUI.Box(new Rect(10, Screen.height - 48, Mathf.Min(Screen.width - 20, 1080), 38), GUIContent.none);
             GUI.Label(new Rect(22, Screen.height - 42, 1250, 30), town
-                ? "A/D Move | SPACE Jump | DOWN+SPACE Drop | W/Up Portal | E Merchant / Waystone / Smithy | I Inventory"
-                : "A/D Move | SPACE Jump | DOWN+SPACE Drop | W/S Ladder | J/K Attack | L Dash | Q/F Potions | E Loot | W/Up Portal | T Town | I Bag", smallStyle);
+                ? "A/D Move | SPACE Jump | DOWN+SPACE Drop | W/Up Portal | E Merchant / Waystone / Smithy | I Inventory | M Map"
+                : "A/D Move | SPACE Jump | DOWN+SPACE Drop | W/S Ladder | J/K Attack | L Dash | Q/F Potions | E Loot | W/Up Portal | T Town | I Bag | M Map", smallStyle);
             if (inventoryOpen) DrawInventory(me);
             if (shopOpen && town) DrawShop(me, def);
             if (waystoneOpen && town) DrawWaystone(me);
             if (smithyOpen && def.hasSmithy) DrawSmithy(me, def);
+            if (worldMapOpen) DrawWorldMap(me);
             if (me.portalCast > 0) GUI.Label(new Rect(18, 218, 500, 35), "Casting Town Portal...", bodyStyle);
             DrawBanner(me, def);
             if (me.dead)
@@ -314,6 +341,243 @@ namespace AshenVale
                 GUI.enabled = true;
                 y += 48;
             }
+        }
+
+        // ---------------------------------------------------------------- minimap and world map
+
+        // Top right (Tab hides it): this map's ground, platforms, ladders and portals, town folk, monsters (red),
+        // chests (gold), other heroes (green), you (yellow), and a frame around the part of the map on screen.
+        void DrawMinimap(PlayerState me, MapDef def, float top)
+        {
+            float s = Mathf.Min(MinimapWidth / def.columns, MinimapMaxHeight / def.rows);   // pixels per world unit
+            float w = def.columns * s, h = def.rows * s;
+            float x0 = Screen.width - 18 - w, y0 = top + 26;
+            float low = def.Bottom, high = def.Top;
+            float MX(float x) { return x0 + Mathf.Clamp(x, 0f, def.columns) * s; }
+            float MY(float y) { return y0 + (high - Mathf.Clamp(y, low, high)) * s; }
+
+            Rect frame = new Rect(x0 - 8, top, w + 16, h + 52);
+            Fill(frame, new Color(.055f, .075f, .12f, .88f));
+            Fill(new Rect(frame.x, frame.y, frame.width, 2), new Color(.65f, .48f, .27f));
+            GUI.Label(new Rect(frame.x + 8, top + 5, frame.width - 16, 20), def.name.ToUpperInvariant() + "  ·  " + def.LevelText.ToUpperInvariant(), minimapTitle);
+            Fill(new Rect(x0, y0, w, h), new Color(.6f, .7f, .9f, .08f));
+
+            var floor = new Color(.86f, .78f, .6f, .9f);
+            Fill(new Rect(x0, MY(low) - 2, w, 2), floor);
+            foreach (var p in def.platforms) Fill(new Rect(MX(p.left), MY(p.top) - 1, (p.right - p.left) * s, 2), floor);
+            foreach (var l in def.ladders) Fill(new Rect(MX(l.x) - .5f, MY(l.top), 1, (l.top - l.bottom) * s), new Color(.7f, .55f, .35f, .8f));
+            foreach (var portal in def.portals)
+            {
+                if (WorldAtlas.IsSecret(portal.targetMap) && !me.ch.HasSeen(portal.targetMap)) continue;   // don't give secrets away
+                Marker(MX(portal.x), MY(portal.y + .8f), 6, new Color(.55f, .6f, 1f));
+            }
+            if (def.kind == MapKind.Town)
+            {
+                Marker(MX(def.returnX), MY(def.returnY + .8f), 6, new Color(.8f, .7f, 1f));
+                foreach (var stand in def.merchants) Square(MX(stand.x), MY(stand.y + .6f), 4, new Color(1f, .85f, .5f));
+                Square(MX(def.waystoneX), MY(def.waystoneY + .6f), 4, new Color(.55f, .95f, 1f));
+            }
+            if (def.hasSmithy) Square(MX(def.smithyX), MY(def.smithyY + .6f), 4, new Color(1f, .6f, .35f));
+            foreach (var m in world.maps[me.map].monsters)
+            {
+                if (m.Def.IsChest) Square(MX(m.x), MY(m.y + .4f), 5, new Color(1f, .8f, .25f));
+                else Marker(MX(m.x), MY(m.y + .5f), 4, new Color(1f, .3f, .28f), false);
+            }
+            foreach (var p in world.players)
+                if (p != me && p.map == me.map && !p.dead) Marker(MX(p.x), MY(p.y + .6f), 6, new Color(.45f, 1f, .5f));
+            Marker(MX(me.x), MY(me.y + .6f), 7, new Color(1f, .92f, .3f));
+
+            var cam = Camera.main;
+            if (cam != null && cam.orthographic)
+            {
+                float hh = cam.orthographicSize, hw = hh * cam.aspect;
+                Vector3 c = cam.transform.position;
+                float left = MX(c.x - hw), right = MX(c.x + hw), viewTop = MY(c.y + hh), viewBottom = MY(c.y - hh);
+                Outline(new Rect(left, viewTop, right - left, viewBottom - viewTop), new Color(1f, 1f, 1f, .35f));
+            }
+            GUI.Label(new Rect(frame.x + 8, y0 + h + 6, frame.width - 16, 18), "M  WORLD MAP   ·   TAB  HIDE", minimapHint);
+        }
+
+        // M: the world as far as you know it. Places you have been, "???" for the places next door, the roads
+        // between them, where you are and where the rest of your party is. Hover a place to see its monsters.
+        void DrawWorldMap(PlayerState me)
+        {
+            var ch = me.ch;
+            float w = Mathf.Min(Screen.width - 40, 1000), h = Mathf.Min(Screen.height - 150, 580);
+            Rect r = new Rect((Screen.width - w) / 2f, Mathf.Max(60, (Screen.height - h) / 2f - 10), w, h);
+            Fill(new Rect(r.x - 5, r.y - 5, r.width + 10, r.height + 10), new Color(.23f, .15f, .09f, .97f));
+            var art = Sprites.Art(WorldMapArt);
+            if (art != null) GUI.DrawTexture(r, art.texture, ScaleMode.StretchToFill);
+            else
+            {
+                Fill(r, new Color(.91f, .84f, .68f, .98f));
+                Outline(new Rect(r.x + 8, r.y + 8, r.width - 16, r.height - 16), new Color(.55f, .4f, .25f, .6f));
+            }
+            GUI.Label(new Rect(r.x, r.y + 14, r.width, 34), "WORLD MAP", atlasTitle);
+            GUI.Label(new Rect(r.x + 20, r.y + 20, r.width - 44, 20), "[M] CLOSE", atlasCorner);
+            Rect area = new Rect(r.x + 70, r.y + 72, r.width - 140, r.height - 160);
+
+            foreach (var road in WorldAtlas.Roads)
+            {
+                bool a = ch.HasSeen(road.x), b = ch.HasSeen(road.y);
+                if ((!a && !b) || !WorldAtlas.Shown(ch, road.x) || !WorldAtlas.Shown(ch, road.y)) continue;
+                DottedLine(AtlasPoint(area, road.x), AtlasPoint(area, road.y), new Color(.42f, .28f, .16f, a && b ? .9f : .35f));
+            }
+
+            int hovered = -1, found = 0;
+            Vector2 mouse = Event.current.mousePosition;
+            for (int i = 0; i < Maps.All.Length; i++)
+            {
+                bool seen = ch.HasSeen(i);
+                if (seen) found++;
+                if (!WorldAtlas.Shown(ch, i)) continue;
+                var def = Maps.All[i];
+                bool here = i == me.map, town = def.kind == MapKind.Town;
+                Vector2 at = AtlasPoint(area, i);
+                if (here) Marker(at.x, at.y, 30f + 6f * Mathf.Sin(Time.unscaledTime * 4f), new Color(1f, .9f, .35f, .5f), false);
+                if (!seen) Marker(at.x, at.y, 16, new Color(.62f, .57f, .5f));
+                else if (town) Square(at.x, at.y, 17, new Color(.95f, .74f, .34f));
+                else Marker(at.x, at.y, 18, DangerColor(def, ch.level));
+                if (!seen) GUI.Label(new Rect(at.x - 10, at.y - 10, 20, 20), "?", atlasName);
+                AtlasText(at.x, at.y + 22, seen ? def.name : "???", atlasName);
+                AtlasText(at.x, at.y + 38, !seen ? "unexplored" : town ? "Town · waystone" : def.LevelText, atlasSub);
+                if (here) AtlasText(at.x, at.y - 29, "YOU ARE HERE", atlasSub);
+                if ((mouse - at).sqrMagnitude < 20f * 20f) hovered = i;
+            }
+
+            int k = 0;
+            var party = new System.Text.StringBuilder();
+            foreach (var p in world.players)
+            {
+                if (p == me) continue;
+                Vector2 at = AtlasPoint(area, p.map);
+                Marker(at.x + 15 + 8 * (k % 3), at.y - 15 - 8 * (k / 3), 8, new Color(.4f, .95f, .45f));
+                if (party.Length > 0) party.Append("   ·   ");
+                party.Append(p.ch.name ?? "Hero").Append(" (Lv ").Append(p.ch.level).Append(")  ").Append(Maps.All[p.map].name);
+                k++;
+            }
+
+            float footer = r.yMax - 70;
+            GUI.Label(new Rect(r.x + 26, footer, r.width - 52, 20), "Discovered " + found + " of " + Maps.All.Length + " places", atlasSmall);
+            GUI.Label(new Rect(r.x + 26, footer + 20, r.width - 52, 20),
+                      "Circle: hunting ground (green about your level, red tougher, grey too easy)   ·   Square: town   ·   ?: not explored yet", atlasSmall);
+            if (party.Length > 0) GUI.Label(new Rect(r.x + 26, footer + 40, r.width - 52, 20), "PARTY   " + party, atlasSmall);
+            if (hovered >= 0) AtlasTooltip(me, hovered, mouse);
+        }
+
+        // A world map label centred on (x, y), on a patch of parchment so roads don't run through the letters.
+        static void AtlasText(float x, float y, string text, GUIStyle style)
+        {
+            var size = style.CalcSize(new GUIContent(text));
+            Fill(new Rect(x - size.x / 2f - 4f, y - size.y / 2f + 1f, size.x + 8f, size.y - 2f), new Color(.91f, .84f, .68f, .88f));
+            GUI.Label(new Rect(x - size.x / 2f - 4f, y - size.y / 2f, size.x + 8f, size.y), text, style);
+        }
+
+        // What hovering a place on the world map tells you.
+        void AtlasTooltip(PlayerState me, int map, Vector2 mouse)
+        {
+            var def = Maps.All[map];
+            bool seen = me.ch.HasSeen(map);
+            var text = new System.Text.StringBuilder();
+            if (!seen) text.Append("Not explored yet. Follow the road to find out what lives here.");
+            else if (def.kind == MapKind.Town)
+                text.Append(def.merchants.Length > 1 ? "Merchants" : "Merchant").Append(", waystone").Append(def.hasSmithy ? ", smithy" : "").Append(".");
+            else
+            {
+                var names = new List<string>();
+                bool chests = false;
+                foreach (var spawn in def.spawns)
+                {
+                    var m = Monsters.All[spawn.monster];
+                    if (m.IsChest) { chests = true; continue; }
+                    string entry = m.name + " (Lv " + m.level + ")";
+                    if (!names.Contains(entry)) names.Add(entry);
+                }
+                text.Append(string.Join(", ", names.ToArray()));
+                if (chests) text.Append("\nChests turn up here now and then.");
+            }
+            string title = seen ? def.name.ToUpperInvariant() + "   ·   " + def.LevelText.ToUpperInvariant() : "???";
+            var body = new GUIContent(text.ToString());
+            float width = 320f, height = tooltipText.CalcHeight(body, width - 20f) + 38f;
+            Rect box = new Rect(Mathf.Min(mouse.x + 18, Screen.width - width - 10), Mathf.Min(mouse.y + 18, Screen.height - height - 10), width, height);
+            Fill(box, new Color(.055f, .075f, .12f, .96f));
+            Fill(new Rect(box.x, box.y, box.width, 2), new Color(.65f, .48f, .27f));
+            GUI.Label(new Rect(box.x + 10, box.y + 7, width - 20, 20), title, minimapTitle);
+            GUI.Label(new Rect(box.x + 10, box.y + 29, width - 20, height - 32), body, tooltipText);
+        }
+
+        // Green: monsters about your level. Red: tougher than you. Grey: so far below you they give little XP.
+        static Color DangerColor(MapDef def, int level)
+        {
+            if (def.maxLevel <= 0) return new Color(.62f, .57f, .5f);
+            if (def.minLevel > level + 3) return new Color(.86f, .32f, .25f);
+            if (def.maxLevel < level - Tuning.OutLevelGrace) return new Color(.62f, .64f, .58f);
+            return new Color(.40f, .72f, .36f);
+        }
+
+        static Vector2 AtlasPoint(Rect area, int map)
+        {
+            var spot = WorldAtlas.Spot(map);
+            return new Vector2(area.x + spot.x * area.width, area.y + spot.y * area.height);
+        }
+
+        static void DottedLine(Vector2 a, Vector2 b, Color color)
+        {
+            int dots = Mathf.Max(1, Mathf.FloorToInt(Vector2.Distance(a, b) / 11f));
+            for (int i = 1; i < dots; i++)      // the ends are under the place markers
+            {
+                Vector2 p = Vector2.Lerp(a, b, i / (float)dots);
+                Marker(p.x, p.y, 5, color, false);
+            }
+        }
+
+        // A soft round dot, white, 16 px (tinted and scaled for map markers).
+        static Texture2D DotTexture
+        {
+            get
+            {
+                if (dotTexture != null) return dotTexture;
+                const int size = 16;
+                dotTexture = new Texture2D(size, size, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
+                float radius = size * .5f;
+                for (int y = 0; y < size; y++)
+                    for (int x = 0; x < size; x++)
+                    {
+                        float d = Mathf.Sqrt((x + .5f - radius) * (x + .5f - radius) + (y + .5f - radius) * (y + .5f - radius));
+                        dotTexture.SetPixel(x, y, new Color(1f, 1f, 1f, Mathf.Clamp01(radius - d)));
+                    }
+                dotTexture.Apply();
+                return dotTexture;
+            }
+        }
+
+        // A round marker centred on (x, y); the dark rim makes it read on any background.
+        static void Marker(float x, float y, float size, Color color, bool rim = true)
+        {
+            Color previous = GUI.color;
+            if (rim)
+            {
+                GUI.color = new Color(.05f, .04f, .03f, .85f * color.a);
+                GUI.DrawTexture(new Rect(x - size / 2f - 1.5f, y - size / 2f - 1.5f, size + 3f, size + 3f), DotTexture);
+            }
+            GUI.color = color;
+            GUI.DrawTexture(new Rect(x - size / 2f, y - size / 2f, size, size), DotTexture);
+            GUI.color = previous;
+        }
+
+        // A square marker with a dark rim (chests, towns, town folk).
+        static void Square(float x, float y, float size, Color color)
+        {
+            Fill(new Rect(x - size / 2f - 1f, y - size / 2f - 1f, size + 2f, size + 2f), new Color(.05f, .04f, .03f, .9f));
+            Fill(new Rect(x - size / 2f, y - size / 2f, size, size), color);
+        }
+
+        static void Outline(Rect r, Color color)
+        {
+            Fill(new Rect(r.x, r.y, r.width, 1), color);
+            Fill(new Rect(r.x, r.yMax - 1, r.width, 1), color);
+            Fill(new Rect(r.x, r.y, 1, r.height), color);
+            Fill(new Rect(r.xMax - 1, r.y, 1, r.height), color);
         }
 
         // "PARTS  Ember Ash 12 · Boar Tusk 3" (only the ones you carry).

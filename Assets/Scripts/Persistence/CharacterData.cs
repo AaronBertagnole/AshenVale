@@ -15,6 +15,7 @@ namespace AshenVale
         public int lastTown = Maps.FirstTown;           // version 2: where town portals and waking up lead
         public int towns = 1 << Maps.FirstTown;         // version 2: towns found (one bit per map id), for waystones
         public int[] parts = new int[0];                // version 2: monster parts carried, by Parts id
+        public long maps = 1L << Maps.FirstTown;        // version 3: maps visited (one bit per map id), for the world map
         public float playSeconds;
         public ItemData[] inventory = new ItemData[0];
         public ItemData[] equipped = new ItemData[0];   // only filled slots; each item knows its slot

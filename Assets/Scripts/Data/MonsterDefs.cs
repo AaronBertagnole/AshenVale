@@ -26,11 +26,14 @@ namespace AshenVale
         public int xp;
         public int goldMin, goldRange;  // gold = goldMin + random(0 .. goldRange - 1)
         public bool aggressive, harmless;
-        public float respawn = 8f;      // seconds before its spawn point fills again
+        public float respawn = 8f;      // seconds before its spawn point fills again (not chests, see IsChest)
         public float itemChance = -1f;  // chance of dropping gear (below 0: the usual Tuning.EquipmentDropChance)
         public int part = -1;           // the monster part it drops (Parts), -1 for none
         public float partChance = Tuning.PartDropChance;
         public int[] chestParts;        // chests: spill Tuning.ChestParts parts picked from this list
+
+        // Chests don't use respawn: they turn up at a random chest spot now and then (World.UpdateChests).
+        public bool IsChest { get { return chestParts != null; } }
     }
 
     public static class Monsters

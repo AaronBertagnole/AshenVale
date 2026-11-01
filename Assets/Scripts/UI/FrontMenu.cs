@@ -267,9 +267,9 @@ namespace AshenVale
         {
             GUI.Label(new Rect(left + 30, top + 19, 780, 54), "YOUR FIRST ADVENTURE", heading);
             GUI.Label(new Rect(left + 55, top + 78, 730, 30), "A few essentials before you set out from Emberhaven", subtitle);
-            string[] keys = { "A / D  or  ← / →", "SPACE  ·  DOWN + SPACE", "W / S", "J / K", "Q / F", "E / I", "W / UP", "T", "L / ESC" };
+            string[] keys = { "A / D  or  ← / →", "SPACE  ·  DOWN + SPACE", "W / S", "J / K", "Q / F", "E / I", "W / UP", "T  ·  M", "L / ESC" };
             string[] actions = { "Move", "Jump  ·  Drop through a platform", "Climb ladders", "Attack / Special attack", "HP / MP potions",
-                                 "Loot, talk / Inventory", "Use a portal", "Open a portal back to town", "Dash / Menu" };
+                                 "Loot, talk / Inventory", "Use a portal", "Portal back to town  ·  World map", "Dash / Menu" };
             for (int i = 0; i < keys.Length; i++)
             {
                 float y = top + 125 + i * 33;

@@ -155,6 +155,14 @@ Bottom centre of the image = where it stands.
 On a painted scene these are optional: the painting already shows the shops, so nothing is drawn there
 unless one of these files exists (a merchant or smith character standing in front of the painting, for example).
 
+### World map: `Art/UI/world_map.png`
+
+Optional painted map of the whole world, shown behind the world map window (M) instead of plain parchment.
+About 2000 x 1160 (the window is up to 1000 x 580 and keeps that shape). Places are drawn on top of it at the
+spots listed in `Assets/Scripts/Data/WorldAtlas.cs` (shares of the width and height), so once a picture is in,
+move each spot onto its place in the picture. Leave room for the title at the top and two lines of text at the
+bottom; names are written in dark ink, so a light parchment-style picture reads best.
+
 ### Heroes: `Assets/Resources/Heroes/<Hero>/<animation>/`
 
 The current heroes are pixel art (128 x 128 frames, sharp filtering). Painted heroes can replace them with the same
