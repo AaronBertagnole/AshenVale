@@ -19,6 +19,7 @@ Emberhaven (town) - Emberfields - Mosswood - Kingsroad - Cinderford (town) - Ash
                                             '- secret ledge, top left: Hollow Den (Lv 9)
 ```
 
+New heroes start in Emberhaven; Emberfields is through the portal on the right.
 Every monster kind has a fixed level, like classic MapleStory, and monsters far below your level give less XP.
 Walk into a town to find it; its waystone then lets you travel between found towns. **T** opens a portal to
 your last town, and that town's return portal takes you back.
