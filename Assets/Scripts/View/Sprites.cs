@@ -11,7 +11,7 @@ namespace AshenVale
         static readonly Dictionary<string, Sprite[]> frames = new Dictionary<string, Sprite[]>();
         static readonly Dictionary<string, Sprite> singles = new Dictionary<string, Sprite>();
         static readonly Dictionary<string, Sprite> gradients = new Dictionary<string, Sprite>();
-        static Sprite square, disc;
+        static Sprite square, disc, quad, glow;
 
         // Frames of Resources/Heroes/<path>, sorted by file name.
         public static Sprite[] Hero(string path) { return Frames("Heroes/" + path); }
@@ -55,6 +55,50 @@ namespace AshenVale
                     square = Sprite.Create(pixel, new Rect(0, 0, 1, 1), new Vector2(.5f, .5f), 1);
                 }
                 return square;
+            }
+        }
+
+        // A white 1 x 1 unit quad whose mesh is the full rectangle, so its UVs run 0..1 corner to corner
+        // (for shaders that draw from UVs, like the waystone glow).
+        public static Sprite FullQuad
+        {
+            get
+            {
+                if (quad == null)
+                {
+                    var tex = new Texture2D(4, 4, TextureFormat.RGBA32, false);
+                    var white = new Color[16];
+                    for (int i = 0; i < white.Length; i++) white[i] = Color.white;
+                    tex.SetPixels(white);
+                    tex.Apply();
+                    quad = Sprite.Create(tex, new Rect(0, 0, 4, 4), new Vector2(.5f, .5f), 4, 0, SpriteMeshType.FullRect);
+                }
+                return quad;
+            }
+        }
+
+        // A white dot that fades from the middle out, 1 unit across: motes and sparks.
+        public static Sprite Glow
+        {
+            get
+            {
+                if (glow == null)
+                {
+                    const int size = 32;
+                    var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+                    tex.filterMode = FilterMode.Bilinear;
+                    tex.wrapMode = TextureWrapMode.Clamp;
+                    float r = size * .5f;
+                    for (int y = 0; y < size; y++)
+                        for (int x = 0; x < size; x++)
+                        {
+                            float d = Mathf.Clamp01(Mathf.Sqrt((x + .5f - r) * (x + .5f - r) + (y + .5f - r) * (y + .5f - r)) / r);
+                            tex.SetPixel(x, y, new Color(1, 1, 1, (1 - d) * (1 - d)));
+                        }
+                    tex.Apply();
+                    glow = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(.5f, .5f), size);
+                }
+                return glow;
             }
         }
 

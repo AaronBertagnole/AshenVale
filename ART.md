@@ -51,6 +51,11 @@ cuts a seam where they look most alike and blends across it. Cinderford was made
 (200 px overlap; the last number crops one row off the top so both sides are multiples of 4, which Unity needs to
 compress the picture). Put `$` on every shop that should open the merchant window.
 
+Painted scenes come alive a little in code: golden motes drift along the street, and the waystone can shimmer
+(`MapLayout.WithSceneGlow`: centre and size of the arch's opening in picture pixels, plus a colour). The shimmer is
+`Assets/Resources/Shaders/WaystoneGlow.shader`, adapted from the owner's Cinderford plaza pack; Emberhaven's is
+gold, Cinderford's teal.
+
 ### Painted backdrops: `Art/Backdrops/<map>.png`
 
 For a map wider than the picture (most hunting maps). The picture is shown `MapDef.backdropWidth` units wide behind

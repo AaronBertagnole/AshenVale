@@ -451,6 +451,7 @@ namespace AshenVale
                 float high = Mathf.Max(low, maxY + ViewHalfHeight - layer.height);
                 layer.transform.position = new Vector3(left, Mathf.Lerp(low, high, ty), 0);
             }
+            visual.Animate(Time.time);      // motes and waystone sparks
         }
     }
 }

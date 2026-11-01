@@ -14,18 +14,44 @@ namespace AshenVale
         public float width, height, floor;
     }
 
-    // Everything drawn for one map: a root (switched on while the local player is on the map) and its backdrop layers.
+    // A drifting, twinkling speck of light (town motes, waystone sparks).
+    public sealed class Sparkle
+    {
+        public Transform transform;
+        public SpriteRenderer sr;
+        public Vector3 start;
+        public float phase;
+        public Color tint;
+    }
+
+    // Everything drawn for one map: a root (switched on while the local player is on the map), its backdrop layers
+    // and its sparkles.
     public sealed class MapVisual
     {
         public GameObject root;
         public readonly List<ParallaxLayer> layers = new List<ParallaxLayer>();
+        public readonly List<Sparkle> sparkles = new List<Sparkle>();
         public float cameraLowY;    // backdrop layers are laid out as seen with the camera at its lowest point
+
+        // Called every frame for the map on screen: each sparkle bobs around its spot and fades in and out.
+        public void Animate(float time)
+        {
+            foreach (var s in sparkles)
+            {
+                float t = time * .45f + s.phase;
+                s.transform.localPosition = s.start + new Vector3(Mathf.Sin(t) * .25f, Mathf.Cos(t * .7f) * .18f, 0);
+                Color c = s.tint;
+                c.a *= .35f + .65f * (Mathf.Sin(t * 2f) + 1f) * .5f;
+                s.sr.color = c;
+            }
+        }
     }
 
     // Builds the look of a map from its MapDef and theme. Every piece first looks for real art under
     // Resources/Art (see ART.md) and falls back to placeholder shapes, so art can be dropped in one file at a time.
     //
-    //   Art/Scenes/<map>          a whole painted scene for one map (MapDef.scene), replacing the backdrop and ground
+    //   Art/Scenes/<map>          a whole painted scene for one map (MapDef.scene), replacing the backdrop and ground;
+    //                             scenes get drifting motes, and a shimmer on the waystone if MapDef.sceneGlow is set
     //   Art/Backdrops/<map>       a painted backdrop for a wider map (MapDef.backdrop), replacing sky / far / mid
     //   Art/Themes/<theme>/sky, far, mid, ground, ground_back, platform_left, platform_mid, platform_right, ladder
     //   Art/Props/portal, return_portal, waystone, merchant, smithy
@@ -34,7 +60,8 @@ namespace AshenVale
         // Sorting orders, back to front (ladders stand behind platforms). Monsters 7, drops 9, heroes 10-11,
         // slashes 12, arrows 13 (WorldView).
         public const int SkyOrder = -40, FarOrder = -30, MidOrder = -20, BackDecorOrder = -10, GroundOrder = 0,
-                         PlatformOrder = 2, LadderOrder = 0, PropOrder = 5, PortalOrder = 6;
+                         PlatformOrder = 2, LadderOrder = 0, GlowOrder = 4, PropOrder = 5, PortalOrder = 6, SparkleOrder = 14;
+        const string GlowShader = "Shaders/WaystoneGlow";
 
         sealed class Theme
         {
@@ -153,7 +180,7 @@ namespace AshenVale
 
             // A painted scene already shows the sky, ground, houses, waystone and shops: draw only what it lacks.
             // A painted backdrop replaces the sky and distant layers; the ground and platforms are still drawn.
-            bool painted = BuildScene(root, def);
+            bool painted = BuildScene(visual, def);
             if (!painted)
             {
                 if (!BuildBackdrop(visual, def))
@@ -179,18 +206,65 @@ namespace AshenVale
 
         // The map's painted scene, stretched to the map's width with its walking line on the ground. False if the map
         // has none or its picture isn't in the project.
-        static bool BuildScene(Transform root, MapDef def)
+        static bool BuildScene(MapVisual visual, MapDef def)
         {
             if (string.IsNullOrEmpty(def.scene)) return false;
             var sprite = Sprites.Art(def.scene);
             if (sprite == null) return false;
+            var root = visual.root.transform;
             var size = sprite.bounds.size;
             float scale = def.columns / size.x, bottom = Tuning.Ground - def.sceneFloor * size.y * scale;
             // Placed from the sprite's own bounds, so it lines up whatever pivot it was imported with.
             var o = Sprites.Picture("Scene", sprite, SkyOrder, root,
                                     def.columns * .5f - sprite.bounds.center.x * scale, bottom - sprite.bounds.min.y * scale);
             o.transform.localScale = new Vector3(scale, scale, 1);
+
+            // Golden motes drifting along the street.
+            Sparkles(visual, "Motes", def.columns * .5f, Tuning.Ground + 2.6f, def.columns, 4.4f,
+                     Mathf.RoundToInt(def.columns * 1.5f), new Color(1f, .85f, .4f, .7f), 83);
+
+            // The waystone's shimmer and sparks, placed by picture pixels (x from the left, y from the top).
+            if (def.sceneGlow.width > 0f)
+            {
+                float perPixel = def.columns / sprite.rect.width;
+                float x = def.sceneGlow.x * perPixel, y = bottom + (sprite.rect.height - def.sceneGlow.y) * perPixel;
+                float w = def.sceneGlow.width * perPixel, h = def.sceneGlow.height * perPixel;
+                var shader = Resources.Load<Shader>(GlowShader);
+                if (shader != null && shader.isSupported)
+                {
+                    var material = new Material(shader);
+                    material.SetColor("_Color", def.sceneGlowColor);
+                    var glow = Sprites.Picture("Waystone glow", Sprites.FullQuad, GlowOrder, root, x, y);
+                    glow.GetComponent<SpriteRenderer>().sharedMaterial = material;
+                    glow.transform.localScale = new Vector3(w, h, 1);
+                }
+                Color spark = def.sceneGlowColor;
+                spark.a = .75f;
+                Sparkles(visual, "Waystone sparks", x, y, w * .55f, h * .65f, 24, spark, 41);
+            }
             return true;
+        }
+
+        // `count` sparkles scattered over a width x height area centred on (x, y); MapVisual.Animate moves them.
+        static void Sparkles(MapVisual visual, string name, float x, float y, float width, float height, int count, Color tint, int seed)
+        {
+            var group = new GameObject(name).transform;
+            group.SetParent(visual.root.transform, false);
+            group.localPosition = new Vector3(x, y, 0);
+            var rng = new System.Random(seed);
+            for (int i = 0; i < count; i++)
+            {
+                var o = new GameObject("Sparkle");
+                o.transform.SetParent(group, false);
+                var start = new Vector3(((float)rng.NextDouble() - .5f) * width, ((float)rng.NextDouble() - .5f) * height, 0);
+                o.transform.localPosition = start;
+                o.transform.localScale = Vector3.one * (.04f + (float)rng.NextDouble() * .06f);
+                var sr = o.AddComponent<SpriteRenderer>();
+                sr.sprite = Sprites.Glow;
+                sr.sortingOrder = SparkleOrder;
+                sr.color = tint;
+                visual.sparkles.Add(new Sparkle { transform = o.transform, sr = sr, start = start, phase = (float)rng.NextDouble() * 6.28f, tint = tint });
+            }
         }
 
         // Painted backdrops dropped in by map name use the same framing as the first ones: the path 116 px above the
