@@ -8,12 +8,19 @@ using System.IO;
 public static class AshenValeSetup
 {
     const string ScenePath="Assets/Scenes/AshenVale.unity";
+    const string OpenedKey="AshenVale.SceneOpenedThisSession";
     static AshenValeSetup()
     {
         EditorApplication.delayCall += () =>
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling) return;
-            if (!File.Exists(ScenePath)) CreateScene();
+            if (!File.Exists(ScenePath)) { CreateScene(); return; }
+            // A fresh clone opens on an empty "Untitled" scene (which scene was open is not stored in git).
+            // Open the game scene instead, once per editor session, if nothing else is open.
+            if (SessionState.GetBool(OpenedKey,false)) return;
+            SessionState.SetBool(OpenedKey,true);
+            var active=SceneManager.GetActiveScene();
+            if (string.IsNullOrEmpty(active.path) && !active.isDirty) EditorSceneManager.OpenScene(ScenePath);
         };
     }
     [MenuItem("Ashen Vale/Rebuild Prototype Scene")]

@@ -1,8 +1,9 @@
+using System;
 using UnityEngine;
 
 namespace AshenVale
 {
-    // In-game IMGUI: status panel, key hints, inventory and shop. Clicks become World commands
+    // In-game IMGUI: status panel, key hints, inventory, shop and the Esc menu. Clicks become World commands
     // (Equip, BuyPotion, BuyGear, Sell), which the world checks before applying.
     public sealed class GameHud
     {
@@ -10,21 +11,30 @@ namespace AshenVale
         const float MerchantLeaveReach = 3f; // walking further than this closes it
 
         readonly World world;
-        public bool inventoryOpen, shopOpen;
-        public bool WindowOpen { get { return inventoryOpen || shopOpen; } }
+        public bool inventoryOpen, shopOpen, menuOpen;
+        public bool WindowOpen { get { return inventoryOpen || shopOpen || menuOpen; } }
 
-        GUIStyle titleText, barText, detailText, bodyStyle, smallStyle, centeredStyle;
+        // Esc menu choices, handled by the game (they save first).
+        public Action onCharacterSelect, onQuit;
+
+        GUIStyle titleText, barText, detailText, detailRight, bodyStyle, smallStyle, centeredStyle, menuButton;
 
         public GameHud(World world) { this.world = world; }
 
-        public void Close() { inventoryOpen = shopOpen = false; }
+        public void Close() { inventoryOpen = shopOpen = menuOpen = false; }
 
-        // Window keys: I inventory, Esc close, E or B at the merchant for the shop.
+        // Window keys: I inventory, E or B at the merchant for the shop, Esc closes a window or opens the menu.
+        // The world keeps running while windows are open (as it will online); only attacks are blocked.
         public void HandleKeys(PlayerState me)
         {
             if (me == null || me.dead) { Close(); return; }
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                if (inventoryOpen || shopOpen) { inventoryOpen = shopOpen = false; }
+                else menuOpen = !menuOpen;
+            }
+            if (menuOpen) return;
             if (Input.GetKeyDown(KeyCode.I)) { inventoryOpen = !inventoryOpen; shopOpen = false; }
-            if (Input.GetKeyDown(KeyCode.Escape)) Close();
             if ((Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.B)) && world.NearMerchant(me, MerchantReach)) { shopOpen = !shopOpen; inventoryOpen = false; }
             if (shopOpen && !world.NearMerchant(me, MerchantLeaveReach)) shopOpen = false;
         }
@@ -38,6 +48,8 @@ namespace AshenVale
             barText.normal.textColor = Color.white;
             detailText = new GUIStyle(GUI.skin.label) { fontSize = 12 };
             detailText.normal.textColor = new Color(.88f, .9f, .94f);
+            detailRight = new GUIStyle(detailText) { alignment = TextAnchor.UpperRight };
+            menuButton = new GUIStyle(GUI.skin.button) { fontSize = 16, fontStyle = FontStyle.Bold };
             bodyStyle = new GUIStyle(GUI.skin.label) { fontSize = 17 };
             bodyStyle.normal.textColor = Color.white;
             smallStyle = new GUIStyle(GUI.skin.label) { fontSize = 14 };
@@ -61,7 +73,18 @@ namespace AshenVale
             if (me.portalCast > 0) GUI.Label(new Rect(18, 245, 500, 35), "Casting Town Portal...", bodyStyle);
             if (me.dead)
                 GUI.Label(new Rect(0, Screen.height / 2f - 25, Screen.width, 65),
-                          me.deathClock < Tuning.RespawnDelay ? "YOU FELL IN BATTLE" : "YOU FELL IN BATTLE — R: WAKE IN EMBERHAVEN   N: NEW HERO", centeredStyle);
+                          me.deathClock < Tuning.RespawnDelay ? "YOU FELL IN BATTLE" : "YOU FELL IN BATTLE — R: WAKE IN EMBERHAVEN   N: YOUR HEROES", centeredStyle);
+            if (menuOpen) DrawMenu();
+        }
+
+        void DrawMenu()
+        {
+            Rect r = new Rect((Screen.width - 320) / 2f, (Screen.height - 250) / 2f, 320, 250);
+            GUI.Box(r, "MENU   [ESC] Close");
+            GUI.Label(new Rect(r.x + 20, r.y + 30, 280, 24), "Your hero saves automatically.", smallStyle);
+            if (GUI.Button(new Rect(r.x + 30, r.y + 66, 260, 44), "RESUME", menuButton)) menuOpen = false;
+            if (GUI.Button(new Rect(r.x + 30, r.y + 120, 260, 44), "SAVE & YOUR HEROES", menuButton)) { menuOpen = false; if (onCharacterSelect != null) onCharacterSelect(); }
+            if (GUI.Button(new Rect(r.x + 30, r.y + 174, 260, 44), "SAVE & QUIT", menuButton)) { menuOpen = false; if (onQuit != null) onQuit(); }
         }
 
         static void Fill(Rect rect, Color color)
@@ -88,8 +111,8 @@ namespace AshenVale
             GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1));
             Fill(new Rect(10, 10, 364, 195), new Color(.055f, .075f, .12f, .90f));
             Fill(new Rect(10, 10, 364, 3), new Color(.65f, .48f, .27f));
-            GUI.Label(new Rect(23, 17, 300, 25), me.Hero.name.ToUpperInvariant(), titleText);
-            GUI.Label(new Rect(310, 19, 55, 22), "LV " + ch.level, detailText);
+            GUI.Label(new Rect(23, 17, 200, 25), (ch.name ?? me.Hero.name).ToUpperInvariant(), titleText);
+            GUI.Label(new Rect(170, 19, 191, 22), me.Hero.name.ToUpperInvariant() + "   LV " + ch.level, detailRight);
             Bar(23, 49, 338, "HP", me.hp, me.MaxHp, new Color(.82f, .20f, .25f));
             Bar(23, 80, 338, "MP", me.mp, me.MaxMp, new Color(.19f, .46f, .88f));
             Bar(23, 111, 338, "XP", ch.xp, Tuning.XpNeeded(ch.level), new Color(.88f, .68f, .24f));

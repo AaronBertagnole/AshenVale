@@ -40,15 +40,19 @@ namespace AshenVale
 
         // ---------------------------------------------------------------- players
 
-        public PlayerState AddPlayer(int hero)
+        // Brings a hero into the world at the start of `map`. hp / mp below 0 mean full; hp of exactly 0
+        // means the hero was saved while fallen, so they wake in town at full health.
+        public PlayerState AddPlayer(Character ch, int map = Maps.Emberfields, int hp = -1, int mp = -1)
         {
-            var p = new PlayerState { id = NextId(), ch = new Character { hero = hero } };
-            Teleport(p, Maps.Emberfields, Maps.All[Maps.Emberfields].startX, Tuning.Ground);
-            p.hp = p.MaxHp;
-            p.mp = p.MaxMp;
-            p.returnMap = Maps.Emberfields;
-            p.returnX = p.x;
-            p.returnY = p.y;
+            if (map < 0 || map >= maps.Length) map = Maps.Emberfields;
+            if (hp == 0) map = Maps.Town;
+            var p = new PlayerState { id = NextId(), ch = ch };
+            Teleport(p, map, maps[map].def.startX, Tuning.Ground);
+            p.hp = hp <= 0 ? p.MaxHp : Mathf.Min(hp, p.MaxHp);
+            p.mp = mp < 0 ? p.MaxMp : Mathf.Min(mp, p.MaxMp);
+            p.returnMap = maps[map].def.kind == MapKind.Field ? map : Maps.Emberfields;
+            p.returnX = maps[p.returnMap].def.startX;
+            p.returnY = Tuning.Ground;
             players.Add(p);
             return p;
         }
@@ -118,6 +122,7 @@ namespace AshenVale
 
         void TickPlayer(PlayerState p, PlayerInput input, float dt)
         {
+            p.ch.playSeconds += dt;
             if (p.dead)
             {
                 p.deathClock += dt;

@@ -5,6 +5,9 @@ namespace AshenVale
     // What a save file will hold: everything about a hero that outlives a session.
     public sealed class Character
     {
+        public string id;           // save file id
+        public string name;
+        public float playSeconds;
         public int hero;
         public int level = 1, xp, gold, kills;
         public int hpPotions = Tuning.StartingPotions, mpPotions = Tuning.StartingPotions;
