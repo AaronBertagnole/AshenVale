@@ -43,6 +43,19 @@ namespace AshenVale
         public const float MonsterWanderSpeed = .55f;       // share of its speed a monster ambles at when nobody is around
         public const float GroundRoam = 10f;                // ground monsters stay this close to their spawn point
         public const float PortalCalm = 6f;                 // ...and this far from portals on the ground
+        // Bosses
+        public const float BossRespawn = 180f;         // seconds before a beaten boss returns to its glade
+        public const float BossSlamWindup = .9f;       // it rears up this long before the root slam lands
+        public const float BossSlamRange = 3.4f;       // slam reach on either side, on its floor
+        public const float BossSlamDamage = 1.6f;      // times its touch damage
+        public const float BossSlamCooldown = 5f;      // (halved while enraged)
+        public const float BossSummonWindup = 1.1f;
+        public const float BossSummonEvery = 12f;
+        public const int BossMaxMinions = 4;           // it stops calling sprouts while this many are alive
+        public const int BossMinionsPerCall = 2;
+        public const float BossEnrageHp = .3f;         // below this share of HP it moves and slams faster
+        public const float BossEnrageSpeed = 1.5f;
+        public const float BossStrikeVisual = .35f;    // how long the slam pose shows
         public const float ArmorBase = 10f;          // defense reduces damage by def / (def + ArmorBase + ArmorPerLevel * level)
         public const float ArmorPerLevel = 2f;       // so gear always helps but never makes you immune
 

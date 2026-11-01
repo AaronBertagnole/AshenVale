@@ -8,8 +8,19 @@ namespace AshenVale
     // It only reads the World (plus its event list, which it clears); it never changes game state.
     public sealed class WorldView
     {
-        sealed class HeroView { public GameObject go; public SpriteRenderer sr; public string anim = ""; public float clock; }
-        sealed class SlashFx { public GameObject obj; public SpriteRenderer sr; public float life, duration, x, y; public int direction; }
+        sealed class HeroView { public GameObject go; public SpriteRenderer sr; public string anim = ""; public float clock, lastHp = -1; }
+        sealed class SlashFx { public GameObject obj; public SpriteRenderer sr; public float life, duration, x, y; public int direction; public bool ring; }
+
+        // A number that pops up where something was hurt or healed and drifts upward (GameHud draws them).
+        public sealed class FloatingNumber
+        {
+            public float x, y, age, life;
+            public string text;
+            public Color color;
+            public bool big;
+        }
+        public readonly List<FloatingNumber> numbers = new List<FloatingNumber>();
+        public static readonly Color DamageColor = new Color(1f, .96f, .8f), HurtColor = new Color(1f, .35f, .3f), HealColor = new Color(.55f, 1f, .55f);
 
         // A monster on screen: `go` stands at its feet and is mirrored to face its way; `body` is what squashes and bobs.
         sealed class MonsterView
@@ -20,7 +31,8 @@ namespace AshenVale
             public SpriteRenderer[] parts;      // every renderer, for the hurt flash and the fade when it dies
             public Color[] colors;
             public MonsterDef def;
-            public float clock, hurt, moveTime, lastHp, lastX, dying;
+            public float clock, hurt, moveTime, lastHp, lastX, dying, lastStrike;
+            public Transform crown;             // bosses: the thorn crown, which flares while it rears up
         }
 
         public const float ViewHalfHeight = 5.4f;   // camera orthographic size: the view is 10.8 units tall
@@ -123,8 +135,13 @@ namespace AshenVale
         void ReadEvents()
         {
             foreach (var e in world.events)
-                if (e.kind == SimEventKind.Slash && e.map == shownMap) SpawnSlash(e);
+            {
+                if (e.map != shownMap) continue;
+                if (e.kind == SimEventKind.Slash) SpawnSlash(e);
+                else if (e.kind == SimEventKind.BossSlam) SpawnSlamRing(e);
+            }
             world.events.Clear();
+            for (int i = numbers.Count - 1; i >= 0; i--) { numbers[i].age += Time.deltaTime; if (numbers[i].age >= numbers[i].life) numbers.RemoveAt(i); }
         }
 
         // ---------------------------------------------------------------- heroes
@@ -144,6 +161,9 @@ namespace AshenVale
                     heroViews[p.id] = v;
                 }
                 v.sr.sortingOrder = p.id == localId ? HeroOrder + 1 : HeroOrder;
+                if (v.lastHp >= 0 && p.hp != v.lastHp && !p.dead)
+                    Number(p.x, p.y + 2.1f, p.hp < v.lastHp ? "-" + (v.lastHp - p.hp) : "+" + (p.hp - v.lastHp), p.hp < v.lastHp ? HurtColor : HealColor, false);
+                v.lastHp = p.hp;
                 Animate(p, v, frameDt);
                 float x = Mathf.Lerp(p.px, p.x, alpha), y = Mathf.Lerp(p.py, p.y, alpha);
                 v.go.transform.localScale = new Vector3(HeroScale, p.crouching ? 1.10f : HeroScale, 1f);
@@ -207,7 +227,13 @@ namespace AshenVale
                 v.clock += frameDt;
                 if (Mathf.Abs(x - v.lastX) > .0005f) v.moveTime = .15f; else v.moveTime = Mathf.Max(0, v.moveTime - frameDt);
                 v.lastX = x;
-                if (m.hp < v.lastHp - .01f) v.hurt = .25f; else v.hurt = Mathf.Max(0, v.hurt - frameDt);
+                if (m.hp < v.lastHp - .01f)
+                {
+                    v.hurt = .25f;
+                    int dealt = Mathf.Max(1, Mathf.RoundToInt(v.lastHp - m.hp));
+                    Number(x, y + d.hover + d.height + .2f, dealt.ToString(), DamageColor, dealt >= 60);
+                }
+                else v.hurt = Mathf.Max(0, v.hurt - frameDt);
                 v.lastHp = m.hp;
 
                 float bob = d.hover > 0 ? Mathf.Sin(v.clock * 3f) * .08f : 0f;
@@ -219,14 +245,24 @@ namespace AshenVale
                     var frames = MonsterFrames(d, v.hurt > 0 ? "hurt" : moving ? "move" : "idle");
                     if (frames.Length > 0) v.art.sprite = frames[Mathf.FloorToInt(v.clock * 8f) % frames.Length];
                 }
+                else if (d.boss)
+                {
+                    // Rearing up: stretches tall and leans back; the strike: squats hard. Otherwise a slow heave.
+                    float stretch = m.windup > 0 ? .18f : m.strike > 0 ? -.22f : Mathf.Sin(v.clock * 1.6f) * .03f;
+                    v.body.localScale = new Vector3(1f - stretch * .6f, 1f + stretch, 1f);
+                    v.body.localRotation = Quaternion.Euler(0, 0, m.windup > 0 ? -9f : 0f);
+                    if (v.crown != null) v.crown.localScale = Vector3.one * (m.windup > 0 ? 1.25f + Mathf.Sin(v.clock * 20f) * .08f : 1f);
+                }
                 else
                 {
                     float squash = moving ? Mathf.Sin(v.clock * 12f) * .06f : Mathf.Sin(v.clock * 2.5f) * .02f;
                     v.body.localScale = new Vector3(1f - squash, 1f + squash, 1f);
                 }
                 float flash = v.hurt / .25f;
+                Color tint = new Color(1f, .45f, .4f, 1f);
+                if (d.boss && m.windup > 0) { flash = Mathf.Max(flash, .55f + Mathf.Sin(v.clock * 18f) * .2f); tint = new Color(1f, .3f, .15f, 1f); }   // the tell
                 for (int i = 0; i < v.parts.Length; i++)
-                    v.parts[i].color = Color.Lerp(v.colors[i], new Color(1f, .45f, .4f, v.colors[i].a), flash * .7f);
+                    v.parts[i].color = Color.Lerp(v.colors[i], new Color(tint.r, tint.g, tint.b, v.colors[i].a), flash * .7f);
             }
 
             stale.Clear();
@@ -281,6 +317,33 @@ namespace AshenVale
                     Part("Chest", Sprites.Block("Chest", d.color, w, h * .7f, 0), v.body, 0, h * .35f);
                     Part("Lid", Sprites.Block("Lid", dark, w * 1.06f, h * .32f, 1), v.body, 0, h * .78f);
                     Part("Latch", Sprites.Block("Latch", new Color(1f, .82f, .3f), w * .16f, h * .24f, 2), v.body, 0, h * .6f);
+                }
+                else if (d.boss)
+                {
+                    // A bramble giant: a knotted trunk, a thorn crown, root feet and two baleful eyes.
+                    Color bark = d.color, darkBark = Color.Lerp(d.color, Color.black, .45f), leaf = new Color(.36f, .58f, .24f), thorn = new Color(.62f, .55f, .38f);
+                    Part("Shadow", Sprites.Blob("Shadow", new Color(0, 0, 0, .3f), w * 1.1f, .25f, 0, null, 0, 0), root, 0, .04f);
+                    for (int i = -1; i <= 1; i++) Part("Root", Sprites.Blob("Root", darkBark, w * .38f, .5f, 1, null, 0, 0), v.body, i * w * .3f, .2f);
+                    Part("Trunk outline", Sprites.Blob("Trunk outline", Color.Lerp(d.color, Color.black, .7f), w * .72f + .12f, h * .78f + .12f, 1, null, 0, 0), v.body, 0, h * .42f);
+                    Part("Trunk", Sprites.Blob("Trunk", bark, w * .72f, h * .78f, 2, null, 0, 0), v.body, 0, h * .42f);
+                    Part("Knot", Sprites.Blob("Knot", darkBark, w * .22f, h * .12f, 3, null, 0, 0), v.body, -w * .12f, h * .3f);
+                    Part("Knot", Sprites.Blob("Knot", darkBark, w * .16f, h * .09f, 3, null, 0, 0), v.body, w * .18f, h * .5f);
+                    v.crown = new GameObject("Crown").transform;
+                    v.crown.SetParent(v.body, false);
+                    v.crown.localPosition = new Vector3(0, h * .8f, 0);
+                    Part("Canopy", Sprites.Blob("Canopy", leaf, w * 1.15f, h * .36f, 2, null, 0, 0), v.crown, 0, 0);
+                    for (int i = 0; i < 5; i++)
+                    {
+                        float a = (i - 2) * .5f;
+                        Part("Thorn", Sprites.Block("Thorn", thorn, .14f, .9f, 3), v.crown, Mathf.Sin(a) * w * .45f, Mathf.Cos(a) * h * .22f);
+                        v.crown.GetChild(v.crown.childCount - 1).localRotation = Quaternion.Euler(0, 0, -a * 57f);
+                    }
+                    for (int i = 0; i < 2; i++)
+                    {
+                        float ex = w * (.12f + i * .18f), ey = h * .62f;
+                        Part("Eye glow", Sprites.Blob("Eye glow", new Color(1f, .75f, .2f, .6f), .34f, .3f, 3, null, 0, 0), v.body, ex, ey);
+                        Part("Eye", Sprites.Blob("Eye", new Color(1f, .9f, .4f), .16f, .14f, 4, null, 0, 0), v.body, ex, ey);
+                    }
                 }
                 else
                 {
@@ -399,6 +462,18 @@ namespace AshenVale
             slashes.Add(new SlashFx { obj = obj, sr = obj.GetComponent<SpriteRenderer>(), life = life, duration = life, direction = e.facing, x = e.x, y = e.y });
         }
 
+        // The root slam: a shockwave ring spreading along the ground from the boss's feet.
+        void SpawnSlamRing(SimEvent e)
+        {
+            var obj = Sprites.Blob("Slam VFX", new Color(.75f, .6f, .3f, .7f), 1f, .35f, SlashOrder, null, e.x, e.y + .15f);
+            slashes.Add(new SlashFx { obj = obj, sr = obj.GetComponent<SpriteRenderer>(), life = .45f, duration = .45f, direction = 0, x = e.x, y = e.y + .15f, ring = true });
+        }
+
+        public void Number(float x, float y, string text, Color color, bool big)
+        {
+            numbers.Add(new FloatingNumber { x = x + Random.Range(-.25f, .25f), y = y, text = text, color = color, big = big, life = big ? 1.1f : .85f });
+        }
+
         void UpdateSlashes(float dt)
         {
             for (int i = slashes.Count - 1; i >= 0; i--)
@@ -407,6 +482,13 @@ namespace AshenVale
                 fx.life -= dt;
                 if (fx.life <= 0) { Object.Destroy(fx.obj); slashes.RemoveAt(i); continue; }
                 float t = fx.life / fx.duration;
+                if (fx.ring)
+                {
+                    float grow = 1f - t;
+                    fx.obj.transform.localScale = new Vector3(1f + grow * 2f * Tuning.BossSlamRange, .35f + grow * .25f, 1f);
+                    fx.sr.color = new Color(.75f, .6f, .3f, t * .7f);
+                    continue;
+                }
                 fx.sr.color = new Color(1, .12f, .18f, t * .8f);
                 fx.obj.transform.position = new Vector3(fx.x, fx.y, 0);
                 fx.obj.transform.rotation = Quaternion.Euler(0, 0, fx.direction * (1 - t) * 22);

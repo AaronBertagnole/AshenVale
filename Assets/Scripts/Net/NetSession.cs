@@ -328,7 +328,7 @@ namespace AshenVale
         public void HostAfterTicks(float dt)
         {
             if (CurrentRole != Role.Host || !handlersRegistered) return;
-            foreach (var e in world.events) if (e.kind == SimEventKind.Slash) pendingEvents.Add(e);
+            foreach (var e in world.events) if (e.kind == SimEventKind.Slash || e.kind == SimEventKind.BossSlam) pendingEvents.Add(e);
             snapshotTimer += dt;
             characterTimer += dt;
             if (snapshotTimer >= SnapshotInterval)
@@ -395,6 +395,7 @@ namespace AshenVale
                     w.WriteValueSafe(m.id); w.WriteValueSafe((byte)m.def); w.WriteValueSafe(m.x); w.WriteValueSafe(m.y);
                     w.WriteValueSafe((byte)Mathf.Clamp(Mathf.CeilToInt(255f * m.hp / Mathf.Max(1, m.Def.hp)), 0, 255));
                     w.WriteValueSafe((sbyte)m.facing);
+                    w.WriteValueSafe((byte)(m.windup > 0f ? 1 : m.strike > 0f ? 2 : 0));   // boss pose, for the telegraph
                 }
                 w.WriteValueSafe(map.drops.Count);
                 foreach (var d in map.drops)
@@ -412,6 +413,7 @@ namespace AshenVale
                 {
                     if (e.map != viewer.map) continue;
                     w.WriteValueSafe(e.x); w.WriteValueSafe(e.y); w.WriteValueSafe((sbyte)e.facing); w.WriteValueSafe(e.heavy);
+                    w.WriteValueSafe(e.kind == SimEventKind.BossSlam);
                 }
                 nm.CustomMessagingManager.SendNamedMessage(MsgSnapshot, client, w, NetworkDelivery.ReliableFragmentedSequenced);
             }
@@ -544,7 +546,7 @@ namespace AshenVale
             for (int i = 0; i < monsterCount; i++)
             {
                 r.ReadValueSafe(out int id); r.ReadValueSafe(out byte def); r.ReadValueSafe(out float x); r.ReadValueSafe(out float y);
-                r.ReadValueSafe(out byte health); r.ReadValueSafe(out sbyte facing);
+                r.ReadValueSafe(out byte health); r.ReadValueSafe(out sbyte facing); r.ReadValueSafe(out byte pose);
                 MonsterState m;
                 if (monsterLookup.TryGetValue(id, out m)) { m.px = m.x; m.py = m.y; }
                 else
@@ -555,6 +557,8 @@ namespace AshenVale
                 m.x = x; m.y = y;
                 m.hp = health / 255f * m.Def.hp;
                 m.facing = facing < 0 ? -1 : 1;
+                m.windup = pose == 1 ? 1f : 0f;
+                m.strike = pose == 2 ? 1f : 0f;
                 runtime.monsters.Add(m);
             }
 
@@ -603,7 +607,8 @@ namespace AshenVale
             for (int i = 0; i < slashCount; i++)
             {
                 r.ReadValueSafe(out float x); r.ReadValueSafe(out float y); r.ReadValueSafe(out sbyte facing); r.ReadValueSafe(out bool heavy);
-                world.events.Add(new SimEvent { kind = SimEventKind.Slash, map = shown, x = x, y = y, facing = facing < 0 ? -1 : 1, heavy = heavy });
+                r.ReadValueSafe(out bool slam);
+                world.events.Add(new SimEvent { kind = slam ? SimEventKind.BossSlam : SimEventKind.Slash, map = shown, x = x, y = y, facing = facing < 0 ? -1 : 1, heavy = heavy });
             }
         }
     }

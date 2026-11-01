@@ -32,8 +32,12 @@ namespace AshenVale
         public float partChance = Tuning.PartDropChance;
         public int[] chestParts;        // chests: spill Tuning.ChestParts parts picked from this list
 
+        // Bosses (World.UpdateBoss): slow giants that telegraph a slam, call minions and enrage when low. They give
+        // their XP to everyone alive on the map, always drop their part, and spill chestParts like a chest.
+        public bool boss;
+        public int minion = -1;         // the monster kind a boss summons
         // Chests don't use respawn: they turn up at a random chest spot now and then (World.UpdateChests).
-        public bool IsChest { get { return chestParts != null; } }
+        public bool IsChest { get { return harmless && chestParts != null; } }
     }
 
     public static class Monsters
@@ -42,7 +46,8 @@ namespace AshenVale
         public const int Emberling = 0, EliteEmberling = 1, MossCrawler = 2, VioletWraith = 3,
                          AshSprout = 4, OldChest = 5, BrambleBoar = 6, MossyChest = 7, DenShade = 8,
                          MarshToad = 9, BogLurker = 10, AshWisp = 11, SunkenChest = 12,
-                         LeafBeetle = 13, EmberFox = 14, Mossling = 15, CragGoat = 16, RockMite = 17;
+                         LeafBeetle = 13, EmberFox = 14, Mossling = 15, CragGoat = 16, RockMite = 17,
+                         Thornmother = 18, ThornSprout = 19;
 
         public static readonly MonsterDef[] All =
         {
@@ -110,6 +115,16 @@ namespace AshenVale
             new MonsterDef { key = "rock_mite", name = "Rock Mite", level = 10, color = new Color(.45f, .5f, .58f),
                 width = .9f, height = .7f, hp = 300, speed = .9f, damage = 25, xp = 34, goldMin = 24, goldRange = 14,
                 part = Parts.ShadeEssence, partChance = .25f },   // a second source of Shade Essence outside the den
+            // Region 1's boss, in Thornmother's Glade off Mosswood. Her bark is thick: a party job, or a well-geared solo.
+            new MonsterDef { key = "thornmother", name = "Thornmother", level = 9, color = new Color(.36f, .30f, .22f),
+                width = 2.6f, height = 3.3f, hp = 2600, speed = 1.1f, damage = 26, xp = 420, goldMin = 160, goldRange = 120,
+                aggressive = true, boss = true, minion = ThornSprout, respawn = Tuning.BossRespawn, itemChance = .9f,
+                part = Parts.WraithSilk, partChance = 1f,
+                chestParts = new[] { Parts.BoarTusk, Parts.MossTuft, Parts.ShadeEssence, Parts.WraithSilk, Parts.BoarTusk, Parts.MossTuft } },
+            new MonsterDef { key = "thorn_sprout", name = "Thorn Sprout", level = 8, color = new Color(.45f, .62f, .25f),
+                width = .8f, height = .8f, hp = 90, speed = 2.4f, damage = 16, xp = 12, goldMin = 8, goldRange = 8,
+                aggressive = true,
+                part = Parts.MossTuft, partChance = .2f },
         };
     }
 }

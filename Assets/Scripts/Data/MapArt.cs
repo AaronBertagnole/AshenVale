@@ -129,6 +129,7 @@ namespace AshenVale
             };
             a[Maps.AshenMarsh] = new MapArtDef { ambient = new[] { Ash() } };
             a[Maps.ShaleCliffs] = new MapArtDef { ambient = new[] { Snow() } };
+            a[Maps.ThornGlade] = a[Maps.Mosswood];     // shows Mosswood's pictures until it has its own
             return a;
         }
 

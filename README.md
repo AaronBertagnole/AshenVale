@@ -37,6 +37,11 @@ Chests turn up at random: each hunting map has a few chest spots (`k` in the lay
 one of them now and then (never the same spot twice in a row), moving on if nobody opens it within 3 minutes.
 One chest per map at a time; the secret Hollow Den allows two. Numbers in `Tuning.cs` (Chest...).
 
+**Thornmother**, the first boss, waits in her glade off the east end of Mosswood (Lv 9, a party job or a well-geared
+solo). She rears up before slamming the roots (step back or jump), calls thorn sprouts, and rages below a third of
+her health. Everyone alive in the glade gets her XP; she always drops Wraith Silk and spills parts like a chest, and
+returns three minutes after she falls. Hits show damage numbers; hers show in red over you.
+
 Monsters also drop parts (chests spill several). The smithies in Emberhaven and Cinderford spend parts and gold to upgrade gear
 from +1 to +5, about 12% of the item's base stats each time. Which parts depends on the item's level band and slot.
 

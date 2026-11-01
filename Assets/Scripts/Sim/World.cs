@@ -416,9 +416,15 @@ namespace AshenVale
             if (attacker == null) return;
 
             attacker.ch.kills++;
-            GainXp(attacker, Tuning.XpFor(def.xp, def.level, attacker.ch.level));
+            if (def.boss)
+            {
+                // A boss is a party event: everyone alive on the map gets its XP, and its minions fall with it.
+                foreach (var p in players) if (!p.dead && p.map == map.def.id) GainXp(p, Tuning.XpFor(def.xp, def.level, p.ch.level));
+                map.monsters.RemoveAll(other => other.def == def.minion && other.spawn < 0);
+            }
+            else GainXp(attacker, Tuning.XpFor(def.xp, def.level, attacker.ch.level));
 
-            // Chests roll for gear first (and always add gold); other monsters roll for a potion first.
+            // Chests (and bosses) roll for gear first and always add gold; other monsters roll for a potion first.
             bool chest = def.itemChance >= 0f;
             float itemChance = chest ? def.itemChance : Tuning.EquipmentDropChance;
             bool equipment = chest && rng.NextDouble() < itemChance;
@@ -511,6 +517,7 @@ namespace AshenVale
                 float lo = m.left + inset, hi = m.right - inset;
                 if (lo > hi) lo = hi = (m.left + m.right) * .5f;
 
+                if (d.boss) { UpdateBoss(map, m, target, dt); m.x = Mathf.Clamp(m.x, lo, hi); continue; }
                 if (m.knockbackTime > 0f)
                 {
                     float step = Mathf.Min(dt, m.knockbackTime);
@@ -539,6 +546,87 @@ namespace AshenVale
             TouchDamage(map);
         }
 
+        // A boss: too heavy to knock back. It lumbers after its target; near enough it rears up (windup, which the
+        // view shows) and slams the roots, hurting everyone on its floor within reach; now and then it calls minions
+        // instead. Below BossEnrageHp it moves and slams faster. Touch still hurts like any monster.
+        void UpdateBoss(MapRuntime map, MonsterState m, PlayerState target, float dt)
+        {
+            var d = m.Def;
+            bool enraged = m.hp < d.hp * Tuning.BossEnrageHp;
+            m.knockbackTime = 0f;
+            m.strike = Mathf.Max(0f, m.strike - dt);
+            m.attackCooldown = Mathf.Max(0f, m.attackCooldown - dt);
+            m.summonCooldown = Mathf.Max(0f, m.summonCooldown - dt);
+            if (m.windup > 0f)
+            {
+                m.windup -= dt;
+                if (m.windup > 0f) return;                      // rearing up: stands still so the tell is readable
+                m.windup = 0f;
+                m.strike = Tuning.BossStrikeVisual;
+                if (m.attack == 1) Slam(map, m, Mathf.RoundToInt(d.damage * Tuning.BossSlamDamage));
+                else if (m.attack == 2 && d.minion >= 0) Summon(map, m, d.minion);
+                m.attack = 0;
+                return;
+            }
+            if (target == null)
+            {
+                // Nobody on its floor: it still stalks the nearest hero on the map (a ledge above it, say) and
+                // keeps calling sprouts, so the glade is never a free shooting gallery.
+                float best = float.MaxValue;
+                foreach (var p in players)
+                    if (!p.dead && p.map == map.def.id && Mathf.Abs(p.x - m.x) < best) { best = Mathf.Abs(p.x - m.x); target = p; }
+                if (target == null) return;                     // truly nobody here: it waits in its glade
+            }
+            float dist = target.x - m.x;
+            if (Mathf.Abs(dist) > .3f) m.facing = dist > 0 ? 1 : -1;
+            if (m.attackCooldown <= 0f)
+            {
+                int minions = 0;
+                foreach (var other in map.monsters) if (other.def == d.minion) minions++;
+                if (m.summonCooldown <= 0f && minions < Tuning.BossMaxMinions && Mathf.Abs(dist) > 1.5f)
+                {
+                    m.attack = 2; m.windup = Tuning.BossSummonWindup;
+                    m.summonCooldown = Tuning.BossSummonEvery; m.attackCooldown = 2f;
+                    return;
+                }
+                if (Mathf.Abs(dist) < Tuning.BossSlamRange - .4f)
+                {
+                    m.attack = 1; m.windup = Tuning.BossSlamWindup;
+                    m.attackCooldown = enraged ? Tuning.BossSlamCooldown * .5f : Tuning.BossSlamCooldown;
+                    return;
+                }
+            }
+            if (Mathf.Abs(dist) > 1.2f) m.x += m.facing * d.speed * (enraged ? Tuning.BossEnrageSpeed : 1f) * dt;
+        }
+
+        void Slam(MapRuntime map, MonsterState m, int damage)
+        {
+            events.Add(new SimEvent { kind = SimEventKind.BossSlam, map = map.def.id, targetId = m.id, x = m.x, y = m.y, facing = m.facing });
+            foreach (var p in players)
+            {
+                if (p.dead || p.map != map.def.id || p.immunity > 0f) continue;
+                if (Mathf.Abs(p.x - m.x) > Tuning.BossSlamRange || Mathf.Abs(p.currentFloor - m.y) > Tuning.MonsterFloorTolerance || !p.grounded && p.y > m.y + 1.5f) continue;
+                Hurt(map, p, m, damage);
+            }
+        }
+
+        // Minions appear at the boss's sides, keep to its floor, never refill, and vanish when it falls.
+        void Summon(MapRuntime map, MonsterState boss, int kind)
+        {
+            var d = Monsters.All[kind];
+            for (int i = 0; i < Tuning.BossMinionsPerCall; i++)
+            {
+                int side = i % 2 == 0 ? -1 : 1;
+                float x = Mathf.Clamp(boss.x + side * (boss.Def.width * .5f + .8f), boss.left + .5f, boss.right - .5f);
+                map.monsters.Add(new MonsterState
+                {
+                    id = NextId(), def = kind, map = map.def.id, level = d.level, spawn = -1,
+                    x = x, y = boss.y, px = x, py = boss.y, hp = d.hp, left = boss.left, right = boss.right, facing = side,
+                    target = boss.target, aggroTime = Tuning.MonsterAggroTime,
+                });
+            }
+        }
+
         // MapleStory rules: bumping into a monster hurts (unless it's harmless) and knocks you back a little.
         void TouchDamage(MapRuntime map)
         {
@@ -557,9 +645,11 @@ namespace AshenVale
             }
         }
 
-        void Hurt(MapRuntime map, PlayerState p, MonsterState m)
+        void Hurt(MapRuntime map, PlayerState p, MonsterState m) { Hurt(map, p, m, m.Def.damage); }
+
+        void Hurt(MapRuntime map, PlayerState p, MonsterState m, int damage)
         {
-            p.hp -= DamageTaken(m.Def.damage, p);
+            p.hp -= DamageTaken(damage, p);
             p.immunity = Tuning.HitImmunity;
             p.hurtVisual = Tuning.HurtFlash;
             if (!p.climbing)
