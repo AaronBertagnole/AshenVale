@@ -186,8 +186,8 @@ namespace AshenVale
 
             Move(p, def, input, dt, !town);
 
-            if (input.hpPotion && p.ch.hpPotions > 0 && p.hp < p.MaxHp) { p.ch.hpPotions--; p.hp = Mathf.Min(p.MaxHp, p.hp + Tuning.HpPotionHeal); }
-            if (input.mpPotion && p.ch.mpPotions > 0 && p.mp < p.MaxMp) { p.ch.mpPotions--; p.mp = Mathf.Min(p.MaxMp, p.mp + Tuning.MpPotionHeal); }
+            if (input.hpPotion && p.ch.hpPotions > 0 && p.hp < p.MaxHp) { p.ch.hpPotions--; p.hp = Mathf.Min(p.MaxHp, p.hp + Tuning.PotionHeal(Tuning.HpPotionHeal, Tuning.HpPotionShare, p.MaxHp)); }
+            if (input.mpPotion && p.ch.mpPotions > 0 && p.mp < p.MaxMp) { p.ch.mpPotions--; p.mp = Mathf.Min(p.MaxMp, p.mp + Tuning.PotionHeal(Tuning.MpPotionHeal, Tuning.MpPotionShare, p.MaxMp)); }
 
             if (!town)
             {
@@ -413,7 +413,14 @@ namespace AshenVale
         {
             if (!map.monsters.Contains(m)) return;
             m.hp -= damage;
-            if (attacker != null) { m.target = attacker.id; m.aggroTime = Tuning.MonsterAggroTime; }   // it turns on whoever hit it
+            if (attacker != null)
+            {
+                m.target = attacker.id; m.aggroTime = Tuning.MonsterAggroTime; m.angry = true;   // it turns on whoever hit it, and stays on the hunt
+                int dealt;
+                m.damageBy.TryGetValue(attacker.id, out dealt);
+                m.damageBy[attacker.id] = dealt + Mathf.Min(damage, Mathf.CeilToInt(m.hp + damage));
+                m.lastHitAt[attacker.id] = time;
+            }
             events.Add(new SimEvent { kind = SimEventKind.MonsterHit, map = map.def.id, targetId = m.id, amount = damage,
                                       playerId = attacker != null ? attacker.id : 0, x = m.x, y = m.y });
             if (m.hp > 0) return;
@@ -424,13 +431,20 @@ namespace AshenVale
             if (attacker == null) return;
 
             attacker.ch.kills++;
-            if (def.boss)
+            // Party play: full XP to everyone alive nearby on the map and to anyone who hit it recently (a boss: the
+            // whole map). Loot belongs to whoever did the most damage, for a while.
+            foreach (var p in players)
             {
-                // A boss is a party event: everyone alive on the map gets its XP, and its minions fall with it.
-                foreach (var p in players) if (!p.dead && p.map == map.def.id) GainXp(p, Tuning.XpFor(def.xp, def.level, p.ch.level));
-                map.monsters.RemoveAll(other => other.def == def.minion && other.spawn < 0);
+                if (p.dead || p.map != map.def.id) continue;
+                float hitAt;
+                bool helped = p == attacker || def.boss || Mathf.Abs(p.x - m.x) <= Tuning.PartyShareRange
+                              || (m.lastHitAt.TryGetValue(p.id, out hitAt) && time - hitAt <= Tuning.HitMemory);
+                if (helped) GainXp(p, Tuning.XpFor(def.xp, def.level, p.ch.level));
             }
-            else GainXp(attacker, Tuning.XpFor(def.xp, def.level, attacker.ch.level));
+            if (def.boss) map.monsters.RemoveAll(other => other.def == def.minion && other.spawn < 0);   // its minions fall with it
+            int best = 0;
+            foreach (var kv in m.damageBy)
+                if (kv.Value > best && GetPlayer(kv.Key) != null) { best = kv.Value; attacker = GetPlayer(kv.Key); }
 
             // Chests (and bosses) roll for gear first and always add gold; other monsters roll for a potion first.
             bool chest = def.itemChance >= 0f;
@@ -451,7 +465,7 @@ namespace AshenVale
 
         void AddDrop(MapRuntime map, PlayerState owner, DropKind kind, float x, float floor, Item item, int gold)
         {
-            map.drops.Add(new DropState { id = NextId(), map = map.def.id, owner = owner.id, kind = kind, x = x, y = floor + .25f, item = item, value = gold });
+            map.drops.Add(new DropState { id = NextId(), map = map.def.id, owner = owner.id, born = time, kind = kind, x = x, y = floor + .25f, item = item, value = gold });
         }
 
         void GainXp(PlayerState p, int amount)
@@ -487,8 +501,9 @@ namespace AshenVale
 
         // Who a monster goes after (null = nobody, it wanders):
         //  1. the player who hit it in the last few seconds, if it can reach them;
-        //  2. aggressive monsters only: the nearest player it can reach within sight, sticking with its
-        //     current target unless someone is clearly closer, so it doesn't flip back and forth.
+        //  2. aggressive monsters, and passive ones that have been hit (angry): the nearest player it can reach
+        //     within sight, sticking with its current target unless someone is clearly closer, so it doesn't flip
+        //     back and forth.
         PlayerState PickTarget(int mapId, MonsterState m, float dt)
         {
             m.aggroTime = Mathf.Max(0f, m.aggroTime - dt);
@@ -503,7 +518,7 @@ namespace AshenVale
             }
             PlayerState pick = null;
             if (current != null && m.aggroTime > 0f) pick = current;
-            else if (m.Def.aggressive)
+            else if (m.Def.aggressive || m.angry)
             {
                 if (current != null && Mathf.Abs(current.x - m.x) <= Tuning.MonsterSight &&
                     Mathf.Abs(current.x - m.x) <= nearestDist + Tuning.MonsterTargetStickiness) pick = current;
@@ -560,7 +575,7 @@ namespace AshenVale
         void UpdateBoss(MapRuntime map, MonsterState m, PlayerState target, float dt)
         {
             var d = m.Def;
-            bool enraged = m.hp < d.hp * Tuning.BossEnrageHp;
+            bool enraged = m.hp < m.maxHp * Tuning.BossEnrageHp;
             m.knockbackTime = 0f;
             m.strike = Mathf.Max(0f, m.strike - dt);
             m.attackCooldown = Mathf.Max(0f, m.attackCooldown - dt);
@@ -629,7 +644,7 @@ namespace AshenVale
                 map.monsters.Add(new MonsterState
                 {
                     id = NextId(), def = kind, map = map.def.id, level = d.level, spawn = -1,
-                    x = x, y = boss.y, px = x, py = boss.y, hp = d.hp, left = boss.left, right = boss.right, facing = side,
+                    x = x, y = boss.y, px = x, py = boss.y, hp = PartyHp(map, d), maxHp = PartyHp(map, d), left = boss.left, right = boss.right, facing = side,
                     target = boss.target, aggroTime = Tuning.MonsterAggroTime,
                 });
             }
@@ -693,7 +708,7 @@ namespace AshenVale
             var m = new MonsterState
             {
                 id = NextId(), def = point.monster, map = map.def.id, level = def.level, spawn = spawn,
-                x = point.x, y = point.y, px = point.x, py = point.y, hp = def.hp,
+                x = point.x, y = point.y, px = point.x, py = point.y, hp = PartyHp(map, def), maxHp = PartyHp(map, def),
                 left = point.left, right = point.right, facing = rng.Next(2) == 0 ? -1 : 1,
                 wanderTime = (float)rng.NextDouble() * 2f,
             };
@@ -752,6 +767,7 @@ namespace AshenVale
             {
                 var d = map.drops[i];
                 if (Mathf.Abs(d.x - p.x) > Tuning.PickupRangeX || Mathf.Abs(d.y - p.y) > Tuning.PickupRangeY) continue;
+                if (ReservedFor(d) != 0 && ReservedFor(d) != p.id) continue;    // still someone else's for a few seconds
                 switch (d.kind)
                 {
                     case DropKind.HpPotion: p.ch.hpPotions++; break;
@@ -768,6 +784,20 @@ namespace AshenVale
                 }
                 map.drops.RemoveAt(i);
             }
+        }
+
+        // Who a drop still belongs to (0: anyone may take it).
+        public int ReservedFor(DropState d)
+        {
+            return d.owner != 0 && time - d.born < Tuning.LootReserve && GetPlayer(d.owner) != null ? d.owner : 0;
+        }
+
+        // Monsters appear tougher with a party on the map, so hunting together stays a hunt.
+        float PartyHp(MapRuntime map, MonsterDef def)
+        {
+            int living = 0;
+            foreach (var p in players) if (!p.dead && p.map == map.def.id) living++;
+            return def.hp * (1f + Tuning.PartyHpPerPlayer * Mathf.Max(0, living - 1));
         }
 
         // ---------------------------------------------------------------- commands

@@ -75,6 +75,9 @@ namespace AshenVale
         public int id, def, map, level;
         public int spawn = -1;          // index of its spawn point in the map (refilled after it dies)
         public float x, y, px, py, hp;  // y is its floor: monsters never leave the platform they live on
+        public float maxHp;             // its HP when it appeared (more with a party on the map)
+        public readonly Dictionary<int, int> damageBy = new Dictionary<int, int>();   // player id -> damage dealt (loot owner, XP share)
+        public readonly Dictionary<int, float> lastHitAt = new Dictionary<int, float>();  // player id -> world time of their last hit
         public float left, right;       // the stretch of floor it keeps to
         public int facing = -1;
         public int wanderDir;           // -1, 0 (standing) or 1 while nobody is being chased
@@ -82,6 +85,7 @@ namespace AshenVale
         public float knockbackVelocity, knockbackTime;
         public int target;              // player id it is chasing (0 = none)
         public float aggroTime;         // seconds it stays on the player who last hit it
+        public bool angry;              // a passive monster that has been hit: it stays on the hunt like an aggressive one
         public float life;              // chests: seconds before it moves on if nobody opens it
         // Bosses: what it is about to do (0 nothing, 1 root slam, 2 summon), how long until it lands, how long the
         // strike pose shows, and its cooldowns. Clients get windup / strike from the snapshot for the telegraph.
@@ -95,7 +99,9 @@ namespace AshenVale
     public sealed class DropState
     {
         public int id, map, value;  // value: gold amount, or the Parts id of a part
-        public int owner;       // player whose kill made it (for instanced loot later; anyone can pick it up for now)
+        public int owner;       // player who earned it (most damage); only they can take it for Tuning.LootReserve seconds
+        public float born;      // world time it dropped
+        public bool reservedForOther;   // clients: the host says someone else still owns it (drawn dim)
         public DropKind kind;
         public float x, y;
         public Item item;

@@ -126,7 +126,7 @@ namespace AshenVale
             rowName.normal.textColor = new Color(1f, .9f, .72f);
             rowDetail = new GUIStyle(GUI.skin.label) { fontSize = 14, alignment = TextAnchor.MiddleLeft };
             rowDetail.normal.textColor = new Color(.82f, .86f, .92f);
-            statusText = new GUIStyle(GUI.skin.label) { fontSize = 15, alignment = TextAnchor.MiddleCenter, wordWrap = true };
+            statusText = new GUIStyle(GUI.skin.label) { fontSize = 14, alignment = TextAnchor.MiddleLeft, wordWrap = true };
             statusText.normal.textColor = new Color(1f, .8f, .55f);
             sectionText = new GUIStyle(GUI.skin.label) { fontSize = 14, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleLeft };
             sectionText.normal.textColor = new Color(.62f, .9f, 1f);
@@ -211,7 +211,7 @@ namespace AshenVale
             }
             GUI.EndScrollView();
             if (saved.Count == 0) GUI.Label(new Rect(left + 60, top + 230, 720, 40), "No heroes yet. Create your first one.", body);
-            if (!string.IsNullOrEmpty(status)) GUI.Label(new Rect(left + 40, top + 410, 760, 20), status, statusText);
+            DrawStatus(left + 40, top + 352, 760);
 
             if (GUI.Button(new Rect(left + 290, top + 432, 260, 47), "NEW HERO  [N]", button)) PrepareNewHero();
             if (GUI.Button(new Rect(left + 342, top + 492, 156, 32), "BACK  [ESC]")) screen = Screen.Title;
@@ -233,6 +233,8 @@ namespace AshenVale
             if (GUI.Button(new Rect(x, top + 186, w, 40), "HOST ONLINE GAME", button)) hostGame(modeHero, true);
             GUI.SetNextControlName("JoinCode");
             joinCode = GUI.TextField(new Rect(x, top + 234, 200, 36), joinCode ?? "", 12, nameField);
+            if (Event.current.type == EventType.KeyDown && Event.current.control && Event.current.keyCode == KeyCode.V && GUI.GetNameOfFocusedControl() == "")
+            { joinCode = (GUIUtility.systemCopyBuffer ?? "").Trim(); Event.current.Use(); }   // Ctrl+V pastes a code anywhere on this screen
             if (GUI.Button(new Rect(x + 210, top + 234, w - 210, 36), "JOIN WITH CODE", button) && (joinCode ?? "").Trim().Length > 0)
                 joinGame(modeHero, true, joinCode);
 
@@ -244,7 +246,7 @@ namespace AshenVale
             string focused = GUI.GetNameOfFocusedControl();
             textFocused = focused == "JoinCode" || focused == "JoinAddress";
 
-            if (!string.IsNullOrEmpty(status)) GUI.Label(new Rect(left + 40, top + 404, 760, 44), status, statusText);
+            DrawStatus(left + 40, top + 396, 760);
             if (GUI.Button(new Rect(left + 342, top + 470, 156, 32), "BACK  [ESC]")) screen = Screen.Characters;
             GUI.enabled = wasEnabled;
         }
@@ -261,6 +263,18 @@ namespace AshenVale
             nameFocused = GUI.GetNameOfFocusedControl() == "HeroName";
             if (GUI.Button(new Rect(left + 290, top + 440, 260, 44), "CONTINUE  [ENTER]", button)) screen = Screen.Tutorial;
             if (GUI.Button(new Rect(left + 342, top + 494, 156, 30), "BACK  [ESC]")) screen = saved.Count > 0 ? Screen.Characters : Screen.Title;
+        }
+
+        // Connection progress or the last error, wrapped so long messages stay readable, with a button that copies
+        // the full text (errors are easier to send to someone than to read off a screen).
+        void DrawStatus(float x, float y, float width)
+        {
+            if (string.IsNullOrEmpty(status)) return;
+            var content = new GUIContent(status);
+            float h = Mathf.Min(120, statusText.CalcHeight(content, width - 150) + 12);
+            GUI.Box(new Rect(x, y - 6, width, h + 8), GUIContent.none);
+            GUI.Label(new Rect(x + 10, y, width - 150, h), content, statusText);
+            if (GUI.Button(new Rect(x + width - 130, y + h / 2 - 14, 120, 28), "COPY TEXT")) GUIUtility.systemCopyBuffer = status;
         }
 
         void DrawTutorial(float left, float top)

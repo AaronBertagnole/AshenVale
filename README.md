@@ -23,6 +23,7 @@ Emberhaven (town) - Emberfields - Amberleaf Trail - Mossgate Hollow - Mosswood -
 New heroes start in Emberhaven; Emberfields is through the portal on the right. A portal on Mossgate Hollow's top
 ledge climbs to Shale Cliffs, the first step up the mountain (its summit will lead on to Highspire later).
 Every monster kind has a fixed level, like classic MapleStory, and monsters far below your level give less XP.
+Some monsters leave you alone until you hit them; after that they hunt you like the aggressive ones do.
 Walk into a town to find it; its waystone then lets you travel between found towns. **T** opens a portal to
 your last town, and that town's return portal takes you back.
 
@@ -62,6 +63,11 @@ file names and folders: drop a PNG in the right place and it replaces that place
 The host's game runs the world (monsters, damage, loot, XP). Everyone else sends their key presses and
 sees what the host sends back. Up to 4 players. Each player keeps their own hero file.
 
+Hunting together pays: a kill gives full XP to everyone nearby (about a screen) and to anyone who hit the monster
+in the last ten seconds, and a boss gives it to the whole map. Monsters appear with 30% more health per extra
+player on the map. Drops belong to whoever did the most damage for eight seconds (faint for everyone else), then
+anyone can take them. Potions heal 40% of your maximum (never less than 60 HP / 45 MP), so they keep up as you level.
+
 In the game: **Start Adventure > Your Heroes > PLAY** on a hero, then choose how to play.
 
 ### Test on one PC (no setup needed)
@@ -83,11 +89,16 @@ One-time setup, on the host's Unity project:
 3. In Unity: **Edit > Project Settings > Services**, choose **Use an existing Unity project ID**, and link
    it to that project.
 
-Then: host picks a hero > **HOST ONLINE GAME**. A join code appears at the top right after a few seconds.
-Friends type it under **JOIN WITH CODE**. Friends need a build of the game (**File > Build Profiles** >
-Windows > **Build**, then send them the folder), not the Unity project.
+Then: host picks a hero > **HOST ONLINE GAME**. A join code appears at the top right after a few seconds, with a
+**COPY CODE** button. Friends type (or Ctrl+V) it under **JOIN WITH CODE**. Friends need a build of the game
+(**File > Build Profiles** > Windows > **Build**, then send them the folder), not the Unity project.
 
-Relay has a free tier that easily covers testing.
+**Testing alone:** host in the Unity editor and join from a build of the game on the same PC (the build signs in as
+a different player than the editor does). That goes through Relay for real, the same as a friend joining.
+
+If hosting fails, the game says why at the top of the screen and carries on solo; the Unity Console has the full
+error. The usual causes: the project is not linked (Project Settings > Services shows no project), or Relay / Lobby
+have not been set up for it in the Dashboard. Relay has a free tier that easily covers testing.
 
 ## Code layout
 

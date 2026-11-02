@@ -64,6 +64,9 @@ namespace AshenVale
         public int PlayerCount { get { return clientPlayers.Count + 1; } }
 
         // One line for the HUD: join code, player count or connection state.
+        // The Relay join code while hosting online (empty otherwise), for the HUD's copy button.
+        public string JoinCode { get { return Online && CurrentRole == Role.Host ? onlineSession.Code ?? "" : ""; } }
+
         public string StatusLine
         {
             get
@@ -393,7 +396,8 @@ namespace AshenVale
                 foreach (var m in map.monsters)
                 {
                     w.WriteValueSafe(m.id); w.WriteValueSafe((byte)m.def); w.WriteValueSafe(m.x); w.WriteValueSafe(m.y);
-                    w.WriteValueSafe((byte)Mathf.Clamp(Mathf.CeilToInt(255f * m.hp / Mathf.Max(1, m.Def.hp)), 0, 255));
+                    w.WriteValueSafe((ushort)Mathf.Clamp(Mathf.RoundToInt(m.maxHp), 1, ushort.MaxValue));
+                    w.WriteValueSafe((byte)Mathf.Clamp(Mathf.CeilToInt(255f * m.hp / Mathf.Max(1f, m.maxHp)), 0, 255));
                     w.WriteValueSafe((sbyte)m.facing);
                     w.WriteValueSafe((byte)(m.windup > 0f ? 1 : m.strike > 0f ? 2 : 0));   // boss pose, for the telegraph
                 }
@@ -401,6 +405,8 @@ namespace AshenVale
                 foreach (var d in map.drops)
                 {
                     w.WriteValueSafe(d.id); w.WriteValueSafe((byte)d.kind); w.WriteValueSafe(d.x); w.WriteValueSafe(d.y);
+                    int keeper = world.ReservedFor(d);
+                    w.WriteValueSafe(keeper != 0 && keeper != viewer.id);
                     if (d.kind == DropKind.Item) { w.WriteValueSafe((byte)d.item.rarity); w.WriteValueSafe(d.item.name ?? ""); }
                     else if (d.kind == DropKind.Part) w.WriteValueSafe((byte)d.value);
                 }
@@ -546,7 +552,7 @@ namespace AshenVale
             for (int i = 0; i < monsterCount; i++)
             {
                 r.ReadValueSafe(out int id); r.ReadValueSafe(out byte def); r.ReadValueSafe(out float x); r.ReadValueSafe(out float y);
-                r.ReadValueSafe(out byte health); r.ReadValueSafe(out sbyte facing); r.ReadValueSafe(out byte pose);
+                r.ReadValueSafe(out ushort maxHp); r.ReadValueSafe(out byte health); r.ReadValueSafe(out sbyte facing); r.ReadValueSafe(out byte pose);
                 MonsterState m;
                 if (monsterLookup.TryGetValue(id, out m)) { m.px = m.x; m.py = m.y; }
                 else
@@ -555,7 +561,8 @@ namespace AshenVale
                     m = new MonsterState { id = id, def = kind, level = Monsters.All[kind].level, map = shown, px = x, py = y };
                 }
                 m.x = x; m.y = y;
-                m.hp = health / 255f * m.Def.hp;
+                m.maxHp = maxHp;
+                m.hp = health / 255f * m.maxHp;
                 m.facing = facing < 0 ? -1 : 1;
                 m.windup = pose == 1 ? 1f : 0f;
                 m.strike = pose == 2 ? 1f : 0f;
@@ -569,6 +576,7 @@ namespace AshenVale
             for (int i = 0; i < dropCount; i++)
             {
                 r.ReadValueSafe(out int id); r.ReadValueSafe(out byte kind); r.ReadValueSafe(out float x); r.ReadValueSafe(out float y);
+                r.ReadValueSafe(out bool reserved);
                 var dropKind = (DropKind)Mathf.Clamp(kind, 0, (int)DropKind.Part);
                 int value = 0;
                 Item item = null;
@@ -585,7 +593,7 @@ namespace AshenVale
                 }
                 DropState d;
                 if (!dropLookup.TryGetValue(id, out d)) d = new DropState { id = id, map = shown };
-                d.kind = dropKind; d.x = x; d.y = y; d.item = item; d.value = value;
+                d.kind = dropKind; d.x = x; d.y = y; d.item = item; d.value = value; d.reservedForOther = reserved;
                 runtime.drops.Add(d);
             }
 

@@ -79,6 +79,12 @@ namespace AshenVale
             return Mathf.Max(1, Mathf.RoundToInt(monsterXp * share));
         }
 
+        // Party play
+        public const float PartyHpPerPlayer = .3f;      // monsters appear with this much more HP per extra living player on the map
+        public const float PartyShareRange = 16f;       // a kill gives full XP to everyone alive this close on the map (about a screen)
+        public const float HitMemory = 10f;             // ...and to anyone who hit it within this many seconds, wherever they are
+        public const float LootReserve = 8f;            // a drop belongs to whoever did the most damage for this long, then anyone
+
         // Loot and items
         public const float PartDropChance = .35f;   // chance a monster also drops its part (some monsters override it)
         public const int ChestParts = 3;            // parts a chest spills
@@ -98,8 +104,12 @@ namespace AshenVale
         public const float PotionDropChance = .23f;
         public const float EquipmentDropChance = .24f;  // rolled only when no potion dropped
         public const int StartingPotions = 3;
+        // Potions heal a share of your maximum, so they keep up as you level (never less than the old flat amount).
         public const int HpPotionHeal = 60;
         public const int MpPotionHeal = 45;
+        public const float HpPotionShare = .4f;
+        public const float MpPotionShare = .4f;
+        public static int PotionHeal(int flat, float share, int maximum) { return Mathf.Max(flat, Mathf.RoundToInt(maximum * share)); }
         public const int HpPotionPrice = 25;
         public const int MpPotionPrice = 35;
     }

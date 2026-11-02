@@ -234,6 +234,7 @@ public class AshenValeGame : MonoBehaviour
         hud.HandleKeys(me);
         keyboard.Sample(!hud.WindowOpen);
         hud.status = mode == Mode.Solo ? soloNotice : net.StatusLine;
+        hud.joinCode = mode == Mode.Host ? net.JoinCode : "";
 
         if (mode == Mode.Client)
         {

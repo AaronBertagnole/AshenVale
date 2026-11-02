@@ -26,6 +26,8 @@ namespace AshenVale
         public IGameCommands commands;      // local World, or the host when playing as a client
         public WorldView view;              // for the floating damage numbers
         public string status = "";          // top-right line: join code, players, connection state
+        public string joinCode = "";        // while hosting online: shows a COPY button next to the status
+        float copiedClock;
         public bool online;                 // changes the Esc menu wording
 
         GUIStyle titleText, barText, detailText, detailRight, bodyStyle, smallStyle, centeredStyle, menuButton, statusStyle, nameplate,
@@ -125,6 +127,12 @@ namespace AshenVale
             DrawBossBar(me);
             DrawStatus(me);
             if (!string.IsNullOrEmpty(status)) GUI.Label(new Rect(Screen.width - 620, 12, 608, 24), status, statusStyle);
+            if (!string.IsNullOrEmpty(joinCode))
+            {
+                copiedClock = Mathf.Max(0, copiedClock - Time.deltaTime);
+                if (GUI.Button(new Rect(Screen.width - 760, 10, 130, 26), copiedClock > 0 ? "COPIED!" : "COPY CODE"))
+                { GUIUtility.systemCopyBuffer = joinCode; copiedClock = 1.5f; }
+            }
             float corner = string.IsNullOrEmpty(status) ? 10 : 36;
             if (minimapShown) DrawMinimap(me, def, corner);
             else GUI.Label(new Rect(Screen.width - 420, corner + 2, 408, 24), def.name.ToUpperInvariant() + "  ·  " + def.LevelText.ToUpperInvariant(), mapLabel);
@@ -232,7 +240,7 @@ namespace AshenVale
                 float w = Mathf.Min(Screen.width - 80, 720), x = (Screen.width - w) / 2f, y = 62;
                 Fill(new Rect(x - 4, y - 4, w + 8, 36), new Color(.04f, .05f, .09f, .8f));
                 Fill(new Rect(x, y, w, 12), new Color(.2f, .05f, .05f));
-                float ratio = Mathf.Clamp01(m.hp / d.hp);
+                float ratio = Mathf.Clamp01(m.hp / Mathf.Max(1f, m.maxHp));
                 Fill(new Rect(x, y, w * ratio, 12), ratio < Tuning.BossEnrageHp ? new Color(1f, .45f, .15f) : new Color(.85f, .15f, .2f));
                 GUI.Label(new Rect(x, y + 11, w, 20), d.name.ToUpperInvariant() + "   ·   LV " + d.level + (ratio < Tuning.BossEnrageHp ? "   ·   ENRAGED" : ""), bossName);
                 break;
@@ -247,10 +255,10 @@ namespace AshenVale
             foreach (var m in world.maps[me.map].monsters)
             {
                 var d = m.Def;
-                if (d.boss || m.hp >= d.hp - .01f) continue;
+                if (d.boss || m.hp >= m.maxHp - .01f) continue;
                 Vector2 at;
                 if (!ToScreen(cam, m.x, m.y + d.hover + d.height + .35f, out at)) continue;
-                float ratio = Mathf.Clamp01(m.hp / d.hp);
+                float ratio = Mathf.Clamp01(m.hp / Mathf.Max(1f, m.maxHp));
                 Fill(new Rect(at.x - 30, at.y - 4, 60, 8), new Color(.05f, .05f, .08f, .85f));
                 Fill(new Rect(at.x - 29, at.y - 3, 58 * ratio, 6), new Color(.9f, .25f, .25f));
                 worldLabel.normal.textColor = d.level > me.ch.level + 3 ? new Color(1f, .55f, .5f) : Color.white;
