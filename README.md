@@ -63,6 +63,11 @@ file names and folders: drop a PNG in the right place and it replaces that place
 The host's game runs the world (monsters, damage, loot, XP). Everyone else sends their key presses and
 sees what the host sends back. Up to 4 players. Each player keeps their own hero file.
 
+Hunting together pays: a kill gives full XP to everyone nearby (about a screen) and to anyone who hit the monster
+in the last ten seconds, and a boss gives it to the whole map. Monsters appear with 30% more health per extra
+player on the map. Drops belong to whoever did the most damage for eight seconds (faint for everyone else), then
+anyone can take them. Potions heal 40% of your maximum (never less than 60 HP / 45 MP), so they keep up as you level.
+
 In the game: **Start Adventure > Your Heroes > PLAY** on a hero, then choose how to play.
 
 ### Test on one PC (no setup needed)

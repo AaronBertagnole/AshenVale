@@ -115,7 +115,7 @@ namespace AshenVale
             ReadEvents();
             SyncHeroes(localId, frameDt, alpha);
             SyncMonsters(frameDt, alpha);
-            SyncDrops();
+            SyncDrops(localId);
             SyncShots(alpha);
             SyncPortals();
             UpdateSlashes(frameDt);
@@ -381,7 +381,7 @@ namespace AshenVale
             dying.Clear();
         }
 
-        void SyncDrops()
+        void SyncDrops(int localId)
         {
             seen.Clear();
             foreach (var d in world.maps[shownMap].drops)
@@ -400,6 +400,11 @@ namespace AshenVale
                     dropViews[d.id] = go;
                 }
                 go.transform.position = new Vector3(d.x, d.y + Mathf.Sin(Time.time * 4 + d.x) * .1f, 0);
+                // Someone else's for now: drawn faint (the host decides; a client is told in the snapshot).
+                int keeper = world.ReservedFor(d);
+                bool reserved = d.reservedForOther || (keeper != 0 && keeper != localId);
+                var sr = go.GetComponent<SpriteRenderer>();
+                var c = sr.color; c.a = reserved ? .35f : 1f; sr.color = c;
             }
             RemoveUnseen(dropViews);
         }
