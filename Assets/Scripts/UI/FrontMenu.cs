@@ -233,6 +233,8 @@ namespace AshenVale
             if (GUI.Button(new Rect(x, top + 186, w, 40), "HOST ONLINE GAME", button)) hostGame(modeHero, true);
             GUI.SetNextControlName("JoinCode");
             joinCode = GUI.TextField(new Rect(x, top + 234, 200, 36), joinCode ?? "", 12, nameField);
+            if (Event.current.type == EventType.KeyDown && Event.current.control && Event.current.keyCode == KeyCode.V && GUI.GetNameOfFocusedControl() == "")
+            { joinCode = (GUIUtility.systemCopyBuffer ?? "").Trim(); Event.current.Use(); }   // Ctrl+V pastes a code anywhere on this screen
             if (GUI.Button(new Rect(x + 210, top + 234, w - 210, 36), "JOIN WITH CODE", button) && (joinCode ?? "").Trim().Length > 0)
                 joinGame(modeHero, true, joinCode);
 

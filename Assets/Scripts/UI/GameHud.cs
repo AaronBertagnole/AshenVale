@@ -26,6 +26,8 @@ namespace AshenVale
         public IGameCommands commands;      // local World, or the host when playing as a client
         public WorldView view;              // for the floating damage numbers
         public string status = "";          // top-right line: join code, players, connection state
+        public string joinCode = "";        // while hosting online: shows a COPY button next to the status
+        float copiedClock;
         public bool online;                 // changes the Esc menu wording
 
         GUIStyle titleText, barText, detailText, detailRight, bodyStyle, smallStyle, centeredStyle, menuButton, statusStyle, nameplate,
@@ -125,6 +127,12 @@ namespace AshenVale
             DrawBossBar(me);
             DrawStatus(me);
             if (!string.IsNullOrEmpty(status)) GUI.Label(new Rect(Screen.width - 620, 12, 608, 24), status, statusStyle);
+            if (!string.IsNullOrEmpty(joinCode))
+            {
+                copiedClock = Mathf.Max(0, copiedClock - Time.deltaTime);
+                if (GUI.Button(new Rect(Screen.width - 760, 10, 130, 26), copiedClock > 0 ? "COPIED!" : "COPY CODE"))
+                { GUIUtility.systemCopyBuffer = joinCode; copiedClock = 1.5f; }
+            }
             float corner = string.IsNullOrEmpty(status) ? 10 : 36;
             if (minimapShown) DrawMinimap(me, def, corner);
             else GUI.Label(new Rect(Screen.width - 420, corner + 2, 408, 24), def.name.ToUpperInvariant() + "  ·  " + def.LevelText.ToUpperInvariant(), mapLabel);

@@ -64,6 +64,9 @@ namespace AshenVale
         public int PlayerCount { get { return clientPlayers.Count + 1; } }
 
         // One line for the HUD: join code, player count or connection state.
+        // The Relay join code while hosting online (empty otherwise), for the HUD's copy button.
+        public string JoinCode { get { return Online && CurrentRole == Role.Host ? onlineSession.Code ?? "" : ""; } }
+
         public string StatusLine
         {
             get

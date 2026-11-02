@@ -84,11 +84,16 @@ One-time setup, on the host's Unity project:
 3. In Unity: **Edit > Project Settings > Services**, choose **Use an existing Unity project ID**, and link
    it to that project.
 
-Then: host picks a hero > **HOST ONLINE GAME**. A join code appears at the top right after a few seconds.
-Friends type it under **JOIN WITH CODE**. Friends need a build of the game (**File > Build Profiles** >
-Windows > **Build**, then send them the folder), not the Unity project.
+Then: host picks a hero > **HOST ONLINE GAME**. A join code appears at the top right after a few seconds, with a
+**COPY CODE** button. Friends type (or Ctrl+V) it under **JOIN WITH CODE**. Friends need a build of the game
+(**File > Build Profiles** > Windows > **Build**, then send them the folder), not the Unity project.
 
-Relay has a free tier that easily covers testing.
+**Testing alone:** host in the Unity editor and join from a build of the game on the same PC (the build signs in as
+a different player than the editor does). That goes through Relay for real, the same as a friend joining.
+
+If hosting fails, the game says why at the top of the screen and carries on solo; the Unity Console has the full
+error. The usual causes: the project is not linked (Project Settings > Services shows no project), or Relay / Lobby
+have not been set up for it in the Dashboard. Relay has a free tier that easily covers testing.
 
 ## Code layout
 
