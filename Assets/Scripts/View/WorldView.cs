@@ -8,7 +8,14 @@ namespace AshenVale
     // It only reads the World (plus its event list, which it clears); it never changes game state.
     public sealed class WorldView
     {
-        sealed class HeroView { public GameObject go; public SpriteRenderer sr; public string anim = ""; public float clock, lastHp = -1; }
+        sealed class HeroView { public GameObject go; public SpriteRenderer sr; public HeroRig rig; public string anim = ""; public float clock, lastHp = -1; }
+
+        // Draw heroes as posed paper dolls (HeroRig) instead of frame animations. Toggled in the Esc menu.
+        public static bool RiggedHeroes
+        {
+            get { return PlayerPrefs.GetInt("heroes.rig", 1) != 0; }
+            set { PlayerPrefs.SetInt("heroes.rig", value ? 1 : 0); }
+        }
         sealed class SlashFx { public GameObject obj; public SpriteRenderer sr; public float life, duration, x, y; public int direction; public bool ring; }
 
         // A number that pops up where something was hurt or healed and drifts upward (GameHud draws them).
@@ -154,20 +161,32 @@ namespace AshenVale
                 if (p.map != shownMap) continue;
                 seen.Add(p.id);
                 HeroView v;
-                if (!heroViews.TryGetValue(p.id, out v))
+                bool wantRig = RiggedHeroes && Rigs.For(p.Hero) != null;
+                if (heroViews.TryGetValue(p.id, out v) && (v.rig != null) != wantRig) { Object.Destroy(v.go); heroViews.Remove(p.id); v = null; }
+                if (v == null)
                 {
                     v = new HeroView { go = new GameObject("Hero " + p.id + " (" + p.Hero.name + ")") };
-                    v.sr = v.go.AddComponent<SpriteRenderer>();
+                    if (wantRig) v.rig = HeroRig.Create(Rigs.For(p.Hero), v.go.transform, "Rig");
+                    if (v.rig == null) v.sr = v.go.AddComponent<SpriteRenderer>();
                     heroViews[p.id] = v;
                 }
-                v.sr.sortingOrder = p.id == localId ? HeroOrder + 1 : HeroOrder;
+                if (v.rig != null) v.rig.Order = p.id == localId ? HeroOrder + 1 : HeroOrder;
+                else v.sr.sortingOrder = p.id == localId ? HeroOrder + 1 : HeroOrder;
                 if (v.lastHp >= 0 && p.hp != v.lastHp && !p.dead)
                     Number(p.x, p.y + 2.1f, p.hp < v.lastHp ? "-" + (v.lastHp - p.hp) : "+" + (p.hp - v.lastHp), p.hp < v.lastHp ? HurtColor : HealColor, false);
                 v.lastHp = p.hp;
                 Animate(p, v, frameDt);
                 float x = Mathf.Lerp(p.px, p.x, alpha), y = Mathf.Lerp(p.py, p.y, alpha);
-                v.go.transform.localScale = new Vector3(HeroScale, p.crouching ? 1.10f : HeroScale, 1f);
-                v.go.transform.position = new Vector3(x, y + (p.crouching ? .33f : .48f), 0);
+                if (v.rig != null)
+                {
+                    v.go.transform.localScale = Vector3.one;
+                    v.go.transform.position = new Vector3(x, y - .04f, 0);      // the doll stands on its feet
+                }
+                else
+                {
+                    v.go.transform.localScale = new Vector3(HeroScale, p.crouching ? 1.10f : HeroScale, 1f);
+                    v.go.transform.position = new Vector3(x, y + (p.crouching ? .33f : .48f), 0);
+                }
             }
             stale.Clear();
             foreach (var kv in heroViews) if (!seen.Contains(kv.Key)) stale.Add(kv.Key);
@@ -192,6 +211,13 @@ namespace AshenVale
             string clip = ChooseAnimation(p);
             if (clip != v.anim) { v.anim = clip; v.clock = 0; }
             v.clock += frameDt;
+            Color tint = p.immunity > 0 && Mathf.FloorToInt(p.immunity * 16) % 2 == 0 ? new Color(1, .55f, .55f) : Color.white;
+            if (v.rig != null)
+            {
+                v.rig.Pose(p, clip, v.clock, frameDt);
+                v.rig.Tint = tint;
+                return;
+            }
             Sprite[] frames = Sprites.Hero(h.folder + "/" + clip);
             float fps = clip == "idle" ? 5 : clip == "run" ? 11 : clip == "death" ? 7 : 12;
             if (frames.Length > 0)
@@ -202,7 +228,7 @@ namespace AshenVale
                 v.sr.sprite = frames[index];
             }
             v.sr.flipX = p.facing < 0;
-            v.sr.color = p.immunity > 0 && Mathf.FloorToInt(p.immunity * 16) % 2 == 0 ? new Color(1, .55f, .55f) : Color.white;
+            v.sr.color = tint;
         }
 
         // ---------------------------------------------------------------- monsters, drops, arrows, portals
