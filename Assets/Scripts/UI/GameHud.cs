@@ -4,7 +4,8 @@ using UnityEngine;
 
 namespace AshenVale
 {
-    // In-game IMGUI: status panel, key hints, map banner, minimap, labels over portals and town folk, monster health bars,
+    // Themed IMGUI windows and world labels; status/minimap fallbacks are hidden while the Canvas HUD is active.
+    // Labels over portals and town folk, monster health bars,
     // inventory, shop, waystone, smithy, world map and the Esc menu. Clicks become World commands (Equip, BuyPotion, BuyGear, Sell,
     // Travel, Upgrade), which the world checks before applying.
     public sealed class GameHud
@@ -17,6 +18,49 @@ namespace AshenVale
         const string WorldMapArt = "Art/UI/world_map";     // optional painted world map (see WorldAtlas)
 
         readonly World world;
+        public bool canvasActive;
+        public HudTheme canvasTheme;
+        public Action<string, Color> onPickup;
+        GUISkin canvasSkin;
+
+        // The Canvas buttons use the same window state and command routes as the keyboard.
+        public void ToggleCanvasWindow(int which)
+        {
+            bool wasOpen = which == 0 ? inventoryOpen : which == 1 ? worldMapOpen : menuOpen;
+            inventoryOpen = shopOpen = waystoneOpen = smithyOpen = worldMapOpen = menuOpen = controlsOpen = false;
+            capturingAction = -1;
+            if (!wasOpen) { if (which == 0) inventoryOpen = true; else if (which == 1) worldMapOpen = true; else menuOpen = true; }
+        }
+
+        public void ReleaseCanvasSkin()
+        {
+            if (canvasSkin != null) UnityEngine.Object.Destroy(canvasSkin);
+            canvasSkin = null; titleText = null;
+        }
+
+        void UseCanvasSkin()
+        {
+            if (canvasSkin == null)
+            {
+                canvasSkin = UnityEngine.Object.Instantiate(GUI.skin);
+                canvasSkin.hideFlags = HideFlags.DontSave;
+                canvasSkin.box.normal.background = canvasTheme.panel.texture;
+                canvasSkin.box.border = new RectOffset(16, 16, 16, 16);
+                canvasSkin.box.normal.textColor = HudTheme.Ivory;
+                canvasSkin.box.fontSize = 15; canvasSkin.box.fontStyle = FontStyle.Bold;
+                canvasSkin.box.padding = new RectOffset(12, 12, 8, 8);
+                canvasSkin.button.border = new RectOffset(16, 16, 16, 16);
+                canvasSkin.button.normal.background = canvasTheme.slot.texture;
+                canvasSkin.button.hover.background = canvasTheme.slot.texture;
+                canvasSkin.button.active.background = canvasTheme.track.texture;
+                canvasSkin.button.normal.textColor = HudTheme.Ivory;
+                canvasSkin.button.hover.textColor = HudTheme.Teal;
+                canvasSkin.button.active.textColor = HudTheme.Ivory;
+                canvasSkin.label.normal.textColor = HudTheme.Ivory;
+                titleText = null; // Recreate styles from this skin once.
+            }
+            GUI.skin = canvasSkin;
+        }
         public bool inventoryOpen, shopOpen, menuOpen, waystoneOpen, smithyOpen, worldMapOpen, controlsOpen;
         public bool minimapShown = true;
         public bool WindowOpen { get { return inventoryOpen || shopOpen || menuOpen || waystoneOpen || smithyOpen || worldMapOpen || controlsOpen; } }
@@ -48,7 +92,7 @@ namespace AshenVale
         // Window keys (bindings in Keys): inventory, world map, minimap, and the loot / talk key at the merchant,
         // waystone or smithy; Esc closes a window or opens the menu. The world keeps running while windows are
         // open; only attacks are blocked.
-        public void HandleKeys(PlayerState me)
+        public void HandleKeys(PlayerState me, bool ignoreMouse = false)
         {
             if (me == null || me.dead) { inventoryOpen = shopOpen = menuOpen = waystoneOpen = smithyOpen = worldMapOpen = controlsOpen = false; capturingAction = -1; return; }
             if (Capturing) return;                      // the Controls window is waiting for a key
@@ -59,10 +103,10 @@ namespace AshenVale
                 else menuOpen = !menuOpen;
             }
             if (menuOpen || controlsOpen) return;
-            if (Keys.Pressed(GameAction.Minimap)) minimapShown = !minimapShown;
-            if (Keys.Pressed(GameAction.WorldMap)) { worldMapOpen = !worldMapOpen; inventoryOpen = shopOpen = waystoneOpen = smithyOpen = false; }
-            if (Keys.Pressed(GameAction.Inventory)) { inventoryOpen = !inventoryOpen; shopOpen = waystoneOpen = smithyOpen = worldMapOpen = false; }
-            bool talk = Keys.Pressed(GameAction.Interact);
+            if (Keys.Pressed(GameAction.Minimap, ignoreMouse)) minimapShown = !minimapShown;
+            if (Keys.Pressed(GameAction.WorldMap, ignoreMouse)) { worldMapOpen = !worldMapOpen; inventoryOpen = shopOpen = waystoneOpen = smithyOpen = false; }
+            if (Keys.Pressed(GameAction.Inventory, ignoreMouse)) { inventoryOpen = !inventoryOpen; shopOpen = waystoneOpen = smithyOpen = worldMapOpen = false; }
+            bool talk = Keys.Pressed(GameAction.Interact, ignoreMouse);
             if (talk && world.NearMerchant(me, NpcReach)) { shopOpen = !shopOpen; inventoryOpen = waystoneOpen = smithyOpen = worldMapOpen = false; }
             else if (talk && world.NearWaystone(me, NpcReach)) { waystoneOpen = !waystoneOpen; inventoryOpen = shopOpen = smithyOpen = worldMapOpen = false; }
             else if (talk && world.NearSmithy(me, NpcReach)) { smithyOpen = !smithyOpen; inventoryOpen = shopOpen = waystoneOpen = worldMapOpen = false; }
@@ -120,6 +164,17 @@ namespace AshenVale
 
         public void Draw(PlayerState me)
         {
+            GUISkin previous = GUI.skin;
+            try
+            {
+                if (canvasActive && canvasTheme != null) UseCanvasSkin();
+                DrawCore(me);
+            }
+            finally { GUI.skin = previous; }
+        }
+
+        void DrawCore(PlayerState me)
+        {
             if (me == null) return;
             InitStyles();
             var def = world.maps[me.map].def;
@@ -129,17 +184,20 @@ namespace AshenVale
             DrawNameplates(me);
             DrawNumbers();
             DrawBossBar(me);
-            DrawStatus(me);
-            if (!string.IsNullOrEmpty(status)) GUI.Label(new Rect(Screen.width - 620, 12, 608, 24), status, statusStyle);
-            if (!string.IsNullOrEmpty(joinCode))
+            if (!canvasActive)
             {
-                copiedClock = Mathf.Max(0, copiedClock - Time.deltaTime);
-                if (GUI.Button(new Rect(Screen.width - 760, 10, 130, 26), copiedClock > 0 ? "COPIED!" : "COPY CODE"))
-                { GUIUtility.systemCopyBuffer = joinCode; copiedClock = 1.5f; }
+                DrawStatus(me);
+                if (!string.IsNullOrEmpty(status)) GUI.Label(new Rect(Screen.width - 620, 12, 608, 24), status, statusStyle);
+                if (!string.IsNullOrEmpty(joinCode))
+                {
+                    copiedClock = Mathf.Max(0, copiedClock - Time.deltaTime);
+                    if (GUI.Button(new Rect(Screen.width - 760, 10, 130, 26), copiedClock > 0 ? "COPIED!" : "COPY CODE"))
+                    { GUIUtility.systemCopyBuffer = joinCode; copiedClock = 1.5f; }
+                }
+                float corner = string.IsNullOrEmpty(status) ? 10 : 36;
+                if (minimapShown) DrawMinimap(me, def, corner);
+                else GUI.Label(new Rect(Screen.width - 420, corner + 2, 408, 24), def.name.ToUpperInvariant() + "  ·  " + def.LevelText.ToUpperInvariant(), mapLabel);
             }
-            float corner = string.IsNullOrEmpty(status) ? 10 : 36;
-            if (minimapShown) DrawMinimap(me, def, corner);
-            else GUI.Label(new Rect(Screen.width - 420, corner + 2, 408, 24), def.name.ToUpperInvariant() + "  ·  " + def.LevelText.ToUpperInvariant(), mapLabel);
             DrawPickups(me);
             if (inventoryOpen) DrawInventory(me);
             if (shopOpen && town) DrawShop(me, def);
@@ -147,8 +205,8 @@ namespace AshenVale
             if (smithyOpen && def.hasSmithy) DrawSmithy(me, def);
             if (worldMapOpen) DrawWorldMap(me);
             if (controlsOpen) DrawControls();
-            if (me.portalCast > 0) GUI.Label(new Rect(18, 218, 500, 35), "Casting Town Portal...", bodyStyle);
-            DrawBanner(me, def);
+            if (!canvasActive && me.portalCast > 0) GUI.Label(new Rect(18, 218, 500, 35), "Casting Town Portal...", bodyStyle);
+            if (!canvasActive) DrawBanner(me, def);
             if (me.dead)
             {
                 string townName = Maps.All[Maps.IsTown(me.ch.lastTown) ? me.ch.lastTown : Maps.FirstTown].name.ToUpperInvariant();
@@ -241,8 +299,9 @@ namespace AshenVale
             for (int i = pickups.Count - 1; i >= 0; i--)
             {
                 var n = pickups[i];
-                n.age += Time.deltaTime;
+                if (Event.current.type == EventType.Repaint) n.age += Time.deltaTime;
                 if (n.age > PickupShow) { pickups.RemoveAt(i); continue; }
+                if (canvasActive) continue;
                 float alpha = n.age > PickupShow - 1f ? PickupShow - n.age : 1f;
                 var size = smallStyle.CalcSize(new GUIContent(n.text));
                 Fill(new Rect(12, y - 22, size.x + 16, 22), new Color(.04f, .05f, .09f, .6f * alpha));
@@ -257,6 +316,7 @@ namespace AshenVale
         {
             // The same thing twice in a row stacks ("+12 gold" then "+5 gold" becomes two lines; fine).
             pickups.Add(new Pickup { text = text, color = color });
+            if (onPickup != null) onPickup(text, color);
             if (pickups.Count > 6) pickups.RemoveAt(0);
         }
 
@@ -291,7 +351,7 @@ namespace AshenVale
             {
                 var d = m.Def;
                 if (!d.boss) continue;
-                float w = Mathf.Min(Screen.width - 80, 720), x = (Screen.width - w) / 2f, y = 62;
+                float w = Mathf.Min(Screen.width - 80, 720), x = (Screen.width - w) / 2f, y = canvasActive ? 90 : 62;
                 Fill(new Rect(x - 4, y - 4, w + 8, 36), new Color(.04f, .05f, .09f, .8f));
                 Fill(new Rect(x, y, w, 12), new Color(.2f, .05f, .05f));
                 float ratio = Mathf.Clamp01(m.hp / Mathf.Max(1f, m.maxHp));
@@ -818,3 +878,4 @@ namespace AshenVale
 
     }
 }
+

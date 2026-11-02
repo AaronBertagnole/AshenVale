@@ -63,19 +63,21 @@ namespace AshenVale
             PlayerPrefs.Save();
         }
 
-        public static bool Held(GameAction action)
+        public static bool Held(GameAction action, bool ignoreMouse = false)
         {
             Load();
-            for (int s = 0; s < Slots; s++) { var k = bound[(int)action, s]; if (k != KeyCode.None && Input.GetKey(k)) return true; }
+            for (int s = 0; s < Slots; s++) { var k = bound[(int)action, s]; if (k != KeyCode.None && (!ignoreMouse || !IsMouse(k)) && Input.GetKey(k)) return true; }
             return false;
         }
 
-        public static bool Pressed(GameAction action)
+        public static bool Pressed(GameAction action, bool ignoreMouse = false)
         {
             Load();
-            for (int s = 0; s < Slots; s++) { var k = bound[(int)action, s]; if (k != KeyCode.None && Input.GetKeyDown(k)) return true; }
+            for (int s = 0; s < Slots; s++) { var k = bound[(int)action, s]; if (k != KeyCode.None && (!ignoreMouse || !IsMouse(k)) && Input.GetKeyDown(k)) return true; }
             return false;
         }
+
+        static bool IsMouse(KeyCode key) { return (int)key >= (int)KeyCode.Mouse0 && (int)key <= (int)KeyCode.Mouse6; }
 
         public static string Describe(GameAction action) { return names[(int)action]; }
 
@@ -119,3 +121,4 @@ namespace AshenVale
         }
     }
 }
+

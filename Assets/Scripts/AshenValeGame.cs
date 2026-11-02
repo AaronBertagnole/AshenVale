@@ -11,7 +11,7 @@ using AshenVale;
 //   Persistence/        hero save files (one JSON file per hero) and the conversion to and from the World
 //   Net/                online co-op: NetSession (host / client messages, snapshots), OnlineSession (Relay join codes)
 //   View/               draws the World (scenery, heroes, monsters, effects, camera)
-//   UI/                 menus, HUD, inventory, shop, Esc menu (IMGUI)
+//   UI/                 Canvas HUD plus themed IMGUI inventory, shop and menus
 //   Client/             keyboard and music
 //
 // Three ways to play:
@@ -27,6 +27,8 @@ public class AshenValeGame : MonoBehaviour
     World world;
     WorldView view;
     GameHud hud;
+    CanvasHud canvasHud;
+    readonly Queue<GameAction> hudActions = new Queue<GameAction>();
     FrontMenu menu;
     MusicPlayer music;
     NetSession net;
@@ -52,6 +54,8 @@ public class AshenValeGame : MonoBehaviour
         localCommands = new LocalCommands(world, () => localId);
         remoteCommands = new RemoteCommands(net);
         hud = new GameHud(world) { onCharacterSelect = BackToHeroes, onQuit = QuitGame, commands = localCommands, view = view };
+        canvasHud = gameObject.AddComponent<CanvasHud>();
+        canvasHud.Bind(world, hud, action => hudActions.Enqueue(action));
         menu = new FrontMenu(music, CreateHero, PlaySolo, HostGame, JoinGame, DeleteSaved);
         menu.SetSaved(SaveStore.LoadAll());
     }
@@ -122,6 +126,7 @@ public class AshenValeGame : MonoBehaviour
         view.Reset();
         hud.Close();
         keyboard.Clear();
+        hudActions.Clear();
         inputs.Clear();
         accumulator = 0;
         saveTimer = AutosaveInterval;
@@ -135,6 +140,7 @@ public class AshenValeGame : MonoBehaviour
     {
         music.Stop();
         keyboard.Clear();
+        hudActions.Clear();
         localId = net.LocalPlayerId;
         var me = world.GetPlayer(localId);
         lastMap = me != null ? me.map : -1;
@@ -219,6 +225,7 @@ public class AshenValeGame : MonoBehaviour
         net.Update(Time.deltaTime);
         if (inMenu)
         {
+            hudActions.Clear();
             if (mode == Mode.Client && net.ClientReady) EnterClientGame();
             else
             {
@@ -231,8 +238,14 @@ public class AshenValeGame : MonoBehaviour
 
         var me = world.GetPlayer(localId);
         if (me != null && me.dead && me.deathClock >= Tuning.RespawnDelay && Input.GetKeyDown(KeyCode.N)) { BackToHeroes(); return; }
-        hud.HandleKeys(me);
-        if (hud.Capturing) keyboard.Clear(); else keyboard.Sample(!hud.WindowOpen);   // rebinding a key: the game doesn't hear it
+        bool pointerOverHud = canvasHud && canvasHud.PointerOverHud();
+        hud.HandleKeys(me, pointerOverHud);
+        if (hud.Capturing) keyboard.Clear(); else keyboard.Sample(!hud.WindowOpen, pointerOverHud);   // rebinding a key: the game doesn't hear it
+        while (hudActions.Count > 0)
+        {
+            var action = hudActions.Dequeue();
+            if (me != null && !me.dead && !hud.WindowOpen && !hud.Capturing) keyboard.QueueAction(action);
+        }
         hud.status = mode == Mode.Solo ? soloNotice : net.StatusLine;
         hud.joinCode = mode == Mode.Host ? net.JoinCode : "";
 
@@ -277,9 +290,19 @@ public class AshenValeGame : MonoBehaviour
         }
     }
 
+    void LateUpdate()
+    {
+        if (!canvasHud) return;
+        if (inMenu) canvasHud.SetVisible(false);
+        else canvasHud.Refresh(world.GetPlayer(localId));
+    }
+
+    void OnDisable() { if (canvasHud) canvasHud.SetVisible(false); }
+
     void OnGUI()
     {
         if (inMenu) menu.Draw();
         else hud.Draw(world.GetPlayer(localId));
     }
 }
+
