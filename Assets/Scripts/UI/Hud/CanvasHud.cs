@@ -40,8 +40,9 @@ namespace AshenVale
             var c = new GameObject("Ashen Vale Canvas HUD", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster), typeof(CanvasGroup));
             c.transform.SetParent(transform, false); canvas = c.GetComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.sortingOrder = 5;
             var scaler = c.GetComponent<CanvasScaler>(); scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1280, 720); scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.Expand;
-            group = c.GetComponent<CanvasGroup>(); safeRoot = Rect("Safe area", c.transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            scaler.referenceResolution = new Vector2(1600, 900); scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.Expand;
+            group = c.GetComponent<CanvasGroup>(); safeRoot = Rect("Safe area", c.transform, new Vector2(.5f, .5f), new Vector2(.5f, .5f), Vector2.zero, Vector2.zero);
+            safeRoot.anchorMin = Vector2.zero; safeRoot.anchorMax = Vector2.one;
             safeRoot.offsetMin = safeRoot.offsetMax = Vector2.zero;
             if (!EventSystem.current)
             {
@@ -49,71 +50,71 @@ namespace AshenVale
                 ownedEventSystem.transform.SetParent(transform, false);
             }
 
-            var status = Panel("Hero", safeRoot, new Vector2(0, 1), new Vector2(0, 1), new Vector2(20, -20), new Vector2(344, 112));
-            var avatar = Panel("Portrait frame", status, new Vector2(0, 1), new Vector2(0, 1), new Vector2(10, -11), new Vector2(80, 88));
-            portrait = Graphic<Image>("Hero sprite", avatar, new Vector2(0, 1), new Vector2(0, 1), new Vector2(5, -4), new Vector2(70, 78)); portrait.preserveAspect = true;
-            heroName = Label("Name", status, 102, 10, 230, 25, 19, HudTheme.Ivory, FontStyle.Bold);
-            heroClass = Label("Class", status, 104, 36, 228, 18, 10, HudTheme.Muted);
-            health = MeterAt(status, 104, 60, 228, 17, new Color(.88f, .26f, .24f));
-            mana = MeterAt(status, 104, 83, 228, 15, new Color(.13f, .64f, .82f));
-            level = Label("Level", avatar, 0, 67, 80, 18, 11, HudTheme.Ivory, FontStyle.Bold); level.alignment = TextAnchor.MiddleCenter;
-            network = Label("Connection", safeRoot, 22, 140, 340, 38, 11, HudTheme.Muted); network.horizontalOverflow = HorizontalWrapMode.Wrap;
-            copyCode = ButtonAt("Copy join code", safeRoot, new Vector2(0, 1), new Vector2(0, 1), new Vector2(22, -184), new Vector2(150, 25), () => { GUIUtility.systemCopyBuffer = legacy.joinCode; AddActivity("Join code copied.", HudTheme.Teal); });
+            var status = Panel("Hero", safeRoot, new Vector2(0, 1), new Vector2(0, 1), new Vector2(20, -20), new Vector2(292, 90));
+            var avatar = Panel("Portrait frame", status, new Vector2(0, 1), new Vector2(0, 1), new Vector2(8, -9), new Vector2(62, 72));
+            portrait = Graphic<Image>("Hero sprite", avatar, new Vector2(0, 1), new Vector2(0, 1), new Vector2(4, -3), new Vector2(54, 62)); portrait.preserveAspect = true;
+            heroName = Label("Name", status, 80, 8, 200, 22, 16, HudTheme.Ivory, FontStyle.Bold);
+            heroClass = Label("Class", status, 82, 31, 198, 15, 10, HudTheme.Muted);
+            health = MeterAt(status, 82, 50, 198, 14, new Color(.88f, .26f, .24f));
+            mana = MeterAt(status, 82, 69, 198, 12, new Color(.13f, .64f, .82f));
+            level = Label("Level", avatar, 0, 54, 62, 16, 9, HudTheme.Ivory, FontStyle.Bold); level.alignment = TextAnchor.MiddleCenter;
+            network = Label("Connection", safeRoot, 22, 118, 292, 30, 10, HudTheme.Muted); network.horizontalOverflow = HorizontalWrapMode.Wrap;
+            copyCode = ButtonAt("Copy join code", safeRoot, new Vector2(0, 1), new Vector2(0, 1), new Vector2(22, -153), new Vector2(140, 23), () => { GUIUtility.systemCopyBuffer = legacy.joinCode; AddActivity("Join code copied.", HudTheme.Teal); });
             CenterLabel(copyCode.transform, "COPY JOIN CODE", 10, HudTheme.Ivory);
 
             var heading = Rect("Location", safeRoot, new Vector2(.5f, 1), new Vector2(.5f, 1), new Vector2(0, -17), new Vector2(350, 55)); heading.pivot = new Vector2(.5f, 1);
-            location = Label("Map", heading, 0, 0, 350, 30, 23, HudTheme.Ivory, FontStyle.Bold); location.alignment = TextAnchor.MiddleCenter;
-            region = Label("Region", heading, 0, 33, 350, 18, 11, HudTheme.Copper); region.alignment = TextAnchor.MiddleCenter;
+            location = Label("Map", heading, 0, 0, 350, 28, 20, HudTheme.Ivory, FontStyle.Bold); location.alignment = TextAnchor.MiddleCenter;
+            region = Label("Region", heading, 0, 33, 350, 16, 10, HudTheme.Copper); region.alignment = TextAnchor.MiddleCenter;
 
-            var map = Panel("Minimap", safeRoot, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-20, -20), new Vector2(270, 142)); mapPanel = map.gameObject;
-            Label("Map header", map, 12, 8, 180, 18, 10, HudTheme.Copper, FontStyle.Bold).text = "LOCAL MAP";
-            var compass = Label("Compass", map, 238, 8, 20, 18, 12, HudTheme.Ivory); compass.text = "N";
-            minimap = Graphic<HudMinimap>("Terrain", map, new Vector2(0, 1), new Vector2(0, 1), new Vector2(10, -28), new Vector2(250, 88));
-            mapHint = Label("Map keys", map, 12, 119, 246, 16, 9, HudTheme.Muted); mapHint.alignment = TextAnchor.MiddleRight;
-            var purse = Panel("Gold", safeRoot, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-20, -170), new Vector2(165, 29));
-            gold = Label("Gold value", purse, 10, 3, 145, 23, 14, HudTheme.Copper, FontStyle.Bold); gold.alignment = TextAnchor.MiddleCenter;
+            var map = Panel("Minimap", safeRoot, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-20, -20), new Vector2(220, 110)); mapPanel = map.gameObject;
+            Label("Map header", map, 10, 6, 160, 16, 9, HudTheme.Copper, FontStyle.Bold).text = "LOCAL MAP";
+            var compass = Label("Compass", map, 190, 6, 20, 16, 10, HudTheme.Ivory); compass.text = "N";
+            minimap = Graphic<HudMinimap>("Terrain", map, new Vector2(0, 1), new Vector2(0, 1), new Vector2(10, -23), new Vector2(200, 65));
+            mapHint = Label("Map keys", map, 10, 91, 200, 14, 8, HudTheme.Muted); mapHint.alignment = TextAnchor.MiddleRight;
+            var purse = Panel("Gold", safeRoot, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-20, -140), new Vector2(140, 24));
+            gold = Label("Gold value", purse, 8, 1, 124, 22, 12, HudTheme.Copper, FontStyle.Bold); gold.alignment = TextAnchor.MiddleCenter;
 
-            var journey = Panel("Journey", safeRoot, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-20, -216), new Vector2(270, 145));
-            Label("Journey heading", journey, 14, 10, 242, 18, 11, HudTheme.Copper, FontStyle.Bold).text = "YOUR JOURNEY";
-            var paper = Panel("Guidance", journey, new Vector2(0, 1), new Vector2(0, 1), new Vector2(10, -35), new Vector2(250, 99), theme.parchment);
+            var journey = Panel("Journey", safeRoot, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-20, -180), new Vector2(220, 120));
+            Label("Journey heading", journey, 12, 8, 196, 16, 10, HudTheme.Copper, FontStyle.Bold).text = "YOUR JOURNEY";
+            var paper = Panel("Guidance", journey, new Vector2(0, 1), new Vector2(0, 1), new Vector2(8, -30), new Vector2(204, 82), theme.parchment);
             Color ink = new Color(.22f, .18f, .12f);
-            journeyTitle = Label("Guidance title", paper, 11, 8, 228, 22, 14, ink, FontStyle.Bold);
-            journeyBody = Label("Guidance body", paper, 11, 33, 228, 59, 12, ink); journeyBody.horizontalOverflow = HorizontalWrapMode.Wrap;
+            journeyTitle = Label("Guidance title", paper, 10, 6, 184, 19, 12, ink, FontStyle.Bold);
+            journeyBody = Label("Guidance body", paper, 10, 28, 184, 50, 11, ink); journeyBody.horizontalOverflow = HorizontalWrapMode.Wrap;
 
-            var log = Panel("Adventure log", safeRoot, new Vector2(0, 0), new Vector2(0, 0), new Vector2(20, 20), new Vector2(270, 95));
-            Label("Log heading", log, 12, 7, 246, 16, 10, HudTheme.Copper, FontStyle.Bold).text = "ADVENTURE LOG";
-            for (int i = 0; i < 3; i++) lines.Add(Label("Activity " + i, log, 12, 27 + i * 19, 246, 18, 11, HudTheme.Muted));
+            var log = Panel("Adventure log", safeRoot, new Vector2(0, 0), new Vector2(0, 0), new Vector2(20, 8), new Vector2(220, 68));
+            Label("Log heading", log, 10, 5, 200, 13, 9, HudTheme.Copper, FontStyle.Bold).text = "ADVENTURE LOG";
+            for (int i = 0; i < 3; i++) lines.Add(Label("Activity " + i, log, 10, 21 + i * 14, 200, 14, 10, HudTheme.Muted));
 
-            var actions = Rect("Action bar", safeRoot, new Vector2(.5f, 0), new Vector2(.5f, 0), new Vector2(0, 20), new Vector2(440, 105)); actions.pivot = new Vector2(.5f, 0);
+            var actions = Rect("Action bar", safeRoot, new Vector2(.5f, 0), new Vector2(.5f, 0), new Vector2(0, 8), new Vector2(292, 66)); actions.pivot = new Vector2(.5f, 0);
             GameAction[] actionsList = { GameAction.Attack, GameAction.Skill, GameAction.Dash, GameAction.TownPortal, GameAction.HpPotion, GameAction.MpPotion };
             HudGlyph.Symbol[] glyphs = { HudGlyph.Symbol.Blade, HudGlyph.Symbol.Burst, HudGlyph.Symbol.Dash, HudGlyph.Symbol.Portal, HudGlyph.Symbol.Bottle, HudGlyph.Symbol.Bottle };
             Color[] colors = { new Color(1,.65f,.24f), HudTheme.Teal, new Color(.7f,.89f,.8f), new Color(.65f,.8f,1), new Color(1,.4f,.35f), new Color(.3f,.75f,1) };
             for (int i = 0; i < actionsList.Length; i++)
             {
                 GameAction action = actionsList[i];
-                var button = ButtonAt(action.ToString(), actions, new Vector2(0, 1), new Vector2(0, 1), new Vector2(i * 74, -3), new Vector2(66, 66), () => Request(action));
-                var icon = Graphic<HudGlyph>("Icon", button.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(10, -7), new Vector2(46, 46)); icon.symbol = glyphs[i]; icon.color = colors[i];
-                var mask = Graphic<Image>("Cooldown", button.transform, new Vector2(0, 1), new Vector2(0, 1), Vector2.zero, new Vector2(66, 66)); mask.sprite = theme.white; mask.type = Image.Type.Filled; mask.fillMethod = Image.FillMethod.Radial360; mask.color = new Color(.015f,.05f,.07f,.82f); mask.fillAmount = 0;
-                var timer = Label("Cooldown seconds", button.transform, 2, 18, 62, 25, 17, HudTheme.Ivory, FontStyle.Bold); timer.alignment = TextAnchor.MiddleCenter;
-                var keyFrame = Panel("Key", button.transform, new Vector2(.5f, 0), new Vector2(.5f, 0), new Vector2(0, -5), new Vector2(63, 22));
-                var key = CenterLabel(keyFrame, "", 10, HudTheme.Ivory); key.resizeTextForBestFit = true; key.resizeTextMinSize = 6; key.resizeTextMaxSize = 10;
-                var count = Label("Count", button.transform, 3, 3, 58, 16, 10, HudTheme.Ivory); count.alignment = TextAnchor.MiddleRight;
+                var button = ButtonAt(action.ToString(), actions, new Vector2(0, 1), new Vector2(0, 1), new Vector2(i * 49, -2), new Vector2(42, 42), () => Request(action));
+                var icon = Graphic<HudGlyph>("Icon", button.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(6, -3), new Vector2(30, 30)); icon.symbol = glyphs[i]; icon.color = colors[i];
+                var mask = Graphic<Image>("Cooldown", button.transform, new Vector2(0, 1), new Vector2(0, 1), Vector2.zero, new Vector2(42, 42)); mask.sprite = theme.white; mask.type = Image.Type.Filled; mask.fillMethod = Image.FillMethod.Radial360; mask.color = new Color(.015f,.05f,.07f,.82f); mask.fillAmount = 0;
+                var timer = Label("Cooldown seconds", button.transform, 1, 10, 40, 20, 12, HudTheme.Ivory, FontStyle.Bold); timer.alignment = TextAnchor.MiddleCenter;
+                var keyFrame = Panel("Key", button.transform, new Vector2(.5f, 0), new Vector2(.5f, 0), new Vector2(0, -5), new Vector2(42, 16));
+                var key = CenterLabel(keyFrame, "", 8, HudTheme.Ivory); key.resizeTextForBestFit = true; key.resizeTextMinSize = 6; key.resizeTextMaxSize = 8;
+                var count = Label("Count", button.transform, 2, 1, 38, 13, 8, HudTheme.Ivory); count.alignment = TextAnchor.MiddleRight;
                 slots.Add(new ActionSlot { action = action, button = button, key = key, value = count, timer = timer, cooldown = mask });
             }
-            xp = MeterAt(actions, 0, 91, 436, 7, new Color(.95f,.68f,.22f)); xp.text.gameObject.SetActive(false);
-            xpText = Label("Experience", actions, 0, 101, 436, 15, 9, HudTheme.Muted); xpText.alignment = TextAnchor.MiddleCenter;
+            xp = MeterAt(actions, 0, 55, 287, 5, new Color(.95f,.68f,.22f)); xp.text.gameObject.SetActive(false);
+            xpText = Label("Experience", actions, 0, 59, 287, 12, 8, HudTheme.Muted); xpText.alignment = TextAnchor.MiddleCenter;
 
-            var shortcuts = Rect("Shortcuts", safeRoot, new Vector2(1,0), new Vector2(1,0), new Vector2(-20,20), new Vector2(218,78)); shortcuts.pivot = new Vector2(1,0);
+            var shortcuts = Rect("Shortcuts", safeRoot, new Vector2(1,0), new Vector2(1,0), new Vector2(-20,8), new Vector2(164,58)); shortcuts.pivot = new Vector2(1,0);
             string[] labels = { "Bag", "World", "Menu" };
             HudGlyph.Symbol[] menuIcons = { HudGlyph.Symbol.Bag, HudGlyph.Symbol.Atlas, HudGlyph.Symbol.Menu };
             for (int i=0; i<3; i++)
             {
-                int which=i; var button=ButtonAt(labels[i],shortcuts,new Vector2(0,1),new Vector2(0,1),new Vector2(i*74,0),new Vector2(64,53),()=>Open(which));
-                var icon=Graphic<HudGlyph>("Icon",button.transform,new Vector2(0,1),new Vector2(0,1),new Vector2(13,-7),new Vector2(38,38));icon.symbol=menuIcons[i];icon.color=HudTheme.Copper;
-                Label("Label",shortcuts,i*74,58,64,18,11,HudTheme.Ivory).text=labels[i];
+                int which=i; var button=ButtonAt(labels[i],shortcuts,new Vector2(0,1),new Vector2(0,1),new Vector2(i*56,0),new Vector2(44,38),()=>Open(which));
+                var icon=Graphic<HudGlyph>("Icon",button.transform,new Vector2(0,1),new Vector2(0,1),new Vector2(8,-5),new Vector2(28,28));icon.symbol=menuIcons[i];icon.color=HudTheme.Copper;
+                Label("Label",shortcuts,i*56,42,44,15,10,HudTheme.Ivory).text=labels[i];
             }
-            var prompt=Panel("Interaction",safeRoot,new Vector2(.5f,0),new Vector2(.5f,0),new Vector2(0,155),new Vector2(340,34));interactionPanel=prompt.gameObject;
-            interaction=CenterLabel(prompt,"",12,HudTheme.Ivory);
+            var prompt=Panel("Interaction",safeRoot,new Vector2(.5f,0),new Vector2(.5f,0),new Vector2(0,125),new Vector2(270,26));interactionPanel=prompt.gameObject;
+            interaction=CenterLabel(prompt,"",11,HudTheme.Ivory);
         }
 
         // Raycast at the current pointer rather than depending on EventSystem's Update ordering.
@@ -158,7 +159,7 @@ namespace AshenVale
             else journeyBody.text=def.LevelText+"\nFind the next road. "+Keys.Name(GameAction.WorldMap)+" opens your explored world.";
             foreach(var slot in slots)
             {
-                slot.key.text=Keys.Name(slot.action);slot.value.text="";float time=0,duration=1;bool ready=!blocked;
+                slot.key.text=PrimaryKey(slot.action);slot.value.text="";float time=0,duration=1;bool ready=!blocked;
                 switch(slot.action)
                 {
                     case GameAction.Attack: time=me.attackCooldown;duration=me.lastWasSkill?me.Hero.skillCooldown:me.Hero.attackCooldown;break;
@@ -180,10 +181,28 @@ namespace AshenVale
                 else if(world.NearSmithy(me,2))prompt=key+"Visit the blacksmith";
                 else if(me.portalCast>0)prompt="Opening a town portal...";
             }
-            interactionPanel.SetActive(prompt.Length>0);interaction.text=prompt;
+            var camera = Camera.main;
+            bool showPrompt = prompt.Length > 0 && camera != null;
+            if (showPrompt)
+            {
+                Vector3 at = camera.WorldToScreenPoint(new Vector3(me.x, me.y + 2.8f, 0));
+                showPrompt = at.z >= 0;
+                float halfWidth = 135 * canvas.scaleFactor;
+                at.x = Mathf.Clamp(at.x, Screen.safeArea.xMin + halfWidth, Screen.safeArea.xMax - halfWidth);
+                at.y = Mathf.Clamp(at.y, Screen.safeArea.yMin + 100 * canvas.scaleFactor, Screen.safeArea.yMax - 32 * canvas.scaleFactor);
+                at.z = 0;
+                interactionPanel.transform.position = at;
+            }
+            interactionPanel.SetActive(showPrompt); interaction.text = prompt;
             for(int i=0;i<lines.Count;i++){int index=activity.Count-1-i;lines[i].text=index>=0?activity[index].text:"";lines[i].color=index>=0?activity[index].color:HudTheme.Muted;}
         }
 
+        static string PrimaryKey(GameAction action)
+        {
+            var key = Keys.Get(action, 0);
+            if (key == KeyCode.None) key = Keys.Get(action, 1);
+            return Keys.KeyName(key);
+        }
         static int KnownTowns(Character ch){int count=0;for(int i=0;i<Maps.All.Length;i++)if(Maps.IsTown(i)&&ch.KnowsTown(i))count++;return count;}
         void Request(GameAction action){if(legacy.WindowOpen)return;if(queue!=null)queue(action);}
         void Open(int which){legacy.ToggleCanvasWindow(which);}
@@ -200,7 +219,7 @@ namespace AshenVale
         RectTransform Rect(string name,Transform parent,Vector2 anchor,Vector2 pivot,Vector2 position,Vector2 size)
         {var g=new GameObject(name,typeof(RectTransform));var r=g.GetComponent<RectTransform>();r.SetParent(parent,false);r.anchorMin=r.anchorMax=anchor;r.pivot=pivot;r.anchoredPosition=position;r.sizeDelta=size;return r;}
         T Graphic<T>(string name,Transform parent,Vector2 anchor,Vector2 pivot,Vector2 position,Vector2 size) where T:Graphic
-        {var r=Rect(name,parent,anchor,pivot,position,size);var graphic=r.gameObject.AddComponent<T>();graphic.raycastTarget=false;return graphic;}
+        {var r=Rect(name,parent,anchor,pivot,position,size);if (!r.GetComponent<CanvasRenderer>()) r.gameObject.AddComponent<CanvasRenderer>(); var graphic=r.gameObject.AddComponent<T>();graphic.raycastTarget=false;return graphic;}
         RectTransform Panel(string name,Transform parent,Vector2 anchor,Vector2 pivot,Vector2 position,Vector2 size,Sprite surface=null)
         {var image=Graphic<Image>(name,parent,anchor,pivot,position,size);image.sprite=surface?surface:theme.panel;image.type=Image.Type.Sliced;return image.rectTransform;}
         Text Label(string name,Transform parent,float x,float y,float width,float height,int fontSize,Color color,FontStyle style=FontStyle.Normal)
@@ -223,3 +242,4 @@ namespace AshenVale
         void OnDestroy(){if(legacy!=null){legacy.canvasActive=false;legacy.onPickup=null;legacy.canvasTheme=null;legacy.ReleaseCanvasSkin();}if(theme!=null)theme.Dispose();if(ownedEventSystem)Destroy(ownedEventSystem);}
     }
 }
+

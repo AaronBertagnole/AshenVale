@@ -4,6 +4,7 @@ using UnityEngine.UI;
 namespace AshenVale
 {
     // Actual terrain and entities, including the same discovery rules as the world atlas.
+    [RequireComponent(typeof(CanvasRenderer))]
     public sealed class HudMinimap : MaskableGraphic
     {
         public World world;
@@ -52,3 +53,4 @@ namespace AshenVale
         { int n = vh.currentVertCount; vh.AddVert(p + new Vector2(-radius, 0), c, Vector2.zero); vh.AddVert(p + new Vector2(0, radius), c, Vector2.zero); vh.AddVert(p + new Vector2(radius, 0), c, Vector2.zero); vh.AddVert(p + new Vector2(0, -radius), c, Vector2.zero); vh.AddTriangle(n, n + 1, n + 2); vh.AddTriangle(n, n + 2, n + 3); }
     }
 }
+

@@ -56,6 +56,7 @@ public class AshenValeGame : MonoBehaviour
         hud = new GameHud(world) { onCharacterSelect = BackToHeroes, onQuit = QuitGame, commands = localCommands, view = view };
         canvasHud = gameObject.AddComponent<CanvasHud>();
         canvasHud.Bind(world, hud, action => hudActions.Enqueue(action));
+        hud.onUseItem = action => hudActions.Enqueue(action);
         menu = new FrontMenu(music, CreateHero, PlaySolo, HostGame, JoinGame, DeleteSaved);
         menu.SetSaved(SaveStore.LoadAll());
     }
@@ -239,12 +240,13 @@ public class AshenValeGame : MonoBehaviour
         var me = world.GetPlayer(localId);
         if (me != null && me.dead && me.deathClock >= Tuning.RespawnDelay && Input.GetKeyDown(KeyCode.N)) { BackToHeroes(); return; }
         bool pointerOverHud = canvasHud && canvasHud.PointerOverHud();
-        hud.HandleKeys(me, pointerOverHud);
-        if (hud.Capturing) keyboard.Clear(); else keyboard.Sample(!hud.WindowOpen, pointerOverHud);   // rebinding a key: the game doesn't hear it
+        hud.HandleKeys(me, pointerOverHud || hud.WindowOpen);
+        if (hud.Capturing) keyboard.Clear(); else keyboard.Sample(!hud.WindowOpen, pointerOverHud || hud.WindowOpen);   // rebinding a key: the game doesn't hear it
         while (hudActions.Count > 0)
         {
             var action = hudActions.Dequeue();
-            if (me != null && !me.dead && !hud.WindowOpen && !hud.Capturing) keyboard.QueueAction(action);
+            bool inventoryPotion = hud.inventoryOpen && (action == GameAction.HpPotion || action == GameAction.MpPotion);
+            if (me != null && !me.dead && !hud.Capturing && (!hud.WindowOpen || inventoryPotion)) keyboard.QueueAction(action);
         }
         hud.status = mode == Mode.Solo ? soloNotice : net.StatusLine;
         hud.joinCode = mode == Mode.Host ? net.JoinCode : "";
@@ -305,4 +307,5 @@ public class AshenValeGame : MonoBehaviour
         else hud.Draw(world.GetPlayer(localId));
     }
 }
+
 

@@ -7,7 +7,7 @@ The approved visual direction is deep teal, copper, ivory and parchment. The imp
 ## Data and interaction
 
 - HP, MP, XP, level, hero name, gold and potion counts come from PlayerState/Character.
-- Six slots correspond to the game's actual Attack, Skill, Dash, Town Portal, HP Potion and MP Potion actions. Labels follow Keys bindings. Cooldowns reflect the shared attack timer, dash timer and portal cast timer; unavailable actions dim.
+- Six slots correspond to the game's actual Attack, Skill, Dash, Town Portal, HP Potion and MP Potion actions. Keycaps show the first assigned binding (or the secondary binding if the first is empty); both keys still work and the Controls screen lists them. Cooldowns reflect the shared attack timer, dash timer and portal cast timer; unavailable actions dim.
 - Clicking a slot queues a one-shot PlayerInput through KeyboardInput. Solo, host and client keep the same simulation and networking routes. The world still validates costs, cooldowns and state.
 - Bag, World and Menu open the existing GameHud windows. Existing shop, smithy, controls and waystone actions remain on IGameCommands. Their IMGUI surfaces use the matching theme; those windows have not been rewritten as Canvas layouts.
 - Minimap renders real terrain, portals, NPC facilities, monsters, chests, party and camera bounds; undiscovered secret portals stay hidden. Tab and world-map bindings still work.
@@ -18,7 +18,7 @@ Decorative graphics do not intercept clicks. UI buttons use hover/pressed states
 
 ## Layout and lifecycle
 
-A 1280x720 reference Canvas uses Expand scaling and safe-area anchors. The center remains open for gameplay. The Canvas is hidden on front menus, temporarily hides while an IMGUI window is open (so Overlay Canvas graphics cannot cover legacy dialogs), and blocks action slots on death. It creates an EventSystem only when none exists, and cleans up the textures/sprites/skin it owns. Scene changes and hero selection clear queued clicks.
+A 1600x900 reference Canvas uses Expand scaling and safe-area anchors. The center remains open for gameplay. The Canvas is hidden on front menus, temporarily hides while an IMGUI window is open (so Overlay Canvas graphics cannot cover legacy dialogs), and blocks action slots on death. It creates an EventSystem only when none exists, and cleans up the textures/sprites/skin it owns. Scene changes and hero selection clear queued clicks.
 
 ## Validation
 
@@ -39,3 +39,15 @@ Before merging:
 9. Save, return to heroes, load another hero and stop Play Mode. Confirm no duplicated Canvas/EventSystem or leftover activity/queued input.
 
 No balance, save format, map definitions or network protocol changes are included.
+
+
+
+## Compact HUD and tabbed inventory revision
+
+The HUD uses a smaller reference scale, reduced hero/minimap/journey panels and a 42-unit hotbar placed along the bottom edge. Interaction prompts now project above the player instead of occupying a fixed strip across the character. Keycaps show one binding to avoid overlapping alias text. Custom icons and minimap explicitly require a CanvasRenderer; the construction helper adds one before creating any Graphic. Smoke checks now verify that these elements produce mesh geometry.
+
+Inventory has three tabs: **Equips** (the existing 20-slot gear bag and worn equipment), **Useable Items** (HP/MP potion stacks and Use buttons), and **Monster Parts** (scrollable owned-material quantities and total sale values). The tabs read existing character fields; there is no save migration or new item system. Inventory potions enter the same input queue and host validation as keyboard/hotbar use, even while inventory is open. Full health/mana, empty stacks and death prevent use. UI clicks in modal windows no longer trigger mouse-bound gameplay actions.
+
+The merchant parts heading is a single line, and material names/quantities share the buttons' row height and vertical center. The rest of the merchant layout and prices are unchanged. The image edit supplied alongside the change is a visual concept; Unity remains the final rendering check.
+
+Revision checks in Unity: verify character clearance on ground and raised platforms; icons and minimap now appear; long/secondary-only keybindings fit; switch all three inventory tabs and scroll through every material; use both potions solo and as a client with inventory open; check counts, healing and subsequent save/reload; confirm merchant columns stay aligned with zero, one and seven material rows.

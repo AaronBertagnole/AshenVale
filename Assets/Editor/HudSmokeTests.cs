@@ -27,6 +27,14 @@ namespace AshenVale.Editor
                 Require(legacy.canvasActive, "Legacy overlay hidden while Canvas is active");
                 var minimap = root.GetComponentInChildren<HudMinimap>(true);
                 Require(minimap != null && minimap.player == me, "Minimap bound to the actual player");
+                Require(minimap.GetComponent<CanvasRenderer>() != null, "Minimap owns a CanvasRenderer");
+                Require(minimap.canvasRenderer.GetMesh() != null && minimap.canvasRenderer.GetMesh().vertexCount > 0, "Minimap actually generates visible geometry");
+                foreach (var glyph in root.GetComponentsInChildren<HudGlyph>(true))
+                {
+                    Require(glyph.GetComponent<CanvasRenderer>() != null, "Every action/menu icon owns a CanvasRenderer");
+                    Require(glyph.canvasRenderer.GetMesh() != null && glyph.canvasRenderer.GetMesh().vertexCount > 0, "Icons generate visible geometry");
+                }
+                CheckInventoryPotions(legacy, me, clicks); clicks.Clear();
                 Button attack = null, bag = null;
                 foreach (var button in root.GetComponentsInChildren<Button>(true))
                 {
@@ -47,6 +55,36 @@ namespace AshenVale.Editor
             }
             finally { UnityEngine.Object.Destroy(root); }
         }
+        static void CheckInventoryPotions(GameHud legacy, PlayerState me, List<GameAction> clicks)
+        {
+            int hp = me.hp, mp = me.mp, healthCount = me.ch.hpPotions, manaCount = me.ch.mpPotions;
+            legacy.onUseItem = action => clicks.Add(action);
+            legacy.inventoryOpen = true;
+            try
+            {
+                me.hp = me.MaxHp;
+                Require(!legacy.UseInventoryPotion(me, true), "Full health cannot waste an inventory potion");
+                me.hp = me.MaxHp - 1; me.ch.hpPotions = 1;
+                int before = clicks.Count;
+                Require(legacy.UseInventoryPotion(me, true) && clicks.Count == before + 1 && clicks[before] == GameAction.HpPotion, "Useables queues the health-potion input");
+                Require(me.ch.hpPotions == 1 && me.hp == me.MaxHp - 1, "UI leaves potion consumption and healing to the world/host");
+                me.ch.hpPotions = 0;
+                Require(!legacy.UseInventoryPotion(me, true), "Empty stacks cannot queue use");
+                me.mp = me.MaxMp; me.ch.mpPotions = 1;
+                Require(!legacy.UseInventoryPotion(me, false), "Full mana cannot waste an inventory potion");
+                me.mp = me.MaxMp - 1;
+                before = clicks.Count;
+                Require(legacy.UseInventoryPotion(me, false) && clicks[before] == GameAction.MpPotion, "Useables queues mana-potion input");
+                me.dead = true;
+                Require(!legacy.UseInventoryPotion(me, false), "Dead characters cannot use inventory potions");
+            }
+            finally
+            {
+                me.hp = hp; me.mp = mp; me.ch.hpPotions = healthCount; me.ch.mpPotions = manaCount;
+                me.dead = false; legacy.inventoryOpen = false;
+            }
+        }
+
         static void CheckInput()
         {
             var input = new KeyboardInput();
@@ -61,3 +99,4 @@ namespace AshenVale.Editor
         static void Require(bool condition, string message) { if (!condition) throw new InvalidOperationException("HUD check failed: " + message); }
     }
 }
+

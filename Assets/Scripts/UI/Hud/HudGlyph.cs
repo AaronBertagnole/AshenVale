@@ -4,6 +4,7 @@ using UnityEngine.UI;
 namespace AshenVale
 {
     // Vector UI symbols remain sharp at CanvasScaler resolutions. Points are in a 64 x 64 design space.
+    [RequireComponent(typeof(CanvasRenderer))]
     public sealed class HudGlyph : MaskableGraphic
     {
         public enum Symbol { Blade, Burst, Dash, Portal, Bottle, Bag, Atlas, Menu, Diamond }
@@ -37,3 +38,4 @@ namespace AshenVale
         void Circle(VertexHelper vh, Vector2 center, float radius) { for (int i = 0; i < 16; i++) { float a = i * Mathf.PI / 8, b = (i + 1) * Mathf.PI / 8; Triangle(vh, center, center + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * radius, center + new Vector2(Mathf.Cos(b), Mathf.Sin(b)) * radius); } }
     }
 }
+

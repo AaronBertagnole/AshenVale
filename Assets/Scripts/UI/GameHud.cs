@@ -21,6 +21,10 @@ namespace AshenVale
         public bool canvasActive;
         public HudTheme canvasTheme;
         public Action<string, Color> onPickup;
+        public Action<GameAction> onUseItem;
+        public enum InventorySection { Equips, Useables, MonsterParts }
+        public InventorySection inventorySection = InventorySection.Equips;
+        Vector2 inventoryPartsScroll;
         GUISkin canvasSkin;
 
         // The Canvas buttons use the same window state and command routes as the keyboard.
@@ -79,7 +83,7 @@ namespace AshenVale
 
         GUIStyle titleText, barText, detailText, detailRight, bodyStyle, smallStyle, centeredStyle, menuButton, statusStyle, nameplate,
                  bannerTitle, bannerSub, worldLabel, mapLabel, minimapTitle, minimapHint, tooltipText,
-                 atlasTitle, atlasCorner, atlasName, atlasSub, atlasSmall, numberStyle, bigNumberStyle, bossName;
+                 atlasTitle, atlasCorner, atlasName, atlasSub, atlasSmall, numberStyle, bigNumberStyle, bossName, inventoryTabText, activeInventoryTabText, partNameText;
         static Texture2D dotTexture;
         int bannerMap = -1;
         float bannerClock;
@@ -160,6 +164,10 @@ namespace AshenVale
             bigNumberStyle = new GUIStyle(numberStyle) { fontSize = 30 };
             bossName = new GUIStyle(GUI.skin.label) { fontSize = 15, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
             bossName.normal.textColor = new Color(1f, .92f, .75f);
+            inventoryTabText = new GUIStyle(GUI.skin.button) { fontSize = 13, fontStyle = FontStyle.Bold };
+            activeInventoryTabText = new GUIStyle(inventoryTabText);
+            activeInventoryTabText.normal.textColor = HudTheme.Copper;
+            partNameText = new GUIStyle(smallStyle) { fontSize = 13, alignment = TextAnchor.MiddleLeft, wordWrap = false, clipping = TextClipping.Clip };
         }
 
         public void Draw(PlayerState me)
@@ -486,26 +494,112 @@ namespace AshenVale
         {
             var ch = me.ch;
             Rect r = PanelRect();
-            GUI.Box(r, "INVENTORY — " + Tuning.InventoryCapacity + " SLOTS   [" + Keys.Name(GameAction.Inventory) + "] Close");
-            GUI.Label(new Rect(r.x + 18, r.y + 25, 580, 22), "Click item to equip. Gear bonuses: ATK +" + ch.BonusAttack + "  DEF +" + ch.BonusDefense + "  HP +" + ch.BonusHealth, smallStyle);
+            GUI.Box(r, "INVENTORY   [" + Keys.Name(GameAction.Inventory) + "] Close");
+            GUI.Label(new Rect(r.x + 18, r.y + 27, r.width - 36, 20),
+                      "Gold " + ch.gold + "   |   Gear bonuses: ATK +" + ch.BonusAttack + "  DEF +" + ch.BonusDefense + "  HP +" + ch.BonusHealth, smallStyle);
+            int partKinds = 0;
+            foreach (int count in ch.parts) if (count > 0) partKinds++;
+            string[] tabs = { "EQUIPS  " + ch.inventory.Count + "/" + Tuning.InventoryCapacity,
+                              "USEABLE ITEMS", "MONSTER PARTS  " + partKinds };
+            float tabWidth = (r.width - 48) / 3;
+            for (int i = 0; i < tabs.Length; i++)
+            {
+                Rect tab = new Rect(r.x + 18 + i * (tabWidth + 6), r.y + 55, tabWidth, 30);
+                bool active = (int)inventorySection == i;
+                if (GUI.Button(tab, tabs[i], active ? activeInventoryTabText : inventoryTabText)) inventorySection = (InventorySection)i;
+                if (active) Fill(new Rect(tab.x + 8, tab.yMax - 3, tab.width - 16, 2), HudTheme.Copper);
+            }
+            switch (inventorySection)
+            {
+                case InventorySection.Equips: DrawEquipsTab(me, r); break;
+                case InventorySection.Useables: DrawUseablesTab(me, r); break;
+                case InventorySection.MonsterParts: DrawPartsTab(me, r); break;
+            }
+        }
+
+        void DrawEquipsTab(PlayerState me, Rect r)
+        {
+            var ch = me.ch;
             for (int i = 0; i < 4; i++)
             {
                 Item item = ch.equipped[i];
-                GUI.Label(new Rect(r.x + 18 + (i % 2) * 300, r.y + 52 + (i / 2) * 27, 290, 25), ((Slot)i) + ": " + (item == null ? "Empty" : item.DisplayName), smallStyle);
+                GUI.Label(new Rect(r.x + 18 + (i % 2) * 300, r.y + 96 + (i / 2) * 25, 290, 23),
+                          ((Slot)i) + ": " + (item == null ? "Empty" : item.DisplayName), smallStyle);
             }
             for (int i = 0; i < Tuning.InventoryCapacity; i++)
             {
                 int col = i % 5, row = i / 5;
-                Rect cell = new Rect(r.x + 18 + col * 120, r.y + 119 + row * 75, 115, 68);
+                Rect cell = new Rect(r.x + 18 + col * 120, r.y + 161 + row * 65, 115, 60);
                 Item item = i < ch.inventory.Count ? ch.inventory[i] : null;
                 if (item == null) { GUI.Box(cell, "—"); continue; }
-                Color old = GUI.color;
+                Color previous = GUI.color;
                 GUI.color = Loot.RarityColor(item.rarity);
                 bool clicked = GUI.Button(cell, item.DisplayName + "\n+" + item.Attack + " ATK / +" + item.Defense + " DEF\n+" + item.Health + " HP");
-                GUI.color = old;
-                if (clicked) { commands.Equip(i); break; }   // the list changed: redraw next frame
+                GUI.color = previous;
+                if (clicked) { commands.Equip(i); break; }
             }
-            GUI.Label(new Rect(r.x + 18, r.y + 422, 594, 50), PartsLine(ch), smallStyle);
+            GUI.Label(new Rect(r.x + 18, r.y + 433, r.width - 36, 28), "Click an item to equip it. Potions and monster parts have their own tabs.", partNameText);
+        }
+
+        void DrawUseablesTab(PlayerState me, Rect r)
+        {
+            DrawPotionCard(me, r, true, r.x + 18);
+            DrawPotionCard(me, r, false, r.x + 320);
+            GUI.Label(new Rect(r.x + 18, r.y + 343, r.width - 36, 44),
+                      "Potions restore a share of your maximum health or mana.\nSupplies can be restocked at a merchant.", smallStyle);
+        }
+
+        void DrawPotionCard(PlayerState me, Rect r, bool health, float x)
+        {
+            int count = health ? me.ch.hpPotions : me.ch.mpPotions;
+            int current = health ? me.hp : me.mp, maximum = health ? me.MaxHp : me.MaxMp;
+            int amount = health ? Tuning.PotionHeal(Tuning.HpPotionHeal, Tuning.HpPotionShare, maximum)
+                                : Tuning.PotionHeal(Tuning.MpPotionHeal, Tuning.MpPotionShare, maximum);
+            string stat = health ? "HP" : "MP";
+            Rect card = new Rect(x, r.y + 106, 290, 214);
+            GUI.Box(card, (health ? "HEALTH POTION" : "MANA POTION") + "  x" + count);
+            GUI.Label(new Rect(card.x + 16, card.y + 42, card.width - 32, 84),
+                      "Restore " + amount + " " + stat + ".\nCurrent " + stat + ": " + current + " / " + maximum + "\nHotkey: " + Keys.Name(health ? GameAction.HpPotion : GameAction.MpPotion), smallStyle);
+            bool previous = GUI.enabled;
+            GUI.enabled = previous && onUseItem != null && !me.dead && count > 0 && current < maximum;
+            if (GUI.Button(new Rect(card.x + 16, card.y + 156, card.width - 32, 36), "USE " + stat + " POTION")) UseInventoryPotion(me, health);
+            GUI.enabled = previous;
+        }
+
+        // Inventory uses the same one-shot input route as the hotbar; the host still validates each potion.
+        public bool UseInventoryPotion(PlayerState me, bool health)
+        {
+            if (me == null || me.dead || onUseItem == null) return false;
+            int count = health ? me.ch.hpPotions : me.ch.mpPotions;
+            if (count <= 0 || (health ? me.hp >= me.MaxHp : me.mp >= me.MaxMp)) return false;
+            onUseItem(health ? GameAction.HpPotion : GameAction.MpPotion);
+            return true;
+        }
+
+        void DrawPartsTab(PlayerState me, Rect r)
+        {
+            int rows = 0;
+            foreach (int count in me.ch.parts) if (count > 0) rows++;
+            GUI.Label(new Rect(r.x + 22, r.y + 99, 294, 22), "MATERIAL", partNameText);
+            GUI.Label(new Rect(r.x + 330, r.y + 99, 90, 22), "QUANTITY", partNameText);
+            GUI.Label(new Rect(r.x + 440, r.y + 99, 138, 22), "SELL VALUE", partNameText);
+            Rect area = new Rect(r.x + 18, r.y + 127, r.width - 36, 292);
+            inventoryPartsScroll = GUI.BeginScrollView(area, inventoryPartsScroll, new Rect(0, 0, area.width - 20, Mathf.Max(area.height, rows * 38)));
+            int shown = 0;
+            for (int i = 0; i < me.ch.parts.Length; i++)
+            {
+                int count = me.ch.parts[i];
+                if (count <= 0) continue;
+                float y = shown++ * 38;
+                if (shown % 2 != 0) Fill(new Rect(0, y, area.width - 20, 36), new Color(1, 1, 1, .04f));
+                var part = Parts.All[i];
+                GUI.Label(new Rect(4, y + 4, 294, 28), part.name, partNameText);
+                GUI.Label(new Rect(312, y + 4, 90, 28), "x" + count, partNameText);
+                GUI.Label(new Rect(422, y + 4, 132, 28), (part.price * count) + " gold", partNameText);
+            }
+            if (shown == 0) GUI.Label(new Rect(4, 16, area.width - 20, 30), "No monster parts yet. Collect materials from defeated monsters.", smallStyle);
+            GUI.EndScrollView();
+            GUI.Label(new Rect(r.x + 18, r.y + 433, r.width - 36, 28), "Keep materials for the smithy, or sell them at a merchant.", partNameText);
         }
 
         void DrawShop(PlayerState me, MapDef def)
@@ -532,14 +626,14 @@ namespace AshenVale
                 { commands.Sell(i); break; }
             }
             if (ch.inventory.Count > 7) GUI.Label(new Rect(r.x + 20, r.y + 280 + 7 * 28, 280, 22), "...and " + (ch.inventory.Count - 7) + " more (sell these first)", smallStyle);
-            GUI.Label(new Rect(r.x + 320, r.y + 255, 280, 25), "Sell monster parts (keep some for the smithy)", smallStyle);
+            GUI.Label(new Rect(r.x + 320, r.y + 255, 280, 25), "Sell monster parts", smallStyle);
             int shown = 0;
             for (int i = 0; i < ch.parts.Length && shown < 7; i++)
             {
                 if (ch.parts[i] <= 0) continue;
                 float y = r.y + 280 + shown * 28;
                 var part = Parts.All[i];
-                GUI.Label(new Rect(r.x + 320, y + 3, 130, 22), part.name + " x" + ch.parts[i], smallStyle);
+                GUI.Label(new Rect(r.x + 320, y, 125, 26), part.name + " x" + ch.parts[i], partNameText);
                 if (GUI.Button(new Rect(r.x + 452, y, 66, 26), "1  +" + part.price + "g")) { commands.SellPart(i, 1); break; }
                 if (GUI.Button(new Rect(r.x + 522, y, 70, 26), "All +" + part.price * ch.parts[i] + "g")) { commands.SellPart(i, 0); break; }
                 shown++;
@@ -878,4 +972,5 @@ namespace AshenVale
 
     }
 }
+
 
