@@ -210,7 +210,7 @@ namespace AshenVale
                         if (floor == 0)
                         {
                             // Ground monsters roam a stretch around their spawn point, so they stay spread out;
-                            // a boss has the run of the whole floor (bar the calm stretch by the portal).
+                            // a boss has the run of the whole floor, portal included: nowhere to hide in its glade.
                             float roam = Monsters.All[monster].boss ? def.columns : Tuning.GroundRoam;
                             point.left = Mathf.Max(def.minX, x - roam);
                             point.right = Mathf.Min(def.maxX, x + roam);
@@ -231,11 +231,11 @@ namespace AshenVale
                         }
                     }
                 }
-            // Keep ground monsters a little way from portals on the ground, so arriving on a map is calm.
+            // Keep ground monsters a little way from portals on the ground, so arriving on a map is calm (not bosses).
             for (int i = 0; i < spawns.Count; i++)
             {
                 var point = spawns[i];
-                if (point.y > G + .01f) continue;
+                if (point.y > G + .01f || Monsters.All[point.monster].boss) continue;
                 foreach (var portal in portals)
                 {
                     if (portal.y > G + .01f) continue;
