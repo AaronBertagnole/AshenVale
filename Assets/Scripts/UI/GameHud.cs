@@ -17,9 +17,12 @@ namespace AshenVale
         const string WorldMapArt = "Art/UI/world_map";     // optional painted world map (see WorldAtlas)
 
         readonly World world;
-        public bool inventoryOpen, shopOpen, menuOpen, waystoneOpen, smithyOpen, worldMapOpen;
-        public bool minimapShown = true;    // Tab
-        public bool WindowOpen { get { return inventoryOpen || shopOpen || menuOpen || waystoneOpen || smithyOpen || worldMapOpen; } }
+        public bool inventoryOpen, shopOpen, menuOpen, waystoneOpen, smithyOpen, worldMapOpen, controlsOpen;
+        public bool minimapShown = true;
+        public bool WindowOpen { get { return inventoryOpen || shopOpen || menuOpen || waystoneOpen || smithyOpen || worldMapOpen || controlsOpen; } }
+        // Controls window: which binding is waiting for a key (-1 none); while one is, the game ignores the keyboard.
+        int capturingAction = -1, capturingSlot;
+        public bool Capturing { get { return controlsOpen && capturingAction >= 0; } }
 
         // Esc menu choices, handled by the game (they save first).
         public Action onCharacterSelect, onQuit;
@@ -40,26 +43,27 @@ namespace AshenVale
 
         public GameHud(World world) { this.world = world; }
 
-        public void Close() { inventoryOpen = shopOpen = menuOpen = waystoneOpen = smithyOpen = worldMapOpen = false; bannerMap = -1; }
+        public void Close() { inventoryOpen = shopOpen = menuOpen = waystoneOpen = smithyOpen = worldMapOpen = controlsOpen = false; capturingAction = -1; bannerMap = -1; }
 
-        // Window keys: I inventory, M world map, Tab shows / hides the minimap, E (or B) at the merchant for the shop,
-        // E at a waystone for travel, E at a smithy for upgrades, Esc closes a window or opens the menu. The world
-        // keeps running while windows are open; only attacks are blocked.
+        // Window keys (bindings in Keys): inventory, world map, minimap, and the loot / talk key at the merchant,
+        // waystone or smithy; Esc closes a window or opens the menu. The world keeps running while windows are
+        // open; only attacks are blocked.
         public void HandleKeys(PlayerState me)
         {
-            if (me == null || me.dead) { inventoryOpen = shopOpen = menuOpen = waystoneOpen = smithyOpen = worldMapOpen = false; return; }
+            if (me == null || me.dead) { inventoryOpen = shopOpen = menuOpen = waystoneOpen = smithyOpen = worldMapOpen = controlsOpen = false; capturingAction = -1; return; }
+            if (Capturing) return;                      // the Controls window is waiting for a key
             if (Input.GetKeyDown(KeyCode.Escape))
             {
-                if (inventoryOpen || shopOpen || waystoneOpen || smithyOpen || worldMapOpen) { inventoryOpen = shopOpen = waystoneOpen = smithyOpen = worldMapOpen = false; }
+                if (controlsOpen) controlsOpen = false;
+                else if (inventoryOpen || shopOpen || waystoneOpen || smithyOpen || worldMapOpen) { inventoryOpen = shopOpen = waystoneOpen = smithyOpen = worldMapOpen = false; }
                 else menuOpen = !menuOpen;
             }
-            if (menuOpen) return;
-            if (Input.GetKeyDown(KeyCode.Tab)) minimapShown = !minimapShown;
-            if (Input.GetKeyDown(KeyCode.M)) { worldMapOpen = !worldMapOpen; inventoryOpen = shopOpen = waystoneOpen = smithyOpen = false; }
-            if (Input.GetKeyDown(KeyCode.I)) { inventoryOpen = !inventoryOpen; shopOpen = waystoneOpen = smithyOpen = worldMapOpen = false; }
-            bool use = Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.B);
-            bool talk = Input.GetKeyDown(KeyCode.E);
-            if (use && world.NearMerchant(me, NpcReach)) { shopOpen = !shopOpen; inventoryOpen = waystoneOpen = smithyOpen = worldMapOpen = false; }
+            if (menuOpen || controlsOpen) return;
+            if (Keys.Pressed(GameAction.Minimap)) minimapShown = !minimapShown;
+            if (Keys.Pressed(GameAction.WorldMap)) { worldMapOpen = !worldMapOpen; inventoryOpen = shopOpen = waystoneOpen = smithyOpen = false; }
+            if (Keys.Pressed(GameAction.Inventory)) { inventoryOpen = !inventoryOpen; shopOpen = waystoneOpen = smithyOpen = worldMapOpen = false; }
+            bool talk = Keys.Pressed(GameAction.Interact);
+            if (talk && world.NearMerchant(me, NpcReach)) { shopOpen = !shopOpen; inventoryOpen = waystoneOpen = smithyOpen = worldMapOpen = false; }
             else if (talk && world.NearWaystone(me, NpcReach)) { waystoneOpen = !waystoneOpen; inventoryOpen = shopOpen = smithyOpen = worldMapOpen = false; }
             else if (talk && world.NearSmithy(me, NpcReach)) { smithyOpen = !smithyOpen; inventoryOpen = shopOpen = waystoneOpen = worldMapOpen = false; }
             if (shopOpen && !world.NearMerchant(me, NpcLeaveReach)) shopOpen = false;
@@ -136,15 +140,13 @@ namespace AshenVale
             float corner = string.IsNullOrEmpty(status) ? 10 : 36;
             if (minimapShown) DrawMinimap(me, def, corner);
             else GUI.Label(new Rect(Screen.width - 420, corner + 2, 408, 24), def.name.ToUpperInvariant() + "  ·  " + def.LevelText.ToUpperInvariant(), mapLabel);
-            GUI.Box(new Rect(10, Screen.height - 48, Mathf.Min(Screen.width - 20, 1080), 38), GUIContent.none);
-            GUI.Label(new Rect(22, Screen.height - 42, 1250, 30), town
-                ? "A/D Move | SPACE Jump | DOWN+SPACE Drop | W/Up Portal | E Merchant / Waystone / Smithy | I Inventory | M Map"
-                : "A/D Move | SPACE Jump | DOWN+SPACE Drop | W/S Ladder | J/K Attack | L Dash | Q/F Potions | E Loot | W/Up Portal | T Town | I Bag | M Map", smallStyle);
+            DrawPickups(me);
             if (inventoryOpen) DrawInventory(me);
             if (shopOpen && town) DrawShop(me, def);
             if (waystoneOpen && town) DrawWaystone(me);
             if (smithyOpen && def.hasSmithy) DrawSmithy(me, def);
             if (worldMapOpen) DrawWorldMap(me);
+            if (controlsOpen) DrawControls();
             if (me.portalCast > 0) GUI.Label(new Rect(18, 218, 500, 35), "Casting Town Portal...", bodyStyle);
             DrawBanner(me, def);
             if (me.dead)
@@ -195,15 +197,67 @@ namespace AshenVale
             var cam = Camera.main;
             if (cam == null) return;
             foreach (var portal in def.portals)
-                Label(cam, portal.x, portal.y + 2.35f, Maps.All[portal.targetMap].name.ToUpperInvariant() + "  [UP]", new Color(.75f, .9f, 1f));
+                Label(cam, portal.x, portal.y + 2.35f, Maps.All[portal.targetMap].name.ToUpperInvariant() + "  [" + Keys.Name(GameAction.Up) + "]", new Color(.75f, .9f, 1f));
             if (def.kind != MapKind.Town) return;
             if (me.returnReady && me.returnMap >= 0 && me.returnMap < Maps.All.Length)
-                Label(cam, def.returnX, def.returnY + 2.35f, "BACK TO " + Maps.All[me.returnMap].name.ToUpperInvariant() + "  [UP]", new Color(1f, .88f, .6f));
+                Label(cam, def.returnX, def.returnY + 2.35f, "BACK TO " + Maps.All[me.returnMap].name.ToUpperInvariant() + "  [" + Keys.Name(GameAction.Up) + "]", new Color(1f, .88f, .6f));
             else
-                Label(cam, def.returnX, def.returnY + 2.35f, "RETURN PORTAL (OPENS WHEN YOU USE T IN THE FIELD)", new Color(.75f, .72f, .66f));
-            foreach (var stand in def.merchants) Label(cam, stand.x, stand.y + 2.5f, "MERCHANT  [E]", new Color(1f, .85f, .55f));
-            Label(cam, def.waystoneX, def.waystoneY + 2.35f, "WAYSTONE  [E]", new Color(.7f, .95f, 1f));
-            if (def.hasSmithy) Label(cam, def.smithyX, def.smithyY + 2.5f, "SMITHY  [E]", new Color(1f, .7f, .45f));
+                Label(cam, def.returnX, def.returnY + 2.35f, "RETURN PORTAL (OPENS WHEN YOU USE " + Keys.Name(GameAction.TownPortal) + " IN THE FIELD)", new Color(.75f, .72f, .66f));
+            foreach (var stand in def.merchants) Label(cam, stand.x, stand.y + 2.5f, "MERCHANT  [" + Keys.Name(GameAction.Interact) + "]", new Color(1f, .85f, .55f));
+            Label(cam, def.waystoneX, def.waystoneY + 2.35f, "WAYSTONE  [" + Keys.Name(GameAction.Interact) + "]", new Color(.7f, .95f, 1f));
+            if (def.hasSmithy) Label(cam, def.smithyX, def.smithyY + 2.5f, "SMITHY  [" + Keys.Name(GameAction.Interact) + "]", new Color(1f, .7f, .45f));
+        }
+
+        // What you picked up: a line per item in the bottom left, fading after a few seconds. Found by watching your
+        // hero's gold, potions, parts and bag change, so it works the same for a friend playing on your game.
+        sealed class Pickup { public string text; public Color color; public float age; }
+        readonly List<Pickup> pickups = new List<Pickup>();
+        int seenGold = -1, seenHp, seenMp, seenBag; int[] seenParts; string seenHero;
+        const float PickupShow = 4f;
+
+        void DrawPickups(PlayerState me)
+        {
+            var ch = me.ch;
+            if (seenGold < 0 || seenHero != ch.id || seenParts == null || seenParts.Length != ch.parts.Length)
+            {
+                seenHero = ch.id; seenGold = ch.gold; seenHp = ch.hpPotions; seenMp = ch.mpPotions; seenBag = ch.inventory.Count;
+                seenParts = (int[])ch.parts.Clone();
+                pickups.Clear();
+            }
+            if (ch.gold > seenGold) Note("+" + (ch.gold - seenGold) + " gold", new Color(1f, .85f, .35f));
+            if (ch.hpPotions > seenHp) Note("+" + (ch.hpPotions - seenHp) + " HP potion", new Color(1f, .5f, .55f));
+            if (ch.mpPotions > seenMp) Note("+" + (ch.mpPotions - seenMp) + " MP potion", new Color(.55f, .7f, 1f));
+            for (int i = 0; i < ch.parts.Length; i++)
+                if (ch.parts[i] > seenParts[i]) Note("+" + (ch.parts[i] - seenParts[i]) + " " + Parts.All[i].name, Parts.All[i].color);
+            if (ch.inventory.Count > seenBag)
+            {
+                var item = ch.inventory[ch.inventory.Count - 1];
+                Note(item.DisplayName + "  (+" + item.Attack + " ATK / +" + item.Defense + " DEF / +" + item.Health + " HP)", Loot.RarityColor(item.rarity));
+            }
+            seenGold = ch.gold; seenHp = ch.hpPotions; seenMp = ch.mpPotions; seenBag = ch.inventory.Count;
+            for (int i = 0; i < ch.parts.Length; i++) seenParts[i] = ch.parts[i];
+
+            float y = Screen.height - 22;
+            for (int i = pickups.Count - 1; i >= 0; i--)
+            {
+                var n = pickups[i];
+                n.age += Time.deltaTime;
+                if (n.age > PickupShow) { pickups.RemoveAt(i); continue; }
+                float alpha = n.age > PickupShow - 1f ? PickupShow - n.age : 1f;
+                var size = smallStyle.CalcSize(new GUIContent(n.text));
+                Fill(new Rect(12, y - 22, size.x + 16, 22), new Color(.04f, .05f, .09f, .6f * alpha));
+                smallStyle.normal.textColor = new Color(n.color.r, n.color.g, n.color.b, alpha);
+                GUI.Label(new Rect(20, y - 22, size.x + 10, 22), n.text, smallStyle);
+                y -= 24;
+            }
+            smallStyle.normal.textColor = new Color(.82f, .85f, .9f);
+        }
+
+        void Note(string text, Color color)
+        {
+            // The same thing twice in a row stacks ("+12 gold" then "+5 gold" becomes two lines; fine).
+            pickups.Add(new Pickup { text = text, color = color });
+            if (pickups.Count > 6) pickups.RemoveAt(0);
         }
 
         // Damage and healing numbers: pop in, drift up, fade out (WorldView makes them from health changes).
@@ -282,12 +336,53 @@ namespace AshenVale
 
         void DrawMenu()
         {
-            Rect r = new Rect((Screen.width - 320) / 2f, (Screen.height - 250) / 2f, 320, 250);
+            Rect r = new Rect((Screen.width - 320) / 2f, (Screen.height - 304) / 2f, 320, 304);
             GUI.Box(r, "MENU   [ESC] Close");
             GUI.Label(new Rect(r.x + 20, r.y + 30, 280, 24), "Your hero saves automatically.", smallStyle);
             if (GUI.Button(new Rect(r.x + 30, r.y + 66, 260, 44), "RESUME", menuButton)) menuOpen = false;
-            if (GUI.Button(new Rect(r.x + 30, r.y + 120, 260, 44), online ? "SAVE & LEAVE GAME" : "SAVE & YOUR HEROES", menuButton)) { menuOpen = false; if (onCharacterSelect != null) onCharacterSelect(); }
-            if (GUI.Button(new Rect(r.x + 30, r.y + 174, 260, 44), "SAVE & QUIT", menuButton)) { menuOpen = false; if (onQuit != null) onQuit(); }
+            if (GUI.Button(new Rect(r.x + 30, r.y + 120, 260, 44), "CONTROLS", menuButton)) { menuOpen = false; controlsOpen = true; capturingAction = -1; }
+            if (GUI.Button(new Rect(r.x + 30, r.y + 174, 260, 44), online ? "SAVE & LEAVE GAME" : "SAVE & YOUR HEROES", menuButton)) { menuOpen = false; if (onCharacterSelect != null) onCharacterSelect(); }
+            if (GUI.Button(new Rect(r.x + 30, r.y + 228, 260, 44), "SAVE & QUIT", menuButton)) { menuOpen = false; if (onQuit != null) onQuit(); }
+        }
+
+        // Controls: two keys per action; click one and press the key you want (Esc keeps the old key, Backspace clears).
+        void DrawControls()
+        {
+            int rows = Keys.Count;
+            float h = 96 + rows * 27 + 50;
+            Rect r = new Rect((Screen.width - 620) / 2f, Mathf.Max(20, (Screen.height - h) / 2f), 620, h);
+            GUI.Box(r, "CONTROLS   [ESC] Close");
+            GUI.Label(new Rect(r.x + 20, r.y + 28, 580, 44), Capturing ? "Press the key you want (Esc: keep the old one, Backspace: clear)."
+                                                               : "Click a key to change it. Either key works for an action. Saved on this PC.", smallStyle);
+            if (Capturing)
+            {
+                var e = Event.current;
+                if (e.type == EventType.KeyDown && e.keyCode == KeyCode.Escape) { capturingAction = -1; e.Use(); }
+                else if (e.type == EventType.KeyDown && e.keyCode == KeyCode.Backspace) { Keys.Set((GameAction)capturingAction, capturingSlot, KeyCode.None); capturingAction = -1; e.Use(); }
+                else
+                {
+                    var key = Keys.AnyKeyDown();
+                    if (key != KeyCode.None && key != KeyCode.Backspace) { Keys.Set((GameAction)capturingAction, capturingSlot, key); capturingAction = -1; }
+                }
+            }
+            for (int a = 0; a < rows; a++)
+            {
+                float y = r.y + 78 + a * 27;
+                if (a % 2 == 0) Fill(new Rect(r.x + 12, y - 1, 596, 26), new Color(1, 1, 1, .05f));
+                GUI.Label(new Rect(r.x + 20, y + 2, 300, 22), Keys.Describe((GameAction)a), smallStyle);
+                for (int s = 0; s < Keys.Slots; s++)
+                {
+                    bool mine = capturingAction == a && capturingSlot == s;
+                    string label = mine ? "..." : Keys.KeyName(Keys.Get((GameAction)a, s));
+                    GUI.enabled = !Capturing || mine;
+                    if (GUI.Button(new Rect(r.x + 330 + s * 135, y, 125, 24), label)) { capturingAction = a; capturingSlot = s; }
+                    GUI.enabled = true;
+                }
+            }
+            GUI.enabled = !Capturing;
+            if (GUI.Button(new Rect(r.x + 20, r.yMax - 40, 180, 30), "RESET TO DEFAULTS")) Keys.ResetAll();
+            if (GUI.Button(new Rect(r.xMax - 140, r.yMax - 40, 120, 30), "DONE")) { controlsOpen = false; capturingAction = -1; }
+            GUI.enabled = true;
         }
 
         static void Fill(Rect rect, Color color)
@@ -321,7 +416,7 @@ namespace AshenVale
             Bar(23, 111, 338, "XP", ch.xp, Tuning.XpNeeded(ch.level), new Color(.88f, .68f, .24f));
             Fill(new Rect(23, 144, 338, 1), new Color(.45f, .45f, .48f, .55f));
             GUI.Label(new Rect(23, 152, 220, 20), "GOLD  " + ch.gold + "     KILLS  " + ch.kills, detailText);
-            GUI.Label(new Rect(23, 175, 338, 19), "HP POTIONS [Q]  " + ch.hpPotions + "       MP POTIONS [F]  " + ch.mpPotions, detailText);
+            GUI.Label(new Rect(23, 175, 338, 19), "HP POTIONS [" + Keys.Name(GameAction.HpPotion) + "]  " + ch.hpPotions + "       MP POTIONS [" + Keys.Name(GameAction.MpPotion) + "]  " + ch.mpPotions, detailText);
             GUI.matrix = oldMatrix;
         }
 
@@ -331,7 +426,7 @@ namespace AshenVale
         {
             var ch = me.ch;
             Rect r = PanelRect();
-            GUI.Box(r, "INVENTORY — " + Tuning.InventoryCapacity + " SLOTS   [I] Close");
+            GUI.Box(r, "INVENTORY — " + Tuning.InventoryCapacity + " SLOTS   [" + Keys.Name(GameAction.Inventory) + "] Close");
             GUI.Label(new Rect(r.x + 18, r.y + 25, 580, 22), "Click item to equip. Gear bonuses: ATK +" + ch.BonusAttack + "  DEF +" + ch.BonusDefense + "  HP +" + ch.BonusHealth, smallStyle);
             for (int i = 0; i < 4; i++)
             {
@@ -357,7 +452,7 @@ namespace AshenVale
         {
             var ch = me.ch;
             Rect r = PanelRect();
-            GUI.Box(r, def.name.ToUpperInvariant() + " GENERAL STORE — [B] Close");
+            GUI.Box(r, def.name.ToUpperInvariant() + " GENERAL STORE — [" + Keys.Name(GameAction.Interact) + "] Close");
             GUI.Label(new Rect(r.x + 20, r.y + 32, 550, 28), "Gold: " + ch.gold + "   |   Sell unwanted gear for half its value", bodyStyle);
             if (GUI.Button(new Rect(r.x + 20, r.y + 70, 270, 42), "Buy HP Potion — " + Tuning.HpPotionPrice + " gold")) commands.BuyPotion(true);
             if (GUI.Button(new Rect(r.x + 320, r.y + 70, 270, 42), "Buy MP Potion — " + Tuning.MpPotionPrice + " gold")) commands.BuyPotion(false);
@@ -369,21 +464,34 @@ namespace AshenVale
                 if (GUI.Button(new Rect(r.x + 20 + (i % 2) * 300, r.y + 154 + (i / 2) * 49, 270, 40), "Buy Common " + Loot.SlotName(slot, me.Hero) + " — " + cost + "g"))
                     commands.BuyGear(slot);
             }
-            GUI.Label(new Rect(r.x + 20, r.y + 269, 550, 25), "Sell inventory items", smallStyle);
-            for (int i = 0; i < ch.inventory.Count && i < 10; i++)
+            GUI.Label(new Rect(r.x + 20, r.y + 255, 280, 25), "Sell gear", smallStyle);
+            for (int i = 0; i < ch.inventory.Count && i < 7; i++)
             {
                 Item item = ch.inventory[i];
-                int col = i % 2, row = i / 2;
-                if (GUI.Button(new Rect(r.x + 20 + col * 300, r.y + 297 + row * 31, 270, 29), "Sell " + item.DisplayName + " +" + Loot.SellPrice(item) + "g"))
+                if (GUI.Button(new Rect(r.x + 20, r.y + 280 + i * 28, 280, 26), "Sell " + item.DisplayName + "  +" + Loot.SellPrice(item) + "g"))
                 { commands.Sell(i); break; }
             }
+            if (ch.inventory.Count > 7) GUI.Label(new Rect(r.x + 20, r.y + 280 + 7 * 28, 280, 22), "...and " + (ch.inventory.Count - 7) + " more (sell these first)", smallStyle);
+            GUI.Label(new Rect(r.x + 320, r.y + 255, 280, 25), "Sell monster parts (keep some for the smithy)", smallStyle);
+            int shown = 0;
+            for (int i = 0; i < ch.parts.Length && shown < 7; i++)
+            {
+                if (ch.parts[i] <= 0) continue;
+                float y = r.y + 280 + shown * 28;
+                var part = Parts.All[i];
+                GUI.Label(new Rect(r.x + 320, y + 3, 130, 22), part.name + " x" + ch.parts[i], smallStyle);
+                if (GUI.Button(new Rect(r.x + 452, y, 66, 26), "1  +" + part.price + "g")) { commands.SellPart(i, 1); break; }
+                if (GUI.Button(new Rect(r.x + 522, y, 70, 26), "All +" + part.price * ch.parts[i] + "g")) { commands.SellPart(i, 0); break; }
+                shown++;
+            }
+            if (shown == 0) GUI.Label(new Rect(r.x + 320, r.y + 283, 280, 22), "No parts to sell yet.", smallStyle);
         }
     
         // Waystone: travel to any town you have found (walking into a town finds it).
         void DrawWaystone(PlayerState me)
         {
             Rect r = new Rect((Screen.width - 420) / 2f, Mathf.Max(120, (Screen.height - 360) / 2f), 420, 360);
-            GUI.Box(r, "WAYSTONE — [E] Close");
+            GUI.Box(r, "WAYSTONE — [" + Keys.Name(GameAction.Interact) + "] Close");
             GUI.Label(new Rect(r.x + 20, r.y + 28, 380, 24), "Travel to a town you have found.", smallStyle);
             float y = r.y + 62;
             for (int i = 0; i < Maps.All.Length; i++)
@@ -451,7 +559,7 @@ namespace AshenVale
                 float left = MX(c.x - hw), right = MX(c.x + hw), viewTop = MY(c.y + hh), viewBottom = MY(c.y - hh);
                 Outline(new Rect(left, viewTop, right - left, viewBottom - viewTop), new Color(1f, 1f, 1f, .35f));
             }
-            GUI.Label(new Rect(frame.x + 8, y0 + h + 6, frame.width - 16, 18), "M  WORLD MAP   ·   TAB  HIDE", minimapHint);
+            GUI.Label(new Rect(frame.x + 8, y0 + h + 6, frame.width - 16, 18), Keys.Name(GameAction.WorldMap) + "  WORLD MAP   ·   " + Keys.Name(GameAction.Minimap) + "  HIDE", minimapHint);
         }
 
         // M: the world as far as you know it. Places you have been, "???" for the places next door, the roads
@@ -470,7 +578,7 @@ namespace AshenVale
                 Outline(new Rect(r.x + 8, r.y + 8, r.width - 16, r.height - 16), new Color(.55f, .4f, .25f, .6f));
             }
             GUI.Label(new Rect(r.x, r.y + 14, r.width, 34), "WORLD MAP", atlasTitle);
-            GUI.Label(new Rect(r.x + 20, r.y + 20, r.width - 44, 20), "[M] CLOSE", atlasCorner);
+            GUI.Label(new Rect(r.x + 20, r.y + 20, r.width - 44, 20), "[" + Keys.Name(GameAction.WorldMap) + "] CLOSE", atlasCorner);
             Rect area = new Rect(r.x + 70, r.y + 72, r.width - 140, r.height - 160);
 
             foreach (var road in WorldAtlas.Roads)
@@ -668,7 +776,7 @@ namespace AshenVale
             var ch = me.ch;
             float w = Mathf.Min(Screen.width - 20, 820);
             Rect r = new Rect((Screen.width - w) / 2f, Mathf.Max(120, (Screen.height - 480) / 2f), w, 480);
-            GUI.Box(r, def.name.ToUpperInvariant() + " SMITHY — [E] Close");
+            GUI.Box(r, def.name.ToUpperInvariant() + " SMITHY — [" + Keys.Name(GameAction.Interact) + "] Close");
             GUI.Label(new Rect(r.x + 18, r.y + 26, w - 36, 22), "Upgrades always succeed, up to +" + Tuning.MaxUpgrade + ". Gold: " + ch.gold, smallStyle);
             GUI.Label(new Rect(r.x + 18, r.y + 48, w - 36, 44), PartsLine(ch), smallStyle);
 

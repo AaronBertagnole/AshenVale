@@ -57,7 +57,7 @@ namespace AshenVale
         {
             if (map < 0 || map >= maps.Length) map = Maps.Emberfields;
             if (hp == 0) map = Maps.IsTown(ch.lastTown) ? ch.lastTown : Maps.FirstTown;
-            var p = new PlayerState { id = NextId(), ch = ch };
+            var p = new PlayerState { id = NextId(), ch = ch, map = -1 };   // -1: the first Teleport counts as arriving
             var def = maps[map].def;
             Teleport(p, map, def.startX, def.startY);
             if (def.kind == MapKind.Town) ch.FindTown(map);
@@ -99,14 +99,9 @@ namespace AshenVale
             ResetChests();
         }
 
-        // Every map's first chest turns up somewhere in its first ChestFirstDelay seconds of play.
         void ResetChests()
         {
-            foreach (var map in maps)
-            {
-                map.chestTimer = (float)rng.NextDouble() * Tuning.ChestFirstDelay;
-                map.lastChestSpot = -1;
-            }
+            foreach (var map in maps) { map.chestTimer = 0f; map.lastChestSpot = -1; }
         }
 
         bool HasLivingPlayer(int mapId)
@@ -273,8 +268,10 @@ namespace AshenVale
         // Puts a player somewhere instantly (map change, town, respawn), standing still.
         void Teleport(PlayerState p, int mapId, float x, float y)
         {
+            bool arriving = p.map != mapId;
             p.map = mapId;
             p.ch.SeeMap(mapId);     // the world map shows every map you have been to
+            if (arriving) ChestOnArrival(maps[mapId]);
             p.x = p.px = x;
             p.y = p.py = y;
             p.vx = p.vy = 0;
@@ -426,7 +423,7 @@ namespace AshenVale
             if (m.hp > 0) return;
             map.monsters.Remove(m);
             var def = m.Def;
-            if (def.IsChest) map.chestTimer = ChestDelay();     // the next chest turns up somewhere else a while later
+            if (def.IsChest) map.chestTimer = Tuning.ChestCooldown;   // no new chest for a while, and only when someone arrives
             else if (m.spawn >= 0 && m.spawn < map.spawnFilled.Length) { map.spawnFilled[m.spawn] = false; map.spawnTimers[m.spawn] = def.respawn; }
             if (attacker == null) return;
 
@@ -482,11 +479,11 @@ namespace AshenVale
         }
 
         // A monster's touch damage is fixed by its kind. Defense is a percentage that shrinks as you level:
-        // two Epic armor pieces give roughly 35-40% reduction, never immunity.
+        // a Common set gives about 30%, an Epic set 55%, capped at ArmorCap so nothing is harmless.
         int DamageTaken(int raw, PlayerState victim)
         {
             int def = victim.ch.BonusDefense;
-            float reduction = def / (def + Tuning.ArmorBase + Tuning.ArmorPerLevel * victim.ch.level);
+            float reduction = Mathf.Min(Tuning.ArmorCap, def / (def + Tuning.ArmorBase + Tuning.ArmorPerLevel * victim.ch.level));
             return Mathf.Max(1, Mathf.RoundToInt(raw * (1f - reduction)));
         }
 
@@ -716,29 +713,30 @@ namespace AshenVale
             return m;
         }
 
-        float ChestDelay() { return Tuning.ChestDelayMin + (float)rng.NextDouble() * (Tuning.ChestDelayMax - Tuning.ChestDelayMin); }
-
-        // Chests turn up now and then at one of the map's chest spots, never at the same spot twice in a row, and
-        // move on if nobody opens them for a while. So a map may have no chest when you arrive, and the one you
-        // saw last time may be somewhere else. At most def.maxChests are out at once.
+        // Unopened chests move on after a while (the view fades them out); the cooldown counts down meanwhile.
         void UpdateChests(MapRuntime map, float dt)
         {
-            int present = 0;
+            map.chestTimer = Mathf.Max(0f, map.chestTimer - dt);
             for (int i = map.monsters.Count - 1; i >= 0; i--)
             {
                 var m = map.monsters[i];
                 if (!m.Def.IsChest) continue;
                 m.life -= dt;
-                if (m.life > 0f) { present++; continue; }
-                map.monsters.RemoveAt(i);                       // nobody came for it: it moves on (the view fades it out)
-                map.chestTimer = ChestDelay();
+                if (m.life > 0f) continue;
+                map.monsters.RemoveAt(i);
+                map.chestTimer = Tuning.ChestCooldown;
             }
-            if (present >= map.def.maxChests) return;
-            map.chestTimer -= dt;
-            if (map.chestTimer > 0f) return;
-            map.chestTimer = ChestDelay();                      // for the next one, on maps that allow several
+        }
 
-            // A free chest spot, not the last one used (unless it is the only one).
+        // Someone arrived on the map: with some luck a chest is waiting at one of its chest spots (never the one
+        // used last, and never within the cooldown of the last one). Staying on a map never brings another:
+        // leave and come back, or have a friend arrive. At most def.maxChests are out at once.
+        void ChestOnArrival(MapRuntime map)
+        {
+            int present = 0;
+            foreach (var m in map.monsters) if (m.Def.IsChest) present++;
+            if (present >= map.def.maxChests || map.chestTimer > 0f || rng.NextDouble() >= Tuning.ChestOnArrival) return;
+
             var points = map.def.spawns;
             int choices = 0, pick = -1;
             for (int pass = 0; pass < 2 && pick < 0; pass++)
@@ -874,6 +872,19 @@ namespace AshenVale
             var def = maps[town].def;
             Teleport(p, town, def.waystoneX, def.waystoneY);
             p.ch.FindTown(town);
+            return true;
+        }
+
+        // Merchant: sell monster parts you don't need (count parts of one kind; 0 = all of them).
+        public bool SellPart(int playerId, int part, int count)
+        {
+            var p = GetPlayer(playerId);
+            if (!NearMerchant(p, Tuning.NpcReach) || part < 0 || part >= Parts.All.Length) return false;
+            int have = p.ch.parts[part];
+            if (count <= 0 || count > have) count = have;
+            if (count <= 0) return false;
+            p.ch.parts[part] -= count;
+            p.ch.gold += Parts.All[part].price * count;
             return true;
         }
 

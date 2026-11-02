@@ -28,6 +28,7 @@ namespace AshenVale
     {
         public string name;
         public Color color;     // drop colour until parts have icons
+        public int price;       // what the merchant pays for one
     }
 
     public static class Parts
@@ -38,16 +39,16 @@ namespace AshenVale
 
         public static readonly PartDef[] All =
         {
-            new PartDef { name = "Ember Ash", color = new Color(.95f, .45f, .25f) },
-            new PartDef { name = "Sprout Leaf", color = new Color(.65f, .85f, .35f) },
-            new PartDef { name = "Ember Core", color = new Color(1f, .3f, .55f) },
-            new PartDef { name = "Moss Tuft", color = new Color(.3f, .75f, .45f) },
-            new PartDef { name = "Boar Tusk", color = new Color(.95f, .9f, .75f) },
-            new PartDef { name = "Shade Essence", color = new Color(.45f, .45f, .7f) },
-            new PartDef { name = "Wraith Silk", color = new Color(.7f, .45f, 1f) },
-            new PartDef { name = "Toad Slime", color = new Color(.55f, .75f, .35f) },
-            new PartDef { name = "Lurker Scale", color = new Color(.35f, .6f, .6f) },
-            new PartDef { name = "Wisp Ember", color = new Color(1f, .95f, .7f) },
+            new PartDef { name = "Ember Ash", price = 4, color = new Color(.95f, .45f, .25f) },
+            new PartDef { name = "Sprout Leaf", price = 4, color = new Color(.65f, .85f, .35f) },
+            new PartDef { name = "Ember Core", price = 15, color = new Color(1f, .3f, .55f) },
+            new PartDef { name = "Moss Tuft", price = 7, color = new Color(.3f, .75f, .45f) },
+            new PartDef { name = "Boar Tusk", price = 9, color = new Color(.95f, .9f, .75f) },
+            new PartDef { name = "Shade Essence", price = 20, color = new Color(.45f, .45f, .7f) },
+            new PartDef { name = "Wraith Silk", price = 22, color = new Color(.7f, .45f, 1f) },
+            new PartDef { name = "Toad Slime", price = 12, color = new Color(.55f, .75f, .35f) },
+            new PartDef { name = "Lurker Scale", price = 14, color = new Color(.35f, .6f, .6f) },
+            new PartDef { name = "Wisp Ember", price = 30, color = new Color(1f, .95f, .7f) },
         };
     }
 
