@@ -12,10 +12,13 @@ namespace AshenVale
         public readonly Transform root;             // stands at the feet; mirrored to face left
         readonly RigDef def;
         readonly Transform visual, body, torso, head, nearArm, nearForearm, farArm, farForearm;
-        readonly Transform nearThigh, nearShin, farThigh, farShin, weapon, cape;
+        readonly Transform nearThigh, nearShin, farThigh, farShin, weapon, cape, pelvis, nearFoot, farFoot;
+        readonly SpriteRenderer nearFullLeg, farFullLeg, nearCalfArt, farCalfArt, nearFootArt, farFootArt;
+        readonly float nearCalf, farCalf, nearFootHeight, farFootHeight;   // rig units
         readonly SortingGroup group;
         readonly List<SpriteRenderer> renderers = new List<SpriteRenderer>();
         float walkPhase, breath;
+        bool walkingArt;
 
         static readonly Dictionary<string, Sprite[]> sheets = new Dictionary<string, Sprite[]>();
 
@@ -36,7 +39,8 @@ namespace AshenVale
             visual = Joint("Visual", root, Vector2.zero);
             group = visual.gameObject.AddComponent<SortingGroup>();
             body = Joint("Body", visual, new Vector2(0, 1.5f));
-            Picture(parts[2], body, def.pelvisHeight, 2);
+            pelvis = Joint("Pelvis", body, Vector2.zero);
+            Picture(parts[2], pelvis, def.pelvisHeight, 2);
             torso = Joint("Torso", body, new Vector2(0, .06f));
             Picture(parts[1], torso, def.torsoHeight, 0);
             head = Joint("Head", torso, new Vector2(def.ranger ? .02f : -.08f, def.ranger ? .82f : .96f));
@@ -52,11 +56,26 @@ namespace AshenVale
             nearThigh = Joint("NearThigh", body, new Vector2(.18f, 0));
             Picture(parts[7], nearThigh, def.thighHeight, 1);
             nearShin = Joint("NearShin", nearThigh, new Vector2(0, -.66f));
-            Picture(parts[8], nearShin, def.shinHeight, 2);
+            nearFullLeg = Picture(parts[8], nearShin, def.shinHeight, 2);
             farThigh = Joint("FarThigh", body, new Vector2(-.18f, 0));
             Picture(parts[9], farThigh, def.thighHeight, -5);
             farShin = Joint("FarShin", farThigh, new Vector2(0, -.66f));
-            Picture(parts[10], farShin, def.shinHeight, -4);
+            farFullLeg = Picture(parts[10], farShin, def.shinHeight, -4);
+            // Walking swaps each whole shin for a calf plus a boot on its own ankle (slices of the same pixels).
+            if (parts.Length > 16 && parts[13] != null && parts[14] != null && parts[15] != null && parts[16] != null)
+            {
+                nearCalfArt = Picture(parts[13], nearShin, def.shinHeight * parts[13].rect.height / parts[8].rect.height, 2);
+                farCalfArt = Picture(parts[15], farShin, def.shinHeight * parts[15].rect.height / parts[10].rect.height, -4);
+                nearCalf = def.shinHeight * (parts[8].pivot.y - parts[14].pivot.y) / parts[8].rect.height;
+                farCalf = def.shinHeight * (parts[10].pivot.y - parts[16].pivot.y) / parts[10].rect.height;
+                nearFootHeight = def.shinHeight * parts[14].rect.height / parts[8].rect.height;
+                farFootHeight = def.shinHeight * parts[16].rect.height / parts[10].rect.height;
+                nearFoot = Joint("NearFoot", nearShin, new Vector2(0, -nearCalf));
+                farFoot = Joint("FarFoot", farShin, new Vector2(0, -farCalf));
+                nearFootArt = Picture(parts[14], nearFoot, nearFootHeight, 3);
+                farFootArt = Picture(parts[16], farFoot, farFootHeight, -3);
+                LegArt(false);
+            }
             weapon = Joint("Weapon", nearForearm, new Vector2(def.ranger ? .08f : .02f, -.5f));
             Picture(parts[11], weapon, def.weaponHeight, 5);
             if (parts.Length > 12 && parts[12] != null)
@@ -90,18 +109,37 @@ namespace AshenVale
             float weaponTurn = 0;                                   // beyond "stay upright in the hand"
             bool alignWeapon = false;                               // true: the weapon continues the forearm
 
+            LegArt(clip == "run" && !p.climbing && nearFoot != null);
             if (clip == "run")
             {
                 walkPhase += frameDt * Mathf.Max(2.5f, Mathf.Abs(p.vx)) / 4.4f;
-                float g = Mathf.Sin(walkPhase * Mathf.PI * 2);
-                float nearLeg = g * 22, farLeg = -g * 22;
-                float nearKnee = -Mathf.Max(0, -g) * 32, farKnee = -Mathf.Max(0, g) * 32;
-                Angle(nearThigh, nearLeg); Angle(farThigh, farLeg); Angle(nearShin, nearKnee); Angle(farShin, farKnee);
-                float low = Mathf.Min(SoleOffset(def.nearSole, nearLeg, nearKnee), SoleOffset(def.farSole, farLeg, farKnee));
-                body.localPosition = new Vector3(0, .02f - low, 0);
-                Angle(torso, 2); Angle(head, -1 + g * .7f);
-                if (cape) Angle(cape, g * 5);
-                nearUpper += g * -8; farUpper += g * 13;
+                float cycle = Mathf.Repeat(walkPhase, 1f), phase = cycle * Mathf.PI * 2;
+                float g = Mathf.Sin(phase);
+                if (nearFoot != null && !p.climbing)
+                {
+                    // Walk revision 2: planted stance, lifted recovery step, ankles that keep the boots flat.
+                    float hipY = 1.40f + Mathf.Cos(phase * 2) * .014f;
+                    body.localPosition = new Vector3(g * .012f, hipY, 0);
+                    Angle(pelvis, -g * 1.2f);
+                    Angle(torso, 2f + g * (def.ranger ? 1.4f : 1f));
+                    Angle(head, -1f - Mathf.Sin(phase - .25f) * .9f);
+                    WalkLeg(nearThigh, nearShin, nearFoot, def.nearFootSole, nearCalf, nearFootHeight, cycle, hipY);
+                    WalkLeg(farThigh, farShin, farFoot, def.farFootSole, farCalf, farFootHeight, Mathf.Repeat(cycle + .5f, 1f), hipY);
+                    nearUpper -= g * (def.ranger ? 5 : 3); nearLower += Mathf.Sin(phase + .65f) * (def.ranger ? 3 : 2);
+                    farUpper += g * (def.ranger ? 15 : 10); farLower += Mathf.Sin(phase + .65f) * (def.ranger ? 7 : 5);
+                    if (cape) Angle(cape, Mathf.Sin(phase - .5f) * 4f + Mathf.Sin(phase * 2) * .9f);
+                }
+                else
+                {
+                    float nearLeg = g * 22, farLeg = -g * 22;
+                    float nearKnee = -Mathf.Max(0, -g) * 32, farKnee = -Mathf.Max(0, g) * 32;
+                    Angle(nearThigh, nearLeg); Angle(farThigh, farLeg); Angle(nearShin, nearKnee); Angle(farShin, farKnee);
+                    float low = Mathf.Min(SoleOffset(def.nearSole, nearLeg, nearKnee), SoleOffset(def.farSole, farLeg, farKnee));
+                    body.localPosition = new Vector3(0, .02f - low, 0);
+                    Angle(torso, 2); Angle(head, -1 + g * .7f);
+                    if (cape) Angle(cape, g * 5);
+                    nearUpper += g * -8; farUpper += g * 13;
+                }
                 if (p.climbing)
                 {
                     nearUpper = 165 + g * 15; nearLower = 10; farUpper = 165 - g * 15; farLower = 10;
@@ -200,13 +238,65 @@ namespace AshenVale
 
             Angle(nearArm, nearUpper); Angle(nearForearm, nearLower);
             Angle(farArm, farUpper); Angle(farForearm, farLower);
-            Angle(weapon, alignWeapon ? 180 : -nearUpper - nearLower + weaponTurn + (clip == "run" ? Mathf.Sin(walkPhase * Mathf.PI * 2) * 2 : wave * .5f));
+            Angle(weapon, alignWeapon ? 180 : -nearUpper - nearLower + weaponTurn + (clip == "run" ? Mathf.Sin(walkPhase * Mathf.PI * 2 - .25f) * 1.5f : wave * .5f));
+        }
+
+        // One leg of the walk (from the rig pack, revision 2): the boot slides back while planted, then
+        // lifts and swings forward; a two-bone solve puts the knee where the thigh and calf meet.
+        void WalkLeg(Transform thigh, Transform shin, Transform foot, float[] sole, float calfLength, float footHeight, float phase, float hipY)
+        {
+            const float thighLength = .66f;
+            float stance = def.ranger ? .60f : .64f;
+            float stride = def.ranger ? .33f : .30f;
+            float x, lift = 0, pitch;
+            if (phase < stance)
+            {
+                float t = phase / stance;
+                x = Mathf.Lerp(stride, -stride, t);
+                pitch = t < .15f ? Mathf.Lerp(6, 0, t / .15f) : t > .75f ? Mathf.Lerp(0, -10, (t - .75f) / .25f) : 0;
+            }
+            else
+            {
+                float t = (phase - stance) / (1 - stance);
+                float ease = t * t * (3 - 2 * t);
+                x = Mathf.Lerp(-stride, stride, ease);
+                lift = Mathf.Sin(t * Mathf.PI) * (def.ranger ? .17f : .13f);
+                pitch = Mathf.Lerp(-10, 6, ease) + Mathf.Sin(t * Mathf.PI) * 8;
+            }
+            float footLow = float.PositiveInfinity, radians = pitch * Mathf.Deg2Rad;
+            if (sole != null)
+                for (int i = 0; i + 1 < sole.Length; i += 2)
+                    footLow = Mathf.Min(footLow, (sole[i] * Mathf.Sin(radians) + sole[i + 1] * Mathf.Cos(radians)) * footHeight);
+            if (float.IsPositiveInfinity(footLow)) footLow = -footHeight * .85f;
+            var target = new Vector2(x, .02f - footLow + lift - hipY);
+            float distance = Mathf.Clamp(target.magnitude, Mathf.Abs(thighLength - calfLength) + .001f, thighLength + calfLength - .001f);
+            target = target.normalized * distance;
+            float a = Mathf.Atan2(target.y, target.x);
+            float bend = Mathf.Acos(Mathf.Clamp((thighLength * thighLength + distance * distance - calfLength * calfLength) / (2 * thighLength * distance), -1, 1));
+            float upper = a + bend;
+            var knee = new Vector2(Mathf.Cos(upper), Mathf.Sin(upper)) * thighLength;
+            float lower = Mathf.Atan2(target.y - knee.y, target.x - knee.x);
+            float thighDegrees = upper * Mathf.Rad2Deg + 90;
+            float shinDegrees = lower * Mathf.Rad2Deg + 90;
+            Angle(thigh, thighDegrees);
+            Angle(shin, shinDegrees - thighDegrees);
+            Angle(foot, pitch - shinDegrees);          // the ankle keeps the boot flat instead of pointing the toe
+        }
+
+        // Whole shins for standing poses; calf + boot slices while walking.
+        void LegArt(bool walking)
+        {
+            if (nearFoot == null || walking == walkingArt) return;
+            walkingArt = walking;
+            nearFullLeg.enabled = farFullLeg.enabled = !walking;
+            nearCalfArt.enabled = farCalfArt.enabled = nearFootArt.enabled = farFootArt.enabled = walking;
+            if (!walking) { Angle(nearFoot, 0); Angle(farFoot, 0); }
         }
 
         void Stand()
         {
             body.localPosition = new Vector3(0, 1.5f, 0);
-            Angle(torso, 0); Angle(head, 0);
+            Angle(torso, 0); Angle(head, 0); Angle(pelvis, 0);
             Angle(nearThigh, 0); Angle(farThigh, 0); Angle(nearShin, 0); Angle(farShin, 0);
             if (cape) Angle(cape, 0);
         }
@@ -236,7 +326,7 @@ namespace AshenVale
             return t;
         }
 
-        void Picture(Sprite sprite, Transform parent, float height, int order)
+        SpriteRenderer Picture(Sprite sprite, Transform parent, float height, int order)
         {
             var t = Joint(sprite.name, parent, Vector2.zero);
             var sr = t.gameObject.AddComponent<SpriteRenderer>();
@@ -244,16 +334,18 @@ namespace AshenVale
             sr.sortingOrder = order;
             t.localScale = Vector3.one * (height / Mathf.Max(.001f, sprite.bounds.size.y));
             renderers.Add(sr);
+            return sr;
         }
 
-        // Cuts the pieces out of the atlas once per rig (13th entry: the cape, or null).
+        // Cuts the pieces out of the atlas once per rig. Entries 12: cape (or null); 13-16: near calf, near boot,
+        // far calf, far boot, sliced from the shin pieces for the walk (top 78% / bottom 28%, ankle 24% up).
         static Sprite[] Pieces(RigDef def)
         {
             Sprite[] result;
             if (sheets.TryGetValue(def.hero, out result)) return result;
             var tex = Resources.Load<Texture2D>(def.atlas);
             if (tex == null) { sheets[def.hero] = null; return null; }
-            result = new Sprite[13];
+            result = new Sprite[17];
             string[] names = { "Head", "Torso", "Pelvis", "NearUpperArm", "NearForearm", "FarUpperArm", "FarForearm", "NearThigh", "NearShin", "FarThigh", "FarShin", "Weapon" };
             for (int i = 0; i < 12; i++) result[i] = Cut(tex, def.parts[i], names[i]);
             if (!string.IsNullOrEmpty(def.capeAtlas))
@@ -261,8 +353,22 @@ namespace AshenVale
                 var capeTex = Resources.Load<Texture2D>(def.capeAtlas);
                 if (capeTex != null) result[12] = Cut(capeTex, def.cape, "Cape");
             }
+            Slice(tex, def.parts[8], result, 13, "Near");
+            Slice(tex, def.parts[10], result, 15, "Far");
             sheets[def.hero] = result;
             return result;
+        }
+
+        static void Slice(Texture2D tex, RigPart shin, Sprite[] into, int at, string side)
+        {
+            float cut = Mathf.Round(shin.height * .22f), footTop = Mathf.Round(shin.height * .28f), ankle = Mathf.Round(shin.height * .24f);
+            var calfRect = new Rect(shin.x, shin.y + cut, shin.width, shin.height - cut);
+            var footRect = new Rect(shin.x, shin.y, shin.width, footTop);
+            float pivotY = shin.pivotY * shin.height;
+            into[at] = Sprite.Create(tex, calfRect, new Vector2(shin.pivotX, (pivotY - cut) / calfRect.height), 100f, 0, SpriteMeshType.FullRect);
+            into[at].name = side + "Calf";
+            into[at + 1] = Sprite.Create(tex, footRect, new Vector2(shin.pivotX, ankle / footTop), 100f, 0, SpriteMeshType.FullRect);
+            into[at + 1].name = side + "Foot";
         }
 
         static Sprite Cut(Texture2D tex, RigPart part, string name)

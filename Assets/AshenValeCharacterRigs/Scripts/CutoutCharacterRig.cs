@@ -8,7 +8,9 @@ namespace AshenVale.CharacterRigs
         public CharacterRigDefinition definition;
         public bool walking, facingRight = true;
         [HideInInspector] public Transform visual, body, torso, head, nearArm, nearForearm, farArm, farForearm;
-        [HideInInspector] public Transform nearThigh, nearShin, farThigh, farShin, weapon, cape;
+        [HideInInspector] public Transform nearThigh, nearShin, farThigh, farShin, weapon, cape, pelvis, nearFoot, farFoot;
+        [HideInInspector] public SpriteRenderer nearFullLeg, farFullLeg, nearCalfArt, farCalfArt, nearFootArt, farFootArt;
+        [Range(.5f, 2f)] public float walkPlaybackSpeed = 1f;
         Animator animator;
         float clock;
         static readonly int Walking = Animator.StringToHash("Walking");
@@ -22,8 +24,13 @@ namespace AshenVale.CharacterRigs
         {
             if (!body) return;
             visual.localScale = new Vector3(facingRight ? 1 : -1, 1, 1);
-            if (animator && animator.runtimeAnimatorController) animator.SetBool(Walking, walking);
-            else { clock += Time.deltaTime; ApplyPose(clock, walking); }
+            SetLegArt(walking && definition.HasFeet);
+            if (animator && animator.runtimeAnimatorController)
+            {
+                animator.SetBool(Walking, walking);
+                animator.speed = walking ? walkPlaybackSpeed : 1f;
+            }
+            else { clock += Time.deltaTime * (walking ? walkPlaybackSpeed : 1f); ApplyPose(clock, walking); }
         }
         public void SetMovement(float signedSpeed)
         {
@@ -38,7 +45,8 @@ namespace AshenVale.CharacterRigs
             visual = Joint("Visual", transform, Vector2.zero);
             visual.gameObject.AddComponent<UnityEngine.Rendering.SortingGroup>();
             body = Joint("Body", visual, new Vector2(0, 1.5f));
-            Picture("Pelvis", source.parts[2], body, source.pelvisHeight, 2);
+            pelvis = Joint("Pelvis", body, Vector2.zero);
+            Picture("PelvisArt", source.parts[2], pelvis, source.pelvisHeight, 2);
             torso = Joint("Torso", body, new Vector2(0, .06f));
             Picture("TorsoArt", source.parts[1], torso, source.torsoHeight, 0);
             head = Joint("Head", torso, new Vector2(source.ranger ? .02f : -.08f, source.ranger ? .82f : .96f));
@@ -54,11 +62,22 @@ namespace AshenVale.CharacterRigs
             nearThigh = Joint("NearThigh", body, new Vector2(.18f, 0));
             Picture("NearThighArt", source.parts[7], nearThigh, source.thighHeight, 1);
             nearShin = Joint("NearShin", nearThigh, new Vector2(0, -.66f));
-            Picture("NearShinArt", source.parts[8], nearShin, source.shinHeight, 2);
+            nearFullLeg = Picture("NearShinArt", source.parts[8], nearShin, source.shinHeight, 2);
             farThigh = Joint("FarThigh", body, new Vector2(-.18f, 0));
             Picture("FarThighArt", source.parts[9], farThigh, source.thighHeight, -5);
             farShin = Joint("FarShin", farThigh, new Vector2(0, -.66f));
-            Picture("FarShinArt", source.parts[10], farShin, source.shinHeight, -4);
+            farFullLeg = Picture("FarShinArt", source.parts[10], farShin, source.shinHeight, -4);
+            nearFoot = farFoot = null;
+            nearCalfArt = farCalfArt = nearFootArt = farFootArt = null;
+            if (source.HasFeet)
+            {
+                nearCalfArt = Picture("NearCalfArt", source.nearCalf, nearShin, source.shinHeight * source.nearCalf.rect.height / source.parts[8].rect.height, 2);
+                farCalfArt = Picture("FarCalfArt", source.farCalf, farShin, source.shinHeight * source.farCalf.rect.height / source.parts[10].rect.height, -4);
+                nearFoot = Joint("NearFoot", nearShin, new Vector2(0, -CalfLength(true)));
+                farFoot = Joint("FarFoot", farShin, new Vector2(0, -CalfLength(false)));
+                nearFootArt = Picture("NearFootArt", source.nearFoot, nearFoot, FootHeight(true), 3);
+                farFootArt = Picture("FarFootArt", source.farFoot, farFoot, FootHeight(false), -3);
+            }
             weapon = Joint("Weapon", nearForearm, new Vector2(source.ranger ? .08f : .02f, -.5f));
             Picture("WeaponArt", source.parts[11], weapon, source.weaponHeight, 5);
             if (source.cape)
@@ -72,9 +91,21 @@ namespace AshenVale.CharacterRigs
         {
             var joints = new System.Collections.Generic.List<Transform> { body, torso, head, nearArm, nearForearm, farArm, farForearm, nearThigh, nearShin, farThigh, farShin, weapon };
             if (cape) joints.Add(cape);
+            if (pelvis) joints.Add(pelvis);
+            if (nearFoot) joints.Add(nearFoot);
+            if (farFoot) joints.Add(farFoot);
             return joints.ToArray();
         }
         public void ApplyPose(float seconds, bool walk)
+        {
+            if (!body) return;
+            SetLegArt(walk && definition.HasFeet);
+            if (walk && definition.HasFeet) { ApplyWalkingPose(seconds); return; }
+            // Original idle, including its full unsliced boot artwork, is retained.
+            if (pelvis) Angle(pelvis, 0);
+            ApplyOriginalPose(seconds, walk);
+        }
+        void ApplyOriginalPose(float seconds, bool walk)
         {
             if (!body) return;
             float p = seconds * Mathf.PI * 2 / (walk ? .8f : 2.4f);
@@ -98,6 +129,83 @@ namespace AshenVale.CharacterRigs
             // Cancel arm rotation so the carried weapon stays upright while hands and body move.
             Angle(weapon, -nearUpper - nearLower + wave * (walk ? 2 : .5f));
         }
+        void ApplyWalkingPose(float seconds)
+        {
+            float cycle = Mathf.Repeat(seconds / .8f, 1f), phase = cycle * Mathf.PI * 2;
+            float wave = Mathf.Sin(phase);
+            float hipY = 1.40f + Mathf.Cos(phase * 2) * .014f;
+            body.localPosition = new Vector3(wave * .012f, hipY, 0);
+            if (pelvis) Angle(pelvis, -wave * 1.2f);
+            Angle(torso, 2f + wave * (definition.ranger ? 1.4f : 1f));
+            Angle(head, -1f - Mathf.Sin(phase - .25f) * .9f);
+            WalkLeg(nearThigh, nearShin, nearFoot, definition.nearFootSole, CalfLength(true), FootHeight(true), cycle, hipY);
+            WalkLeg(farThigh, farShin, farFoot, definition.farFootSole, CalfLength(false), FootHeight(false), Mathf.Repeat(cycle + .5f, 1f), hipY);
+            float upper = (definition.ranger ? 18 : -30) - wave * (definition.ranger ? 5 : 3);
+            float fore = (definition.ranger ? 40 : 10) + Mathf.Sin(phase + .65f) * (definition.ranger ? 3 : 2);
+            Angle(nearArm, upper); Angle(nearForearm, fore);
+            Angle(farArm, (definition.ranger ? -20 : -3) + wave * (definition.ranger ? 15 : 10));
+            Angle(farForearm, (definition.ranger ? 35 : 8) + Mathf.Sin(phase + .65f) * (definition.ranger ? 7 : 5));
+            Angle(weapon, -upper - fore + Mathf.Sin(phase - .25f) * 1.5f);
+            if (cape) Angle(cape, Mathf.Sin(phase - .5f) * 4f + Mathf.Sin(phase * 2) * .9f);
+        }
+        void WalkLeg(Transform thigh, Transform shin, Transform foot, Vector2[] sole, float calfLength, float footHeight, float phase, float hipY)
+        {
+            const float thighLength = .66f;
+            float stance = definition.ranger ? .60f : .64f;
+            float stride = definition.ranger ? .33f : .30f;
+            float x, lift = 0, pitch;
+            if (phase < stance)
+            {
+                float t = phase / stance;
+                x = Mathf.Lerp(stride, -stride, t);
+                pitch = t < .15f ? Mathf.Lerp(6, 0, t / .15f) : t > .75f ? Mathf.Lerp(0, -10, (t - .75f) / .25f) : 0;
+            }
+            else
+            {
+                float t = (phase - stance) / (1 - stance);
+                float ease = t * t * (3 - 2 * t);
+                x = Mathf.Lerp(-stride, stride, ease);
+                lift = Mathf.Sin(t * Mathf.PI) * (definition.ranger ? .17f : .13f);
+                pitch = Mathf.Lerp(-10, 6, ease) + Mathf.Sin(t * Mathf.PI) * 8;
+            }
+            float footLow = float.PositiveInfinity, radians = pitch * Mathf.Deg2Rad;
+            if (sole != null) foreach (var point in sole)
+                footLow = Mathf.Min(footLow, (point.x * Mathf.Sin(radians) + point.y * Mathf.Cos(radians)) * footHeight);
+            if (float.IsPositiveInfinity(footLow)) footLow = -footHeight * .85f;
+            var target = new Vector2(x, .02f - footLow + lift - hipY);
+            float distance = Mathf.Clamp(target.magnitude, Mathf.Abs(thighLength - calfLength) + .001f, thighLength + calfLength - .001f);
+            target = target.normalized * distance;
+            float a = Mathf.Atan2(target.y, target.x);
+            float bend = Mathf.Acos(Mathf.Clamp((thighLength * thighLength + distance * distance - calfLength * calfLength) / (2 * thighLength * distance), -1, 1));
+            float upper = a + bend;
+            var knee = new Vector2(Mathf.Cos(upper), Mathf.Sin(upper)) * thighLength;
+            float lower = Mathf.Atan2(target.y - knee.y, target.x - knee.x);
+            float thighDegrees = upper * Mathf.Rad2Deg + 90;
+            float shinDegrees = lower * Mathf.Rad2Deg + 90;
+            Angle(thigh, thighDegrees);
+            Angle(shin, shinDegrees - thighDegrees);
+            // Independent ankle prevents calf bend from turning the entire boot into a pointed toe.
+            Angle(foot, pitch - shinDegrees);
+        }
+        float CalfLength(bool near)
+        {
+            Sprite full = definition.parts[near ? 8 : 10], foot = near ? definition.nearFoot : definition.farFoot;
+            return definition.shinHeight * (full.pivot.y - foot.pivot.y) / full.rect.height;
+        }
+        float FootHeight(bool near)
+        {
+            Sprite full = definition.parts[near ? 8 : 10], foot = near ? definition.nearFoot : definition.farFoot;
+            return definition.shinHeight * foot.rect.height / full.rect.height;
+        }
+        void SetLegArt(bool walkingArt)
+        {
+            if (nearFullLeg) nearFullLeg.enabled = !walkingArt;
+            if (farFullLeg) farFullLeg.enabled = !walkingArt;
+            if (nearCalfArt) nearCalfArt.enabled = walkingArt;
+            if (farCalfArt) farCalfArt.enabled = walkingArt;
+            if (nearFootArt) nearFootArt.enabled = walkingArt;
+            if (farFootArt) farFootArt.enabled = walkingArt;
+        }
         float SoleOffset(Sprite shin, Vector2[] sole, float upper, float lower)
         {
             float a = upper * Mathf.Deg2Rad, b = (upper + lower) * Mathf.Deg2Rad;
@@ -116,12 +224,13 @@ namespace AshenVale.CharacterRigs
         static void Angle(Transform target, float degrees) { target.localRotation = Quaternion.Euler(0, 0, degrees); }
         static Transform Joint(string name, Transform parent, Vector2 position)
         { var t = new GameObject(name).transform; t.SetParent(parent, false); t.localPosition = position; return t; }
-        static void Picture(string name, Sprite sprite, Transform parent, float height, int order)
+        static SpriteRenderer Picture(string name, Sprite sprite, Transform parent, float height, int order)
         {
             if (!sprite) throw new System.ArgumentException("Missing sprite: " + name);
             var t = Joint(name, parent, Vector2.zero); var sr = t.gameObject.AddComponent<SpriteRenderer>();
             sr.sprite = sprite; sr.sortingOrder = order;
             t.localScale = Vector3.one * (height / Mathf.Max(.001f, sprite.bounds.size.y));
+            return sr;
         }
     }
 }

@@ -2,6 +2,16 @@
 
 First articulated prototypes based on the approved painted Elven Ranger and Dragon Knight designs. This pack keeps the same face/hair identity, palettes, leaf/dragon motifs, clothing and weapon designs as closely as practical while reconstructing hidden joint areas. It is an editable first pass, not a pixel-identical cutout or a complete replacement character controller.
 
+## Walk revision 2 — upgrading an existing import
+
+Both ranger and warrior now use independently pivoted feet, forward-bending knees, a planted stance and lifted recovery step, pelvis sway, and staggered shoulder/cape motion. The ranger has a lighter stride; the warrior a longer planted phase. Existing art and the original idle pose are preserved. Foot/calf sprites are non-destructive slices of the original atlas, not new paintings.
+
+1. Overwrite **Assets/AshenValeCharacterRigs/Scripts** and **Editor** with this pack, preserving the supplied .meta files. Keep the supplied Art folder in place.
+2. Run **Tools > Ashen Vale > Characters > Create Rig Preview** again. This creates new definitions, ankle joints, prefabs and baked clips in a new timestamped Generated folder.
+3. Test both characters in that new preview scene. For gameplay, replace the old visual prefab with the newly generated matching prefab, retaining your visual scale/offset and movement driver.
+
+**Replacing the script alone does not update an existing baked Walk clip or add ankle joints to an old prefab.** Keep older generated folders until the replacements work. `walkPlaybackSpeed` adjusts cadence (default 1); tune it against your movement speed to limit sliding. This is an in-place loop and does not match foot placement to terrain or measured player velocity.
+
 ## Included
 
 - Approved high-resolution transparent master images, for comparison.
@@ -38,7 +48,7 @@ The parts atlas has one piece per cell, top-left to bottom-right:
 
 The builder detects nontransparent bounds inside each cell and registers Sprite pivots at the intended joints. Ranger head registration accounts for the long ponytail; the bow grip is offset from the bow's geometric center. The warrior has a separate long cape behind his body. Overlapping joint ends limit gaps during rotation. Some small pose/detail differences from the master remain, including neutral hand shapes and the reconstructed joint regions.
 
-This is a **cutout rig**, not a weighted skeletal skin or frame-by-frame sprite sheet. Individual limbs rotate around joints. Hands and boots are attached to forearm/shin pieces. The ranger's ponytail stays with the head and quiver stays with the torso. The cape has independent sway. Idle has a 2.4-second loop; Walk has a 0.8-second loop. Foot-silhouette sampling adjusts body height during the gait, but there is no collision, IK system, root-motion locomotion or gameplay controller.
+This is a **cutout rig**, not a weighted skeletal skin or frame-by-frame sprite sheet. Individual limbs rotate around joints. Hands are attached to forearm pieces; walking boots have independent ankle joints. Idle uses the original whole shin/boot pieces. The ranger's ponytail stays with the head and quiver stays with the torso. The cape has independent sway. Idle has a 2.4-second loop; Walk has a 0.8-second loop. Walking uses a two-bone leg solver and sampled foot silhouettes to follow a flat stance/recovery path. There is no terrain collision, root-motion locomotion or gameplay controller.
 
 Keeping animation on this same set of artwork avoids a new redraw of the character on every frame. Final bow drawing, spear thrusts, jumping, climbing, hit reactions and death poses still need dedicated animation/art passes.
 

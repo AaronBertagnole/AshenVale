@@ -55,6 +55,8 @@ namespace AshenVale.CharacterRigs.Editor
             }
             definition.nearSole = SolePoints(texture, pixels, definition.parts[8]);
             definition.farSole = SolePoints(texture, pixels, definition.parts[10]);
+            MakeFootSlices(texture, pixels, definition, true);
+            MakeFootSlices(texture, pixels, definition, false);
             if (!ranger)
             {
                 string capePath = Root + "/Art/Warrior_Cape.png";
@@ -92,6 +94,19 @@ namespace AshenVale.CharacterRigs.Editor
             left = Mathf.Max(x0, left - 2); right = Mathf.Min(x1 - 1, right + 2); bottom = Mathf.Max(y0, bottom - 2); top = Mathf.Min(y1 - 1, top + 2);
             return new Rect(left, bottom, right - left + 1, top - bottom + 1);
         }
+        static void MakeFootSlices(Texture2D texture, Color32[] pixels, CharacterRigDefinition definition, bool near)
+        {
+            Sprite full = definition.parts[near ? 8 : 10]; Rect r = full.rect;
+            float cut = Mathf.Round(r.height * .22f), footTop = Mathf.Round(r.height * .28f), ankle = Mathf.Round(r.height * .24f);
+            var calfRect = new Rect(r.x, r.y + cut, r.width, r.height - cut);
+            var footRect = new Rect(r.x, r.y, r.width, footTop);
+            var calf = Sprite.Create(texture, calfRect, new Vector2(full.pivot.x / r.width, (full.pivot.y - cut) / calfRect.height), 100, 0, SpriteMeshType.FullRect);
+            var foot = Sprite.Create(texture, footRect, new Vector2(full.pivot.x / r.width, ankle / footTop), 100, 0, SpriteMeshType.FullRect);
+            calf.name = near ? "NearCalf" : "FarCalf"; foot.name = near ? "NearFoot" : "FarFoot";
+            AssetDatabase.AddObjectToAsset(calf, definition); AssetDatabase.AddObjectToAsset(foot, definition);
+            if (near) { definition.nearCalf = calf; definition.nearFoot = foot; definition.nearFootSole = SolePoints(texture, pixels, foot); }
+            else { definition.farCalf = calf; definition.farFoot = foot; definition.farFootSole = SolePoints(texture, pixels, foot); }
+        }
         static Vector2[] SolePoints(Texture2D texture, Color32[] pixels, Sprite sprite)
         {
             var points = new List<Vector2>(); Rect rect = sprite.rect;
@@ -124,17 +139,18 @@ namespace AshenVale.CharacterRigs.Editor
             float length = walk ? .8f : 2.4f; int steps = Mathf.RoundToInt(length * 30);
             var joints = rig.AnimatedJoints(); var rotations = new AnimationCurve[joints.Length];
             for (int i = 0; i < joints.Length; i++) rotations[i] = new AnimationCurve();
-            var bodyY = new AnimationCurve();
+            var bodyY = new AnimationCurve(); var bodyX = new AnimationCurve();
             for (int frame = 0; frame <= steps; frame++)
             {
                 float t = length * frame / steps; rig.ApplyPose(t, walk);
                 for (int i = 0; i < joints.Length; i++) rotations[i].AddKey(t, Mathf.DeltaAngle(0, joints[i].localEulerAngles.z));
-                bodyY.AddKey(t, rig.body.localPosition.y);
+                bodyY.AddKey(t, rig.body.localPosition.y); bodyX.AddKey(t, rig.body.localPosition.x);
             }
             var clip = new AnimationClip { name = walk ? "Walk" : "Idle", frameRate = 30 };
             for (int i = 0; i < joints.Length; i++)
                 AnimationUtility.SetEditorCurve(clip, EditorCurveBinding.FloatCurve(AnimationUtility.CalculateTransformPath(joints[i], rig.transform), typeof(Transform), "localEulerAnglesRaw.z"), rotations[i]);
             AnimationUtility.SetEditorCurve(clip, EditorCurveBinding.FloatCurve(AnimationUtility.CalculateTransformPath(rig.body, rig.transform), typeof(Transform), "m_LocalPosition.y"), bodyY);
+            AnimationUtility.SetEditorCurve(clip, EditorCurveBinding.FloatCurve(AnimationUtility.CalculateTransformPath(rig.body, rig.transform), typeof(Transform), "m_LocalPosition.x"), bodyX);
             var settings = AnimationUtility.GetAnimationClipSettings(clip); settings.loopTime = true; AnimationUtility.SetAnimationClipSettings(clip, settings);
             AssetDatabase.CreateAsset(clip, path); return clip;
         }

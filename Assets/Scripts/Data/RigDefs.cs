@@ -21,6 +21,7 @@ namespace AshenVale
         public RigPart[] parts;
         public RigPart cape;
         public float[] nearSole, farSole;   // lowest boot pixels (x, y pairs in shin heights, from the shin joint) for the gait
+        public float[] nearFootSole, farFootSole;  // the same on the boot slice alone (in boot heights, from the ankle)
         public float headHeight = 1.05f, torsoHeight = 1.05f, pelvisHeight = .65f;
         public float upperArmHeight = .58f, forearmHeight = .60f, thighHeight = .75f, shinHeight = .85f, weaponHeight = 3.95f, capeHeight = 2.2f;
         public float scale = .4f;           // rig units to world units: the knight stands about 1.4 units tall
@@ -52,6 +53,8 @@ namespace AshenVale
                 },
                 nearSole = new[] { -.171f, -.275f, -.128f, -.891f, -.086f, -.903f, -.047f, -.927f, -.005f, -.936f, .038f, -.939f, .080f, -.942f, .119f, -.939f, .162f, -.936f, .204f, -.930f },
                 farSole = new[] { -.212f, -.277f, -.160f, -.897f, -.109f, -.906f, -.057f, -.900f, -.005f, -.921f, .047f, -.936f, .098f, -.942f, .150f, -.942f, .202f, -.939f, .253f, -.930f },
+                nearFootSole = new[] { -.457f, -.640f, -.307f, -.683f, -.167f, -.769f, -.016f, -.801f, .134f, -.812f, .285f, -.823f, .425f, -.812f, .575f, -.801f, .726f, -.780f },
+                farFootSole = new[] { -.573f, -.668f, -.388f, -.701f, -.203f, -.679f, -.018f, -.755f, .166f, -.810f, .351f, -.832f, .536f, -.832f, .721f, -.821f, .905f, -.788f },
             },
             new RigDef
             {
@@ -75,6 +78,8 @@ namespace AshenVale
                 cape = new RigPart(37, 135, 850, 1177, .82f, .95f),
                 nearSole = new[] { -.169f, -.901f, -.128f, -.916f, -.087f, -.937f, -.046f, -.940f, -.004f, -.943f, .037f, -.940f, .078f, -.940f, .120f, -.937f, .161f, -.934f, .202f, -.922f },
                 farSole = new[] { -.218f, -.904f, -.165f, -.913f, -.112f, -.916f, -.059f, -.913f, -.005f, -.937f, .048f, -.940f, .101f, -.943f, .154f, -.940f, .207f, -.937f, .260f, -.928f },
+                nearFootSole = new[] { -.605f, -.679f, -.457f, -.732f, -.310f, -.805f, -.163f, -.816f, -.015f, -.826f, .132f, -.816f, .280f, -.816f, .427f, -.805f, .574f, -.795f, .722f, -.753f },
+                farFootSole = new[] { -.777f, -.689f, -.588f, -.721f, -.398f, -.732f, -.209f, -.721f, -.019f, -.805f, .170f, -.816f, .360f, -.826f, .549f, -.816f, .739f, -.805f, .928f, -.774f },
             },
         };
 
