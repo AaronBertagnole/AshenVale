@@ -203,15 +203,3 @@ bottom; names are written in dark ink, so a light parchment-style picture reads 
 The current heroes are pixel art (128 x 128 frames, sharp filtering). Painted heroes can replace them with the same
 folder and animation names (`idle`, `run`, `jump`, `fall`, `hurt`, `death`, plus each hero's attacks); the hero
 import settings would then be switched to smooth filtering at the new size.
-
-### Hero rigs (prototype): `Assets/Resources/Art/Rigs/<hero>_parts.png`
-
-A painted hero can also be a paper doll: twelve pieces on one sheet (4 columns x 3 rows: head, torso, pelvis,
-near upper arm / near forearm, far upper arm, far forearm, near thigh / near shin, far thigh, far shin, weapon),
-facing right, limbs hanging straight down with the joint at the top of each piece. `Data/RigDefs.cs` holds where
-each piece sits on the sheet and its joint (measure a new sheet with `python3 Tools/rig_bounds.py <art folder>`),
-and `View/HeroRig.cs` poses the doll in code (idle, a walk with ankle joints and a two-bone leg solve so the boots stay
-flat and planted, jump, fall, climb, crouch, attacks, hurt, death), so a
-new hero needs one sheet instead of a frame per pose. The Esc menu switches between rigged dolls and the frame
-sprites. The original prototype pack, with its own editor preview (Tools > Ashen Vale > Characters > Create Rig
-Preview), lives untouched in `Assets/AshenValeCharacterRigs/`.

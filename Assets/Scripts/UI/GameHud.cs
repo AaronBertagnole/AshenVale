@@ -336,15 +336,13 @@ namespace AshenVale
 
         void DrawMenu()
         {
-            Rect r = new Rect((Screen.width - 320) / 2f, (Screen.height - 358) / 2f, 320, 358);
+            Rect r = new Rect((Screen.width - 320) / 2f, (Screen.height - 304) / 2f, 320, 304);
             GUI.Box(r, "MENU   [ESC] Close");
             GUI.Label(new Rect(r.x + 20, r.y + 30, 280, 24), "Your hero saves automatically.", smallStyle);
             if (GUI.Button(new Rect(r.x + 30, r.y + 66, 260, 44), "RESUME", menuButton)) menuOpen = false;
             if (GUI.Button(new Rect(r.x + 30, r.y + 120, 260, 44), "CONTROLS", menuButton)) { menuOpen = false; controlsOpen = true; capturingAction = -1; }
-            // Prototype: heroes as posed paper dolls (the cutout rigs) or the frame-by-frame sprites.
-            if (GUI.Button(new Rect(r.x + 30, r.y + 174, 260, 44), WorldView.RiggedHeroes ? "HEROES: RIGGED DOLLS" : "HEROES: FRAME SPRITES", menuButton)) WorldView.RiggedHeroes = !WorldView.RiggedHeroes;
-            if (GUI.Button(new Rect(r.x + 30, r.y + 228, 260, 44), online ? "SAVE & LEAVE GAME" : "SAVE & YOUR HEROES", menuButton)) { menuOpen = false; if (onCharacterSelect != null) onCharacterSelect(); }
-            if (GUI.Button(new Rect(r.x + 30, r.y + 282, 260, 44), "SAVE & QUIT", menuButton)) { menuOpen = false; if (onQuit != null) onQuit(); }
+            if (GUI.Button(new Rect(r.x + 30, r.y + 174, 260, 44), online ? "SAVE & LEAVE GAME" : "SAVE & YOUR HEROES", menuButton)) { menuOpen = false; if (onCharacterSelect != null) onCharacterSelect(); }
+            if (GUI.Button(new Rect(r.x + 30, r.y + 228, 260, 44), "SAVE & QUIT", menuButton)) { menuOpen = false; if (onQuit != null) onQuit(); }
         }
 
         // Controls: two keys per action; click one and press the key you want (Esc keeps the old key, Backspace clears).
