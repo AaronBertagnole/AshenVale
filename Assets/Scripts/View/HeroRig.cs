@@ -112,21 +112,27 @@ namespace AshenVale
             LegArt(clip == "run" && !p.climbing && nearFoot != null);
             if (clip == "run")
             {
-                walkPhase += frameDt * Mathf.Max(2.5f, Mathf.Abs(p.vx)) / 4.4f;
+                // The pack's walk is a 0.8 s stroll; heroes cover 5-6 units a second, so the gait scales with speed:
+                // faster cadence, longer strides and a higher step, up to what the legs can reach.
+                float ground = Mathf.Max(2.5f, Mathf.Abs(p.vx)) / def.scale;        // rig units per second
+                float cadence = Mathf.Clamp(ground / 6f, 1.25f, 2.4f);                // cycles per second
+                float run = Mathf.Clamp01((ground - 6f) / 8f);                        // 0 stroll .. 1 full run
+                walkPhase += frameDt * cadence;
                 float cycle = Mathf.Repeat(walkPhase, 1f), phase = cycle * Mathf.PI * 2;
                 float g = Mathf.Sin(phase);
                 if (nearFoot != null && !p.climbing)
                 {
                     // Walk revision 2: planted stance, lifted recovery step, ankles that keep the boots flat.
-                    float hipY = 1.40f + Mathf.Cos(phase * 2) * .014f;
+                    float hipY = Mathf.Lerp(1.43f, 1.38f, run) + Mathf.Cos(phase * 2) * (.014f + .02f * run);
                     body.localPosition = new Vector3(g * .012f, hipY, 0);
                     Angle(pelvis, -g * 1.2f);
-                    Angle(torso, 2f + g * (def.ranger ? 1.4f : 1f));
-                    Angle(head, -1f - Mathf.Sin(phase - .25f) * .9f);
-                    WalkLeg(nearThigh, nearShin, nearFoot, def.nearFootSole, nearCalf, nearFootHeight, cycle, hipY);
-                    WalkLeg(farThigh, farShin, farFoot, def.farFootSole, farCalf, farFootHeight, Mathf.Repeat(cycle + .5f, 1f), hipY);
-                    nearUpper -= g * (def.ranger ? 5 : 3); nearLower += Mathf.Sin(phase + .65f) * (def.ranger ? 3 : 2);
-                    farUpper += g * (def.ranger ? 15 : 10); farLower += Mathf.Sin(phase + .65f) * (def.ranger ? 7 : 5);
+                    Angle(torso, 2f + 7f * run + g * (def.ranger ? 1.4f : 1f));
+                    Angle(head, -1f - 3f * run - Mathf.Sin(phase - .25f) * .9f);
+                    WalkLeg(nearThigh, nearShin, nearFoot, def.nearFootSole, nearCalf, nearFootHeight, cycle, hipY, run);
+                    WalkLeg(farThigh, farShin, farFoot, def.farFootSole, farCalf, farFootHeight, Mathf.Repeat(cycle + .5f, 1f), hipY, run);
+                    float swing = 1f + 1.5f * run;
+                    nearUpper -= g * (def.ranger ? 5 : 3) * swing; nearLower += Mathf.Sin(phase + .65f) * (def.ranger ? 3 : 2) * swing;
+                    farUpper += g * (def.ranger ? 15 : 10) * swing; farLower += Mathf.Sin(phase + .65f) * (def.ranger ? 7 : 5) * swing;
                     if (cape) Angle(cape, Mathf.Sin(phase - .5f) * 4f + Mathf.Sin(phase * 2) * .9f);
                 }
                 else
@@ -243,11 +249,11 @@ namespace AshenVale
 
         // One leg of the walk (from the rig pack, revision 2): the boot slides back while planted, then
         // lifts and swings forward; a two-bone solve puts the knee where the thigh and calf meet.
-        void WalkLeg(Transform thigh, Transform shin, Transform foot, float[] sole, float calfLength, float footHeight, float phase, float hipY)
+        void WalkLeg(Transform thigh, Transform shin, Transform foot, float[] sole, float calfLength, float footHeight, float phase, float hipY, float run)
         {
             const float thighLength = .66f;
-            float stance = def.ranger ? .60f : .64f;
-            float stride = def.ranger ? .33f : .30f;
+            float stance = Mathf.Lerp(def.ranger ? .60f : .64f, .5f, run);
+            float stride = Mathf.Lerp(def.ranger ? .33f : .30f, .58f, run);
             float x, lift = 0, pitch;
             if (phase < stance)
             {
@@ -260,7 +266,7 @@ namespace AshenVale
                 float t = (phase - stance) / (1 - stance);
                 float ease = t * t * (3 - 2 * t);
                 x = Mathf.Lerp(-stride, stride, ease);
-                lift = Mathf.Sin(t * Mathf.PI) * (def.ranger ? .17f : .13f);
+                lift = Mathf.Sin(t * Mathf.PI) * Mathf.Lerp(def.ranger ? .17f : .13f, .3f, run);
                 pitch = Mathf.Lerp(-10, 6, ease) + Mathf.Sin(t * Mathf.PI) * 8;
             }
             float footLow = float.PositiveInfinity, radians = pitch * Mathf.Deg2Rad;
