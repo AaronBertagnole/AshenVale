@@ -22,6 +22,12 @@ namespace AshenVale
 
         static async Task SignInAsync()
         {
+            // A build made before the project was linked to Unity Cloud carries no project ID: say so plainly instead
+            // of failing deep inside the services with a long stack of "not linked" errors.
+            if (string.IsNullOrEmpty(Application.cloudProjectId))
+                throw new InvalidOperationException(Application.isEditor
+                    ? "This project is not linked to Unity Cloud yet: Edit > Project Settings > Services, then link a project."
+                    : "This build was made before the game was linked to Unity Cloud. Ask the host for a build made after linking.");
             if (UnityServices.State != ServicesInitializationState.Initialized)
             {
                 var options = new InitializationOptions();
@@ -60,8 +66,11 @@ namespace AshenVale
         // A readable reason for the player, plus the likely fix when the project isn't set up for online play.
         public static string Explain(Exception e)
         {
+            // The services wrap the real reason in an AggregateException; the first inner one is the useful part.
+            var aggregate = e as AggregateException;
+            if (aggregate != null && aggregate.InnerExceptions.Count > 0) e = aggregate.InnerExceptions[0];
             string message = e.Message ?? e.GetType().Name;
-            if (message.Length > 140) message = message.Substring(0, 140) + "...";
+            if (message.Length > 300) message = message.Substring(0, 300) + "...";
             if (message.IndexOf("project", StringComparison.OrdinalIgnoreCase) >= 0 ||
                 message.IndexOf("initializ", StringComparison.OrdinalIgnoreCase) >= 0 ||
                 message.IndexOf("cloud", StringComparison.OrdinalIgnoreCase) >= 0)
