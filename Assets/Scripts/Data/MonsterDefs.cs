@@ -7,7 +7,7 @@ namespace AshenVale
     // (see MapDefs), so a map's level range comes from its monsters.
     //
     // Behaviour:
-    //   passive     wanders its platform; when hit, chases whoever hit it for a while (if it can reach them)
+    //   passive     wanders its platform until someone hits it; from then on it hunts like an aggressive one
     //   aggressive  also chases any player who comes close on its own platform
     //   harmless    never hurts anyone on touch (chests)
     //   speed 0     never moves

@@ -82,6 +82,7 @@ namespace AshenVale
         public float knockbackVelocity, knockbackTime;
         public int target;              // player id it is chasing (0 = none)
         public float aggroTime;         // seconds it stays on the player who last hit it
+        public bool angry;              // a passive monster that has been hit: it stays on the hunt like an aggressive one
         public float life;              // chests: seconds before it moves on if nobody opens it
         // Bosses: what it is about to do (0 nothing, 1 root slam, 2 summon), how long until it lands, how long the
         // strike pose shows, and its cooldowns. Clients get windup / strike from the snapshot for the telegraph.

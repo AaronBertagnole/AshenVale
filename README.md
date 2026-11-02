@@ -23,6 +23,7 @@ Emberhaven (town) - Emberfields - Amberleaf Trail - Mossgate Hollow - Mosswood -
 New heroes start in Emberhaven; Emberfields is through the portal on the right. A portal on Mossgate Hollow's top
 ledge climbs to Shale Cliffs, the first step up the mountain (its summit will lead on to Highspire later).
 Every monster kind has a fixed level, like classic MapleStory, and monsters far below your level give less XP.
+Some monsters leave you alone until you hit them; after that they hunt you like the aggressive ones do.
 Walk into a town to find it; its waystone then lets you travel between found towns. **T** opens a portal to
 your last town, and that town's return portal takes you back.
 

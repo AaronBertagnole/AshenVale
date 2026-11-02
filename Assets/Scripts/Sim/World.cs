@@ -413,7 +413,7 @@ namespace AshenVale
         {
             if (!map.monsters.Contains(m)) return;
             m.hp -= damage;
-            if (attacker != null) { m.target = attacker.id; m.aggroTime = Tuning.MonsterAggroTime; }   // it turns on whoever hit it
+            if (attacker != null) { m.target = attacker.id; m.aggroTime = Tuning.MonsterAggroTime; m.angry = true; }   // it turns on whoever hit it, and stays on the hunt
             events.Add(new SimEvent { kind = SimEventKind.MonsterHit, map = map.def.id, targetId = m.id, amount = damage,
                                       playerId = attacker != null ? attacker.id : 0, x = m.x, y = m.y });
             if (m.hp > 0) return;
@@ -487,8 +487,9 @@ namespace AshenVale
 
         // Who a monster goes after (null = nobody, it wanders):
         //  1. the player who hit it in the last few seconds, if it can reach them;
-        //  2. aggressive monsters only: the nearest player it can reach within sight, sticking with its
-        //     current target unless someone is clearly closer, so it doesn't flip back and forth.
+        //  2. aggressive monsters, and passive ones that have been hit (angry): the nearest player it can reach
+        //     within sight, sticking with its current target unless someone is clearly closer, so it doesn't flip
+        //     back and forth.
         PlayerState PickTarget(int mapId, MonsterState m, float dt)
         {
             m.aggroTime = Mathf.Max(0f, m.aggroTime - dt);
@@ -503,7 +504,7 @@ namespace AshenVale
             }
             PlayerState pick = null;
             if (current != null && m.aggroTime > 0f) pick = current;
-            else if (m.Def.aggressive)
+            else if (m.Def.aggressive || m.angry)
             {
                 if (current != null && Mathf.Abs(current.x - m.x) <= Tuning.MonsterSight &&
                     Mathf.Abs(current.x - m.x) <= nearestDist + Tuning.MonsterTargetStickiness) pick = current;
