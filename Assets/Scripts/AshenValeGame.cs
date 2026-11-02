@@ -232,7 +232,7 @@ public class AshenValeGame : MonoBehaviour
         var me = world.GetPlayer(localId);
         if (me != null && me.dead && me.deathClock >= Tuning.RespawnDelay && Input.GetKeyDown(KeyCode.N)) { BackToHeroes(); return; }
         hud.HandleKeys(me);
-        keyboard.Sample(!hud.WindowOpen);
+        if (hud.Capturing) keyboard.Clear(); else keyboard.Sample(!hud.WindowOpen);   // rebinding a key: the game doesn't hear it
         hud.status = mode == Mode.Solo ? soloNotice : net.StatusLine;
         hud.joinCode = mode == Mode.Host ? net.JoinCode : "";
 

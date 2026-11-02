@@ -34,9 +34,13 @@ where you are and where the rest of your party is (hover a place for its monster
 until you find them. The minimap in the top right corner (**Tab** hides it) shows the map you are on: floors,
 ladders, portals, monsters (red), chests (gold), other heroes (green) and you (yellow).
 
-Chests turn up at random: each hunting map has a few chest spots (`k` in the layouts), and a chest appears at
-one of them now and then (never the same spot twice in a row), moving on if nobody opens it within 3 minutes.
-One chest per map at a time; the secret Hollow Den allows two. Numbers in `Tuning.cs` (Chest...).
+Chests turn up at random: each hunting map has a few chest spots (`k` in the layouts), and when someone arrives on
+a map there is a 50% chance a chest is waiting at one of them (never the same spot twice in a row, and not within a
+minute of the last one). Staying on a map never brings another: leave and come back, or have a friend arrive. An
+unopened chest moves on after 3 minutes. One chest per map at a time; the secret Hollow Den allows two.
+
+Keys can be changed from the Esc menu (**CONTROLS**): two keys per action, saved on your PC. Every label in the game
+shows your bound keys. The merchant also buys monster parts, and what you pick up is listed at the bottom left.
 
 **Thornmother**, the first boss, waits in her glade off the east end of Mosswood (Lv 9, a party job or a well-geared
 solo). She rears up before slamming the roots (step back or jump), calls thorn sprouts, and rages below a third of

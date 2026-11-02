@@ -281,9 +281,15 @@ namespace AshenVale
         {
             GUI.Label(new Rect(left + 30, top + 19, 780, 54), "YOUR FIRST ADVENTURE", heading);
             GUI.Label(new Rect(left + 55, top + 78, 730, 30), "A few essentials before you set out from Emberhaven", subtitle);
-            string[] keys = { "A / D  or  ← / →", "SPACE  ·  DOWN + SPACE", "W / S", "J / K", "Q / F", "E / I", "W / UP", "T  ·  M", "L / ESC" };
+            string[] keys =
+            {
+                Keys.Name(GameAction.Left) + "  ·  " + Keys.Name(GameAction.Right), Keys.Name(GameAction.Jump) + "  ·  " + Keys.Name(GameAction.Down) + " + " + Keys.Name(GameAction.Jump),
+                Keys.Name(GameAction.Up) + "  ·  " + Keys.Name(GameAction.Down), Keys.Name(GameAction.Attack) + "  ·  " + Keys.Name(GameAction.Skill),
+                Keys.Name(GameAction.HpPotion) + "  ·  " + Keys.Name(GameAction.MpPotion), Keys.Name(GameAction.Interact) + "  ·  " + Keys.Name(GameAction.Inventory),
+                Keys.Name(GameAction.Up), Keys.Name(GameAction.TownPortal) + "  ·  " + Keys.Name(GameAction.WorldMap), Keys.Name(GameAction.Dash) + "  ·  ESC",
+            };
             string[] actions = { "Move", "Jump  ·  Drop through a platform", "Climb ladders", "Attack / Special attack", "HP / MP potions",
-                                 "Loot, talk / Inventory", "Use a portal", "Portal back to town  ·  World map", "Dash / Menu" };
+                                 "Loot, talk / Inventory", "Use a portal", "Portal back to town  ·  World map", "Dash / Menu (change keys there)" };
             for (int i = 0; i < keys.Length; i++)
             {
                 float y = top + 125 + i * 33;
