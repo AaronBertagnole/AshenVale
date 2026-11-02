@@ -112,18 +112,18 @@ namespace AshenVale
             LegArt(clip == "run" && !p.climbing && nearFoot != null);
             if (clip == "run")
             {
-                // The pack's walk is a 0.8 s stroll; heroes cover 5-6 units a second, so the gait scales with speed:
-                // faster cadence, longer strides and a higher step, up to what the legs can reach.
+                // The pack's stroll, with its cadence following the hero's speed (the stride itself stays
+                // modest: long lunging steps read as side-stepping on a cutout, so the feet may slide a little).
                 float ground = Mathf.Max(2.5f, Mathf.Abs(p.vx)) / def.scale;        // rig units per second
-                float cadence = Mathf.Clamp(ground / 6f, 1.25f, 2.4f);                // cycles per second
-                float run = Mathf.Clamp01((ground - 6f) / 8f);                        // 0 stroll .. 1 full run
+                float cadence = Mathf.Clamp(ground / 6f, 1.25f, 2.2f);                // cycles per second
+                float run = Mathf.Clamp01((ground - 6f) / 8f) * .35f;                 // a touch longer and livelier at speed
                 walkPhase += frameDt * cadence;
                 float cycle = Mathf.Repeat(walkPhase, 1f), phase = cycle * Mathf.PI * 2;
                 float g = Mathf.Sin(phase);
                 if (nearFoot != null && !p.climbing)
                 {
                     // Walk revision 2: planted stance, lifted recovery step, ankles that keep the boots flat.
-                    float hipY = Mathf.Lerp(1.43f, 1.38f, run) + Mathf.Cos(phase * 2) * (.014f + .02f * run);
+                    float hipY = Mathf.Lerp(1.42f, 1.38f, run) + Mathf.Cos(phase * 2) * (.014f + .02f * run);
                     body.localPosition = new Vector3(g * .012f, hipY, 0);
                     Angle(pelvis, -g * 1.2f);
                     Angle(torso, 2f + 7f * run + g * (def.ranger ? 1.4f : 1f));
@@ -259,7 +259,9 @@ namespace AshenVale
             {
                 float t = phase / stance;
                 x = Mathf.Lerp(stride, -stride, t);
-                pitch = t < .15f ? Mathf.Lerp(6, 0, t / .15f) : t > .75f ? Mathf.Lerp(0, -10, (t - .75f) / .25f) : 0;
+                // Heel down in front, flat under the body, then the heel lifts and the toe points down as the
+                // leg trails behind (a flat boot on a trailing leg looks like a broken ankle).
+                pitch = t < .15f ? Mathf.Lerp(6, 0, t / .15f) : t > .6f ? Mathf.Lerp(0, -28, (t - .6f) / .4f) : 0;
             }
             else
             {
@@ -267,7 +269,7 @@ namespace AshenVale
                 float ease = t * t * (3 - 2 * t);
                 x = Mathf.Lerp(-stride, stride, ease);
                 lift = Mathf.Sin(t * Mathf.PI) * Mathf.Lerp(def.ranger ? .17f : .13f, .3f, run);
-                pitch = Mathf.Lerp(-10, 6, ease) + Mathf.Sin(t * Mathf.PI) * 8;
+                pitch = Mathf.Lerp(-28, 6, ease) + Mathf.Sin(t * Mathf.PI) * 6;
             }
             float footLow = float.PositiveInfinity, radians = pitch * Mathf.Deg2Rad;
             if (sole != null)
