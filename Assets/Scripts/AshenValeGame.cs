@@ -51,7 +51,7 @@ public class AshenValeGame : MonoBehaviour
         net = new NetSession(world) { onFailed = OnNetFailed };
         localCommands = new LocalCommands(world, () => localId);
         remoteCommands = new RemoteCommands(net);
-        hud = new GameHud(world) { onCharacterSelect = BackToHeroes, onQuit = QuitGame, commands = localCommands };
+        hud = new GameHud(world) { onCharacterSelect = BackToHeroes, onQuit = QuitGame, commands = localCommands, view = view };
         menu = new FrontMenu(music, CreateHero, PlaySolo, HostGame, JoinGame, DeleteSaved);
         menu.SetSaved(SaveStore.LoadAll());
     }

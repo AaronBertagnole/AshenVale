@@ -67,12 +67,13 @@ namespace AshenVale
         public SpawnPoint[] spawns = new SpawnPoint[0];  // chest spawn points (k) are chest spots: see World.UpdateChests
         public int maxChests = Tuning.ChestsAtOnce;      // chests that can be out on this map at once
         public int minLevel, maxLevel;          // levels of the monsters here (0 in towns; chests don't count)
+        public bool hasBoss;                    // a boss lives here (its glade)
 
         public float Bottom { get { return Tuning.Ground; } }
         public float Top { get { return Tuning.Ground + rows; } }
         public string LevelText
         {
-            get { return kind == MapKind.Town || maxLevel <= 0 ? "Town" : minLevel == maxLevel ? "Lv " + minLevel : "Lv " + minLevel + "-" + maxLevel; }
+            get { return kind == MapKind.Town || maxLevel <= 0 ? "Town" : hasBoss ? "Boss Lv " + maxLevel : minLevel == maxLevel ? "Lv " + minLevel : "Lv " + minLevel + "-" + maxLevel; }
         }
 
         public bool FindPortal(char key, out Portal portal)
@@ -208,9 +209,11 @@ namespace AshenVale
                         var point = new SpawnPoint { monster = monster, x = x, y = y };
                         if (floor == 0)
                         {
-                            // Ground monsters roam a stretch around their spawn point, so they stay spread out.
-                            point.left = Mathf.Max(def.minX, x - Tuning.GroundRoam);
-                            point.right = Mathf.Min(def.maxX, x + Tuning.GroundRoam);
+                            // Ground monsters roam a stretch around their spawn point, so they stay spread out;
+                            // a boss has the run of the whole floor (bar the calm stretch by the portal).
+                            float roam = Monsters.All[monster].boss ? def.columns : Tuning.GroundRoam;
+                            point.left = Mathf.Max(def.minX, x - roam);
+                            point.right = Mathf.Min(def.maxX, x + roam);
                         }
                         else
                         {
@@ -224,6 +227,7 @@ namespace AshenVale
                         {
                             def.minLevel = def.minLevel == 0 ? m.level : Mathf.Min(def.minLevel, m.level);
                             def.maxLevel = Mathf.Max(def.maxLevel, m.level);
+                            if (m.boss) def.hasBoss = true;
                         }
                     }
                 }
@@ -251,13 +255,13 @@ namespace AshenVale
     {
         // Map ids are stored in save files: never renumber, only add.
         public const int Emberfields = 0, Mosswood = 1, Emberhaven = 2, HollowDen = 3, Kingsroad = 4, Cinderford = 5, AshenMarsh = 6,
-                         AmberleafTrail = 7, MossgateHollow = 8, ShaleCliffs = 9;
+                         AmberleafTrail = 7, MossgateHollow = 8, ShaleCliffs = 9, ThornGlade = 10;
         public const int FirstTown = Emberhaven;    // every hero knows it; where you wake if nothing else is known
 
         // The world so far (west to east):
         //   Emberhaven (town) - Emberfields - Amberleaf Trail - Mossgate Hollow - Mosswood - Kingsroad - Cinderford (town) - Ashen Marsh
         //                                                        '- top ledge: Shale Cliffs     '- secret ledge, top left: Hollow Den
-        //                                                           (up the mountain)
+        //                                                           (up the mountain)          '- east end: Thornmother's Glade (boss)
         // In id order: All[i].id == i.
         public static readonly MapDef[] All =
         {
@@ -268,7 +272,8 @@ namespace AshenVale
                 "Art/Backdrops/emberfields", 116f / 724f, 42f),   // path 116 px above the bottom of the 724 px picture
             MapLayout.WithBackdrop(MapLayout.Build(Mosswood, "Mosswood", "forest", MapKind.Field, MosswoodLayout,
                     new[] { MapLayout.S('a', Monsters.MossCrawler), MapLayout.S('b', Monsters.BrambleBoar), MapLayout.S('k', Monsters.MossyChest) },
-                    new[] { MapLayout.L('B', MossgateHollow, 'B'), MapLayout.L('C', Kingsroad, 'C'), MapLayout.L('S', HollowDen, 'S') }),
+                    new[] { MapLayout.L('B', MossgateHollow, 'B'), MapLayout.L('C', Kingsroad, 'C'), MapLayout.L('S', HollowDen, 'S'),
+                            MapLayout.L('T', ThornGlade, 'T') }),
                 "Art/Backdrops/mosswood", 130f / 724f, 42f),       // its path is a little higher: 130 px above the bottom
             MapLayout.WithScene(MapLayout.Build(Emberhaven, "Emberhaven", "town", MapKind.Town, EmberhavenLayout,
                     new MapLayout.Spawn[0],
@@ -306,6 +311,12 @@ namespace AshenVale
             MapLayout.Build(ShaleCliffs, "Shale Cliffs", "cliffs", MapKind.Field, ShaleCliffsLayout,
                 new[] { MapLayout.S('g', Monsters.CragGoat), MapLayout.S('r', Monsters.RockMite), MapLayout.S('k', Monsters.MossyChest) },
                 new[] { MapLayout.L('G', MossgateHollow, 'G') }),
+            // Region 1's boss glade, off the east end of Mosswood: a bramble-walled clearing with two ledges to
+            // shoot from. Thornmother waits in the middle and comes back a few minutes after she falls.
+            MapLayout.WithBackdrop(MapLayout.Build(ThornGlade, "Thornmother's Glade", "forest", MapKind.Field, ThornGladeLayout,
+                    new[] { MapLayout.S('z', Monsters.Thornmother) },
+                    new[] { MapLayout.L('T', Mosswood, 'T') }),
+                "Art/Backdrops/mosswood", 130f / 724f, 42f),       // Mosswood's pictures until the glade has its own
         };
 
         public static bool IsTown(int map) { return map >= 0 && map < All.Length && All[map].kind == MapKind.Town; }
@@ -341,7 +352,7 @@ namespace AshenVale
             ........|.........=============.............=============.........................
             ........|......a........................a..........................a...k..........
             ........|.===========.............=============...............===========.........
-            .B..@...|.....a...........a.............b...........a.............a.........b...C.
+            .B..@...|.....a...........a.............b...........a.............a...T.....b...C.
             ##################################################################################";
 
         // Matches the painted scene: merchant at the house on the left, waystone at the arch, smithy at the forge.
@@ -419,6 +430,17 @@ namespace AshenVale
             ..........===========.....................................
             ..G.@.........g...........g...........g...........g....k..
             ##########################################################";
+
+        const string ThornGladeLayout = @"
+            ..........................................
+            ..........................................
+            ..........................................
+            ..........................................
+            ....=======...................=======.....
+            ..........................................
+            ........====..............====............
+            .T..@.....................z...............
+            ##########################################";
 
         const string AshenMarshLayout = @"
             ....................................................................................

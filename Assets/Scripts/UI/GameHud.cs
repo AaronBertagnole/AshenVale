@@ -24,12 +24,13 @@ namespace AshenVale
         // Esc menu choices, handled by the game (they save first).
         public Action onCharacterSelect, onQuit;
         public IGameCommands commands;      // local World, or the host when playing as a client
+        public WorldView view;              // for the floating damage numbers
         public string status = "";          // top-right line: join code, players, connection state
         public bool online;                 // changes the Esc menu wording
 
         GUIStyle titleText, barText, detailText, detailRight, bodyStyle, smallStyle, centeredStyle, menuButton, statusStyle, nameplate,
                  bannerTitle, bannerSub, worldLabel, mapLabel, minimapTitle, minimapHint, tooltipText,
-                 atlasTitle, atlasCorner, atlasName, atlasSub, atlasSmall;
+                 atlasTitle, atlasCorner, atlasName, atlasSub, atlasSmall, numberStyle, bigNumberStyle, bossName;
         static Texture2D dotTexture;
         int bannerMap = -1;
         float bannerClock;
@@ -105,6 +106,10 @@ namespace AshenVale
             atlasSub.normal.textColor = new Color(.42f, .30f, .18f);
             atlasSmall = new GUIStyle(GUI.skin.label) { fontSize = 12 };
             atlasSmall.normal.textColor = new Color(.32f, .22f, .12f);
+            numberStyle = new GUIStyle(GUI.skin.label) { fontSize = 22, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
+            bigNumberStyle = new GUIStyle(numberStyle) { fontSize = 30 };
+            bossName = new GUIStyle(GUI.skin.label) { fontSize = 15, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
+            bossName.normal.textColor = new Color(1f, .92f, .75f);
         }
 
         public void Draw(PlayerState me)
@@ -116,6 +121,8 @@ namespace AshenVale
             DrawWorldLabels(me, def);
             DrawMonsterBars(me);
             DrawNameplates(me);
+            DrawNumbers();
+            DrawBossBar(me);
             DrawStatus(me);
             if (!string.IsNullOrEmpty(status)) GUI.Label(new Rect(Screen.width - 620, 12, 608, 24), status, statusStyle);
             float corner = string.IsNullOrEmpty(status) ? 10 : 36;
@@ -191,6 +198,47 @@ namespace AshenVale
             if (def.hasSmithy) Label(cam, def.smithyX, def.smithyY + 2.5f, "SMITHY  [E]", new Color(1f, .7f, .45f));
         }
 
+        // Damage and healing numbers: pop in, drift up, fade out (WorldView makes them from health changes).
+        void DrawNumbers()
+        {
+            var cam = Camera.main;
+            if (cam == null || view == null) return;
+            foreach (var n in view.numbers)
+            {
+                float t = n.age / n.life;
+                Vector2 at;
+                if (!ToScreen(cam, n.x, n.y + t * 1.1f, out at)) continue;
+                float pop = t < .12f ? 1f + (.12f - t) * 4f : 1f;
+                float alpha = t > .6f ? 1f - (t - .6f) / .4f : 1f;
+                var style = n.big ? bigNumberStyle : numberStyle;
+                var rect = new Rect(at.x - 60, at.y - 16, 120, 32);
+                Matrix4x4 old = GUI.matrix;
+                GUIUtility.ScaleAroundPivot(new Vector2(pop, pop), at);
+                style.normal.textColor = new Color(0, 0, 0, .8f * alpha);
+                GUI.Label(new Rect(rect.x + 2, rect.y + 2, rect.width, rect.height), n.text, style);
+                style.normal.textColor = new Color(n.color.r, n.color.g, n.color.b, alpha);
+                GUI.Label(rect, n.text, style);
+                GUI.matrix = old;
+            }
+        }
+
+        // A boss on this map gets a big bar across the top of the screen instead of the little one over its head.
+        void DrawBossBar(PlayerState me)
+        {
+            foreach (var m in world.maps[me.map].monsters)
+            {
+                var d = m.Def;
+                if (!d.boss) continue;
+                float w = Mathf.Min(Screen.width - 80, 720), x = (Screen.width - w) / 2f, y = 62;
+                Fill(new Rect(x - 4, y - 4, w + 8, 36), new Color(.04f, .05f, .09f, .8f));
+                Fill(new Rect(x, y, w, 12), new Color(.2f, .05f, .05f));
+                float ratio = Mathf.Clamp01(m.hp / d.hp);
+                Fill(new Rect(x, y, w * ratio, 12), ratio < Tuning.BossEnrageHp ? new Color(1f, .45f, .15f) : new Color(.85f, .15f, .2f));
+                GUI.Label(new Rect(x, y + 11, w, 20), d.name.ToUpperInvariant() + "   ·   LV " + d.level + (ratio < Tuning.BossEnrageHp ? "   ·   ENRAGED" : ""), bossName);
+                break;
+            }
+        }
+
         // A health bar and level over each monster that has been hurt (classic MapleStory shows its bar once you hit it).
         void DrawMonsterBars(PlayerState me)
         {
@@ -199,7 +247,7 @@ namespace AshenVale
             foreach (var m in world.maps[me.map].monsters)
             {
                 var d = m.Def;
-                if (m.hp >= d.hp - .01f) continue;
+                if (d.boss || m.hp >= d.hp - .01f) continue;
                 Vector2 at;
                 if (!ToScreen(cam, m.x, m.y + d.hover + d.height + .35f, out at)) continue;
                 float ratio = Mathf.Clamp01(m.hp / d.hp);
@@ -437,6 +485,7 @@ namespace AshenVale
                 if (here) Marker(at.x, at.y, 30f + 6f * Mathf.Sin(Time.unscaledTime * 4f), new Color(1f, .9f, .35f, .5f), false);
                 if (!seen) Marker(at.x, at.y, 16, new Color(.62f, .57f, .5f));
                 else if (town) Square(at.x, at.y, 17, new Color(.95f, .74f, .34f));
+                else if (def.hasBoss) { Marker(at.x, at.y, 22, new Color(.3f, .08f, .1f)); Marker(at.x, at.y, 12, DangerColor(def, ch.level), false); }
                 else Marker(at.x, at.y, 18, DangerColor(def, ch.level));
                 if (!seen) GUI.Label(new Rect(at.x - 10, at.y - 10, 20, 20), "?", atlasName);
                 AtlasText(at.x, at.y + 22, seen ? def.name : "???", atlasName);
@@ -460,7 +509,7 @@ namespace AshenVale
             float footer = r.yMax - 70;
             GUI.Label(new Rect(r.x + 26, footer, r.width - 52, 20), "Discovered " + found + " of " + Maps.All.Length + " places", atlasSmall);
             GUI.Label(new Rect(r.x + 26, footer + 20, r.width - 52, 20),
-                      "Circle: hunting ground (green about your level, red tougher, grey too easy)   ·   Square: town   ·   ?: not explored yet", atlasSmall);
+                      "Circle: hunting ground (green about your level, red tougher, grey too easy)   ·   Ringed: a boss   ·   Square: town   ·   ?: not explored yet", atlasSmall);
             if (party.Length > 0) GUI.Label(new Rect(r.x + 26, footer + 40, r.width - 52, 20), "PARTY   " + party, atlasSmall);
             if (hovered >= 0) AtlasTooltip(me, hovered, mouse);
         }
@@ -490,7 +539,7 @@ namespace AshenVale
                 {
                     var m = Monsters.All[spawn.monster];
                     if (m.IsChest) { chests = true; continue; }
-                    string entry = m.name + " (Lv " + m.level + ")";
+                    string entry = (m.boss ? "BOSS " : "") + m.name + " (Lv " + m.level + ")";
                     if (!names.Contains(entry)) names.Add(entry);
                 }
                 text.Append(string.Join(", ", names.ToArray()));

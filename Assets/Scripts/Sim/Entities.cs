@@ -83,6 +83,10 @@ namespace AshenVale
         public int target;              // player id it is chasing (0 = none)
         public float aggroTime;         // seconds it stays on the player who last hit it
         public float life;              // chests: seconds before it moves on if nobody opens it
+        // Bosses: what it is about to do (0 nothing, 1 root slam, 2 summon), how long until it lands, how long the
+        // strike pose shows, and its cooldowns. Clients get windup / strike from the snapshot for the telegraph.
+        public int attack;
+        public float windup, strike, attackCooldown, summonCooldown;
         public MonsterDef Def { get { return Monsters.All[def]; } }
     }
 
@@ -104,7 +108,7 @@ namespace AshenVale
         public HashSet<int> hitSet;   // monster ids already hit; shared by every arrow of one volley
     }
 
-    public enum SimEventKind { Slash, MonsterHit, LevelUp, PlayerDied }
+    public enum SimEventKind { Slash, MonsterHit, LevelUp, PlayerDied, BossSlam }
 
     // Something that happened during a tick, for the view (effects, sounds, numbers) and later for the network.
     public struct SimEvent
