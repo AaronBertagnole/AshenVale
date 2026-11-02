@@ -259,9 +259,9 @@ namespace AshenVale
             {
                 float t = phase / stance;
                 x = Mathf.Lerp(stride, -stride, t);
-                // Heel down in front, flat under the body, then the heel lifts and the toe points down as the
-                // leg trails behind (a flat boot on a trailing leg looks like a broken ankle).
-                pitch = t < .15f ? Mathf.Lerp(6, 0, t / .15f) : t > .6f ? Mathf.Lerp(0, -28, (t - .6f) / .4f) : 0;
+                // The toe keeps pointing the way the hero walks: heel-first in front, flat under the body,
+                // only a slight heel lift as the leg trails behind.
+                pitch = t < .15f ? Mathf.Lerp(4, 0, t / .15f) : t > .7f ? Mathf.Lerp(0, -9, (t - .7f) / .3f) : 0;
             }
             else
             {
@@ -269,7 +269,7 @@ namespace AshenVale
                 float ease = t * t * (3 - 2 * t);
                 x = Mathf.Lerp(-stride, stride, ease);
                 lift = Mathf.Sin(t * Mathf.PI) * Mathf.Lerp(def.ranger ? .17f : .13f, .3f, run);
-                pitch = Mathf.Lerp(-28, 6, ease) + Mathf.Sin(t * Mathf.PI) * 6;
+                pitch = Mathf.Lerp(-9, 4, ease) + Mathf.Sin(t * Mathf.PI) * 3;
             }
             float footLow = float.PositiveInfinity, radians = pitch * Mathf.Deg2Rad;
             if (sole != null)
