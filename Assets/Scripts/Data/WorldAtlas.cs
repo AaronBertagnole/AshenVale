@@ -70,6 +70,15 @@ namespace AshenVale
                 Place(s, Maps.Owlkeep,          .72f, .32f);
                 Place(s, Maps.SpellbrokenGlade, .80f, .24f);
                 Place(s, Maps.ArchmageSanctum,  .88f, .30f);
+                // Region 6, the ruins: down the stair from the glade, across the top of the map.
+                Place(s, Maps.ForgottenStair,   .74f, .14f);
+                Place(s, Maps.Lastlight,        .64f, .08f);
+                Place(s, Maps.SunkenAvenue,     .56f, .16f);
+                Place(s, Maps.HallOfIdols,      .50f, .08f);
+                Place(s, Maps.Oubliette,        .46f, .18f, true);
+                Place(s, Maps.WeepingCatacombs, .58f, .28f);
+                Place(s, Maps.BlackZiggurat,    .52f, .38f);
+                Place(s, Maps.SleepersThrone,   .58f, .48f);
                 spots = s;
                 return spots;
             }

@@ -5,7 +5,7 @@ namespace AshenVale
     // last of them keeps his sanctum at the heart of the wood, as much as there is left of him.
     //
     //   Saltmarrow (north gate) - Thistledown Trail - Eldermere (town) - Glimmerwood - The Hollow Library - Owlkeep - Spellbroken Glade - The Archmage's Sanctum (boss)
-    //                                                                        '- hidden ledge at the top: Moonwell (secret)
+    //                                                                        '- hidden ledge at the top: Moonwell (secret)        '- top shelf: the Forgotten Stair (the ruins)
     public static partial class Maps
     {
         static MapDef[] EldermereMaps()
@@ -39,7 +39,7 @@ namespace AshenVale
                 MapLayout.Build(SpellbrokenGlade, "Spellbroken Glade", "deepwood", MapKind.Field, SpellbrokenGladeLayout,
                     new[] { MapLayout.S('w', Monsters.WildMote), MapLayout.S('g', Monsters.RunedGolem),
                             MapLayout.S('a', Monsters.ArchShade), MapLayout.S('k', Monsters.ArcaneChest) },
-                    new[] { MapLayout.L('C', Owlkeep, 'C'), MapLayout.L('D', ArchmageSanctum, 'D') }),
+                    new[] { MapLayout.L('C', Owlkeep, 'C'), MapLayout.L('D', ArchmageSanctum, 'D'), MapLayout.L('E', ForgottenStair, 'E') }),
 
                 MapLayout.WithChests(MapLayout.Build(Moonwell, "Moonwell", "moonwell", MapKind.Field, MoonwellLayout,
                         new[] { MapLayout.S('m', Monsters.GlimmerMoth), MapLayout.S('b', Monsters.LivingTome), MapLayout.S('k', Monsters.ArcaneChest) },
@@ -144,7 +144,7 @@ namespace AshenVale
         // Where the spells broke loose: motes everywhere, shades on the ledges, golems guarding the way in.
         const string SpellbrokenGladeLayout = @"
             ..........................................................
-            ......................g.....w.....a.......................
+            ...................E....g....w.....a......................
             ..................=====================...................
             ...............a.................w.................k......
             ..........===========.......===========.......===========.

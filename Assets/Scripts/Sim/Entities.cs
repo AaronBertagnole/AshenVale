@@ -15,12 +15,12 @@ namespace AshenVale
         public readonly Item[] equipped = new Item[4];
         public readonly int[] parts = new int[Parts.All.Length];   // monster parts carried, by Parts id
         public int lastTown = Maps.FirstTown;           // where town portals (T) and waking up take you
-        public int towns = 1 << Maps.FirstTown;         // towns found so far, one bit per map id (waystones travel between them)
+        public long towns = 1L << Maps.FirstTown;       // towns found so far, one bit per map id (waystones travel between them)
 
         public long mapsSeen = 1L << Maps.FirstTown;     // maps visited, one bit per map id (the world map shows these)
 
-        public bool KnowsTown(int map) { return map >= 0 && map < 32 && (towns & (1 << map)) != 0; }
-        public void FindTown(int map) { if (Maps.IsTown(map)) { towns |= 1 << map; lastTown = map; } }
+        public bool KnowsTown(int map) { return map >= 0 && map < 64 && (towns & (1L << map)) != 0; }
+        public void FindTown(int map) { if (Maps.IsTown(map) && map < 64) { towns |= 1L << map; lastTown = map; } }
         public bool HasSeen(int map) { return map >= 0 && map < 64 && (mapsSeen & (1L << map)) != 0; }
         public void SeeMap(int map) { if (map >= 0 && map < 64) mapsSeen |= 1L << map; }
 

@@ -264,7 +264,10 @@ namespace AshenVale
                          GallowsPoint = 24, SirensGrotto = 25, CaptainsHold = 26,
                          // Region 5, the deep forest (Maps/Eldermere.cs): the magicians' woods north of Saltmarrow
                          ThistledownTrail = 27, Eldermere = 28, Glimmerwood = 29, HollowLibrary = 30, Owlkeep = 31,
-                         SpellbrokenGlade = 32, Moonwell = 33, ArchmageSanctum = 34;
+                         SpellbrokenGlade = 32, Moonwell = 33, ArchmageSanctum = 34,
+                         // Region 6, the ruins (Maps/Lastlight.cs): the city under the forest that was only a story
+                         ForgottenStair = 35, Lastlight = 36, SunkenAvenue = 37, HallOfIdols = 38, WeepingCatacombs = 39,
+                         BlackZiggurat = 40, Oubliette = 41, SleepersThrone = 42;
         public const int FirstTown = Emberhaven;    // every hero knows it; where you wake if nothing else is known
 
         // The world so far (west to east):
@@ -281,6 +284,7 @@ namespace AshenVale
             list.AddRange(HighspireMaps());
             list.AddRange(SaltmarrowMaps());
             list.AddRange(EldermereMaps());
+            list.AddRange(LastlightMaps());
             for (int i = 0; i < list.Count; i++)
                 if (list[i].id != i) Debug.LogError("Maps.All is out of order at " + i + ": " + list[i].name + " has id " + list[i].id);
             return list.ToArray();

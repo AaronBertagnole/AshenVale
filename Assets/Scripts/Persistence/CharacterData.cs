@@ -13,7 +13,7 @@ namespace AshenVale
         public int hero, level = 1, xp, gold, kills, hpPotions, mpPotions;
         public int map, hp, mp;                         // where and how healthy the hero was when saved (hp 0 = fallen)
         public int lastTown = Maps.FirstTown;           // version 2: where town portals and waking up lead
-        public int towns = 1 << Maps.FirstTown;         // version 2: towns found (one bit per map id), for waystones
+        public long towns = 1L << Maps.FirstTown;       // version 2: towns found (one bit per map id), for waystones (long since the ruins: map ids past 31)
         public int[] parts = new int[0];                // version 2: monster parts carried, by Parts id
         public long maps = 1L << Maps.FirstTown;        // version 3: maps visited (one bit per map id), for the world map
         public float playSeconds;

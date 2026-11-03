@@ -364,6 +364,47 @@ namespace AshenVale
                     platformBody = new Color(.26f, .22f, .18f), platformTop = new Color(.44f, .58f, .60f),
                     accent = new Color(.80f, .95f, 1f), farStyle = "pines", midStyle = "crystals", outdoors = false,
                 };
+                // ---- Lastlight: the ruins, the camp, the catacombs, the ziggurat
+                case "ruins": return new Theme
+                {
+                    skyBottom = new Color(.42f, .20f, .18f), skyTop = new Color(.10f, .06f, .10f),
+                    far = new Color(.24f, .18f, .20f), farDark = new Color(.16f, .12f, .14f),
+                    mid = new Color(.36f, .32f, .32f), midDark = new Color(.24f, .20f, .22f),
+                    groundBody = new Color(.22f, .19f, .20f), groundTop = new Color(.42f, .38f, .36f),
+                    platformBody = new Color(.30f, .26f, .27f), platformTop = new Color(.48f, .44f, .42f),
+                    accent = new Color(1f, .45f, .25f), farStyle = "pillars", midStyle = "pillars",
+                    ladderRail = new Color(.26f, .24f, .26f), ladderRung = new Color(.44f, .40f, .40f),
+                    hanging = new Color(.20f, .24f, .18f),
+                };
+                case "ruintown": return new Theme     // Lastlight: tents and torches in a broken forum
+                {
+                    skyBottom = new Color(.50f, .28f, .22f), skyTop = new Color(.12f, .08f, .12f),
+                    far = new Color(.26f, .20f, .22f), farDark = new Color(.18f, .14f, .16f),
+                    mid = new Color(.50f, .40f, .30f), midDark = new Color(.34f, .26f, .22f),
+                    groundBody = new Color(.24f, .20f, .20f), groundTop = new Color(.46f, .40f, .36f),
+                    platformBody = new Color(.32f, .26f, .24f), platformTop = new Color(.50f, .44f, .40f),
+                    accent = new Color(1f, .70f, .35f), farStyle = "pillars", midStyle = "houses",
+                };
+                case "catacomb": return new Theme     // the hall of idols, the catacombs, the oubliette: bone and old stone
+                {
+                    skyBottom = new Color(.14f, .12f, .12f), skyTop = new Color(.05f, .04f, .05f),
+                    far = new Color(.22f, .19f, .18f), farDark = new Color(.15f, .13f, .12f),
+                    mid = new Color(.46f, .42f, .36f), midDark = new Color(.30f, .27f, .24f),
+                    groundBody = new Color(.20f, .18f, .17f), groundTop = new Color(.38f, .35f, .32f),
+                    platformBody = new Color(.28f, .25f, .23f), platformTop = new Color(.44f, .40f, .36f),
+                    accent = new Color(.55f, .95f, .65f), farStyle = "stalactites", midStyle = "pillars", outdoors = false,
+                    ladderRail = new Color(.30f, .28f, .26f), ladderRung = new Color(.48f, .44f, .40f),
+                };
+                case "ziggurat": return new Theme     // the black ziggurat and the throne: black stone, violet fire
+                {
+                    skyBottom = new Color(.20f, .06f, .22f), skyTop = new Color(.04f, .02f, .06f),
+                    far = new Color(.14f, .10f, .16f), farDark = new Color(.09f, .06f, .11f),
+                    mid = new Color(.18f, .14f, .20f), midDark = new Color(.12f, .09f, .14f),
+                    groundBody = new Color(.12f, .10f, .13f), groundTop = new Color(.28f, .24f, .30f),
+                    platformBody = new Color(.16f, .13f, .18f), platformTop = new Color(.32f, .26f, .34f),
+                    accent = new Color(.75f, .25f, 1f), farStyle = "pillars", midStyle = "pillars",
+                    ladderRail = new Color(.20f, .18f, .22f), ladderRung = new Color(.36f, .30f, .38f),
+                };
                 default: return new Theme   // "meadow"
                 {
                     skyBottom = new Color(.74f, .90f, 1f), skyTop = new Color(.36f, .62f, .93f),
@@ -635,6 +676,14 @@ namespace AshenVale
                         Sprites.Blob("Snow cap", new Color(.95f, .95f, 1f, .85f), 1.8f, 1.2f, FarOrder + 1, layer, x, G + h * .55f);
                     }
                     break;
+                case "pillars":
+                    for (float x = x0; x < x1; x += 2.5f + (float)rng.NextDouble() * 3f)
+                    {
+                        float h = 3f + (float)rng.NextDouble() * 7f;
+                        Sprites.Block("Far column", rng.Next(2) == 0 ? theme.far : theme.farDark, .9f + (float)rng.NextDouble() * .5f, h, FarOrder, layer, x, G + h * .5f);
+                        if (rng.Next(3) == 0) Sprites.Block("Lintel", theme.farDark, 4f, .6f, FarOrder, layer, x + 1.5f, G + h);
+                    }
+                    break;
                 case "sea":
                     Sprites.Band("Sea", theme.far, theme.farDark, (x1 - x0) + 10f, 5f, FarOrder, layer, (x0 + x1) * .5f, G + 2f);
                     Sprites.Band("Horizon", new Color(theme.accent.r, theme.accent.g, theme.accent.b, .5f), new Color(theme.accent.r, theme.accent.g, theme.accent.b, 0f),
@@ -694,6 +743,17 @@ namespace AshenVale
                         Sprites.Block("Trunk", theme.midDark, .6f, h, MidOrder, layer, x, G + h * .5f);
                         for (int i = 0; i < 3; i++)
                             Sprites.Blob("Canopy", theme.mid, 3f + (float)rng.NextDouble(), 2.4f, MidOrder + 1, layer, x - 1f + i, G + h + (i == 1 ? .6f : 0));
+                    }
+                    break;
+                case "pillars":   // ruins: broken columns, rubble, a brazier here and there
+                    for (float x = x0; x < x1; x += 3f + (float)rng.NextDouble() * 3.5f)
+                    {
+                        float h = 1.5f + (float)rng.NextDouble() * 4f;
+                        Sprites.Block("Column", theme.mid, .8f, h, MidOrder, layer, x, G + h * .5f);
+                        Sprites.Block("Capital", theme.midDark, 1.2f, .3f, MidOrder + 1, layer, x, G + h);
+                        Sprites.Blob("Rubble", theme.midDark, 2f + (float)rng.NextDouble(), .8f, MidOrder + 1, layer, x + 1f, G + .2f);
+                        if (rng.Next(3) == 0)
+                            Sprites.Blob("Brazier", new Color(theme.accent.r, theme.accent.g, theme.accent.b, .85f), .5f, .7f, MidOrder + 2, layer, x + .4f, G + h + .5f);
                     }
                     break;
                 case "shelves":   // bookcases: tall cases with rows of coloured spines

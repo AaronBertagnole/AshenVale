@@ -56,7 +56,10 @@ namespace AshenVale
                          BarrelMimic = 37, DeckGhoul = 38, BosunWraith = 39, HangedCorsair = 40, CaptainMarrow = 41, BarnacleChest = 42,
                          // The deep forest (Monsters/Eldermere.cs)
                          SylvanStag = 43, SporePuff = 44, HexToad = 45, GlimmerMoth = 46, VineStalker = 47, LivingTome = 48,
-                         InkWraith = 49, OwlSentry = 50, RunedGolem = 51, WildMote = 52, ArchShade = 53, HollowArchmage = 54, ArcaneChest = 55;
+                         InkWraith = 49, OwlSentry = 50, RunedGolem = 51, WildMote = 52, ArchShade = 53, HollowArchmage = 54, ArcaneChest = 55,
+                         // The ruins (Monsters/Lastlight.cs)
+                         HollowPilgrim = 56, BoneCrawler = 57, Gravewisp = 58, HollowKnight = 59, FlayedHound = 60, IdolWarden = 61,
+                         CultShade = 62, BoneColossus = 63, CarrionHorror = 64, HeraldOfTheDeep = 65, VoidSpawn = 66, TheSleeper = 67, SealedChest = 68;
 
         // In id order. Later regions live in Data/Monsters/<Region>.cs and are appended here.
         public static MonsterDef[] All { get { return all ?? (all = Assemble()); } }
@@ -68,6 +71,7 @@ namespace AshenVale
             list.AddRange(HighspireMonsters());
             list.AddRange(SaltmarrowMonsters());
             list.AddRange(EldermereMonsters());
+            list.AddRange(LastlightMonsters());
             return list.ToArray();
         }
 

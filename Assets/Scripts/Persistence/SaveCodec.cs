@@ -56,10 +56,10 @@ namespace AshenVale
                 playSeconds = Mathf.Max(0, d.playSeconds),
             };
             // Towns: keep only real town ids; everyone knows the first town.
-            int towns = 1 << Maps.FirstTown;
+            long towns = 1L << Maps.FirstTown;
             if (d.version >= 2)
-                for (int i = 0; i < Maps.All.Length && i < 32; i++)
-                    if ((d.towns & (1 << i)) != 0 && Maps.IsTown(i)) towns |= 1 << i;
+                for (int i = 0; i < Maps.All.Length && i < 64; i++)
+                    if ((d.towns & (1L << i)) != 0 && Maps.IsTown(i)) towns |= 1L << i;
             ch.towns = towns;
             ch.lastTown = d.version >= 2 && Maps.IsTown(d.lastTown) && ch.KnowsTown(d.lastTown) ? d.lastTown : Maps.FirstTown;
             // Maps visited: keep only real map ids; towns found and the map the hero stands on count as visited.

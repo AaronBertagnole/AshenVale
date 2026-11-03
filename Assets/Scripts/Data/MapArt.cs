@@ -160,6 +160,15 @@ namespace AshenVale
             a[Maps.SpellbrokenGlade] = new MapArtDef { ambient = new[] { Sparkles(), Fireflies() } };
             a[Maps.Moonwell] = new MapArtDef { ambient = new[] { Sparkles() } };
             a[Maps.ArchmageSanctum] = a[Maps.HollowLibrary];
+            // Lastlight: ash over the ruins, torch embers in the camp, the void below
+            a[Maps.ForgottenStair] = new MapArtDef { ambient = new[] { Ash() } };
+            a[Maps.Lastlight] = new MapArtDef { ambient = new[] { Ash(), Embers() } };
+            a[Maps.SunkenAvenue] = a[Maps.ForgottenStair];
+            a[Maps.HallOfIdols] = new MapArtDef { ambient = new[] { Ash() } };
+            a[Maps.WeepingCatacombs] = a[Maps.HallOfIdols];
+            a[Maps.Oubliette] = a[Maps.HallOfIdols];
+            a[Maps.BlackZiggurat] = new MapArtDef { ambient = new[] { Void() } };
+            a[Maps.SleepersThrone] = a[Maps.BlackZiggurat];
             return a;
         }
 
@@ -191,6 +200,12 @@ namespace AshenVale
         {
             return new AmbientDef { name = "Snow", drift = Drift.Fall, aroundView = true, count = 45, tint = new Color(1f, 1f, 1f, .8f),
                                     sizeMin = .05f, sizeMax = .1f, speed = .4f, sway = .3f, rate = .3f, order = 14 };
+        }
+
+        static AmbientDef Void()
+        {
+            return new AmbientDef { name = "Void", drift = Drift.Rise, aroundView = true, count = 40, tint = new Color(.6f, .15f, .8f, .8f),
+                                    sizeMin = .06f, sizeMax = .16f, speed = .3f, sway = .7f, rate = .3f, order = 14 };
         }
 
         static AmbientDef Fireflies()
