@@ -644,7 +644,7 @@ namespace AshenVale
         // Waystone: travel to any town you have found (walking into a town finds it).
         void DrawWaystone(PlayerState me)
         {
-            Rect r = new Rect((Screen.width - 420) / 2f, Mathf.Max(120, (Screen.height - 360) / 2f), 420, 360);
+            Rect r = new Rect((Screen.width - 420) / 2f, Mathf.Max(120, (Screen.height - 410) / 2f), 420, 410);
             GUI.Box(r, "WAYSTONE — [" + Keys.Name(GameAction.Interact) + "] Close");
             GUI.Label(new Rect(r.x + 20, r.y + 28, 380, 24), "Travel to a town you have found.", smallStyle);
             float y = r.y + 62;

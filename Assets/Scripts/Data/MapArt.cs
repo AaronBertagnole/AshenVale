@@ -130,6 +130,45 @@ namespace AshenVale
             a[Maps.AshenMarsh] = new MapArtDef { ambient = new[] { Ash() } };
             a[Maps.ShaleCliffs] = new MapArtDef { ambient = new[] { Snow() } };
             a[Maps.ThornGlade] = a[Maps.Mosswood];     // shows Mosswood's pictures until it has its own
+            // Highspire: snow on the open maps, embers underground
+            var snow = new MapArtDef { ambient = new[] { Snow() } };
+            a[Maps.FrostpinePass] = snow;
+            a[Maps.Highspire] = snow;
+            a[Maps.GlacierSteps] = snow;
+            a[Maps.WindwardRidge] = new MapArtDef { ambient = new[] { Snow(), Snow() } };    // a blizzard up here
+            a[Maps.IronveinMines] = new MapArtDef { ambient = new[] { Ash() } };              // rock dust
+            a[Maps.DeepForge] = new MapArtDef { ambient = new[] { Embers() } };
+            a[Maps.ColossusVault] = a[Maps.DeepForge];
+            a[Maps.CrystalHollow] = new MapArtDef { ambient = new[] { Motes() } };
+            // Saltmarrow: spray on the open coast, rain on the point, lantern motes below decks
+            var spray = new MapArtDef { ambient = new[] { Spray() } };
+            a[Maps.BrackwaterShore] = spray;
+            a[Maps.Saltmarrow] = spray;
+            a[Maps.WreckersReef] = spray;
+            a[Maps.GallowsPoint] = new MapArtDef { ambient = new[] { Rain() } };
+            a[Maps.SmugglersCove] = new MapArtDef { ambient = new[] { Motes() } };
+            a[Maps.SirensGrotto] = a[Maps.SmugglersCove];
+            a[Maps.BlackGalleon] = new MapArtDef { ambient = new[] { Embers() } };
+            a[Maps.CaptainsHold] = a[Maps.BlackGalleon];
+            // Eldermere: fireflies in the wood, loose magic in the library and the glade
+            var wood = new MapArtDef { ambient = new[] { Fireflies(), Pollen() } };
+            a[Maps.ThistledownTrail] = wood;
+            a[Maps.Eldermere] = new MapArtDef { ambient = new[] { Fireflies() } };
+            a[Maps.Glimmerwood] = wood;
+            a[Maps.Owlkeep] = wood;
+            a[Maps.HollowLibrary] = new MapArtDef { ambient = new[] { Sparkles() } };
+            a[Maps.SpellbrokenGlade] = new MapArtDef { ambient = new[] { Sparkles(), Fireflies() } };
+            a[Maps.Moonwell] = new MapArtDef { ambient = new[] { Sparkles() } };
+            a[Maps.ArchmageSanctum] = a[Maps.HollowLibrary];
+            // Lastlight: ash over the ruins, torch embers in the camp, the void below
+            a[Maps.ForgottenStair] = new MapArtDef { ambient = new[] { Ash() } };
+            a[Maps.Lastlight] = new MapArtDef { ambient = new[] { Ash(), Embers() } };
+            a[Maps.SunkenAvenue] = a[Maps.ForgottenStair];
+            a[Maps.HallOfIdols] = new MapArtDef { ambient = new[] { Ash() } };
+            a[Maps.WeepingCatacombs] = a[Maps.HallOfIdols];
+            a[Maps.Oubliette] = a[Maps.HallOfIdols];
+            a[Maps.BlackZiggurat] = new MapArtDef { ambient = new[] { Void() } };
+            a[Maps.SleepersThrone] = a[Maps.BlackZiggurat];
             return a;
         }
 
@@ -161,6 +200,42 @@ namespace AshenVale
         {
             return new AmbientDef { name = "Snow", drift = Drift.Fall, aroundView = true, count = 45, tint = new Color(1f, 1f, 1f, .8f),
                                     sizeMin = .05f, sizeMax = .1f, speed = .4f, sway = .3f, rate = .3f, order = 14 };
+        }
+
+        static AmbientDef Void()
+        {
+            return new AmbientDef { name = "Void", drift = Drift.Rise, aroundView = true, count = 40, tint = new Color(.6f, .15f, .8f, .8f),
+                                    sizeMin = .06f, sizeMax = .16f, speed = .3f, sway = .7f, rate = .3f, order = 14 };
+        }
+
+        static AmbientDef Fireflies()
+        {
+            return new AmbientDef { name = "Fireflies", drift = Drift.Float, aroundView = true, count = 30, tint = new Color(.7f, 1f, .45f, .9f),
+                                    sizeMin = .06f, sizeMax = .12f, sway = .6f, rate = .3f, order = 14 };
+        }
+
+        static AmbientDef Sparkles()
+        {
+            return new AmbientDef { name = "Loose magic", drift = Drift.Rise, aroundView = true, count = 35, tint = new Color(.85f, .6f, 1f, .85f),
+                                    sizeMin = .05f, sizeMax = .14f, speed = .35f, sway = .6f, rate = .5f, order = 14 };
+        }
+
+        static AmbientDef Spray()
+        {
+            return new AmbientDef { name = "Sea spray", drift = Drift.Float, aroundView = true, count = 30, tint = new Color(.9f, .97f, 1f, .7f),
+                                    sizeMin = .05f, sizeMax = .12f, sway = .5f, rate = .5f, order = 14 };
+        }
+
+        static AmbientDef Rain()
+        {
+            return new AmbientDef { name = "Rain", drift = Drift.Fall, aroundView = true, count = 70, tint = new Color(.75f, .82f, .9f, .55f),
+                                    sizeMin = .04f, sizeMax = .07f, speed = 3f, sway = .1f, rate = .1f, order = 14 };
+        }
+
+        static AmbientDef Embers()
+        {
+            return new AmbientDef { name = "Embers", drift = Drift.Rise, aroundView = true, count = 35, tint = new Color(1f, .6f, .2f, .8f),
+                                    sizeMin = .05f, sizeMax = .12f, speed = .5f, sway = .4f, rate = .4f, order = 14 };
         }
 
         static AmbientDef Ash()

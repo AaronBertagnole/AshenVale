@@ -40,16 +40,42 @@ namespace AshenVale
         public bool IsChest { get { return harmless && chestParts != null; } }
     }
 
-    public static class Monsters
+    public static partial class Monsters
     {
         // The first four keep their old numbers.
         public const int Emberling = 0, EliteEmberling = 1, MossCrawler = 2, VioletWraith = 3,
                          AshSprout = 4, OldChest = 5, BrambleBoar = 6, MossyChest = 7, DenShade = 8,
                          MarshToad = 9, BogLurker = 10, AshWisp = 11, SunkenChest = 12,
                          LeafBeetle = 13, EmberFox = 14, Mossling = 15, CragGoat = 16, RockMite = 17,
-                         Thornmother = 18, ThornSprout = 19;
+                         Thornmother = 18, ThornSprout = 19,
+                         // Highspire (Monsters/Highspire.cs)
+                         FrostWolf = 20, SnowHare = 21, IcicleBat = 22, RimeWisp = 23, FrostTroll = 24, ForgeImp = 25,
+                         SlagBeetle = 26, RuneSentinel = 27, CaveTroll = 28, RustedColossus = 29, FrostChest = 30,
+                         // Saltmarrow coast (Monsters/Saltmarrow.cs)
+                         SandCrab = 31, GullHarpy = 32, TideLurcher = 33, ReefEel = 34, CutlassRat = 35, PowderMonkey = 36,
+                         BarrelMimic = 37, DeckGhoul = 38, BosunWraith = 39, HangedCorsair = 40, CaptainMarrow = 41, BarnacleChest = 42,
+                         // The deep forest (Monsters/Eldermere.cs)
+                         SylvanStag = 43, SporePuff = 44, HexToad = 45, GlimmerMoth = 46, VineStalker = 47, LivingTome = 48,
+                         InkWraith = 49, OwlSentry = 50, RunedGolem = 51, WildMote = 52, ArchShade = 53, HollowArchmage = 54, ArcaneChest = 55,
+                         // The ruins (Monsters/Lastlight.cs)
+                         HollowPilgrim = 56, BoneCrawler = 57, Gravewisp = 58, HollowKnight = 59, FlayedHound = 60, IdolWarden = 61,
+                         CultShade = 62, BoneColossus = 63, CarrionHorror = 64, HeraldOfTheDeep = 65, VoidSpawn = 66, TheSleeper = 67, SealedChest = 68;
 
-        public static readonly MonsterDef[] All =
+        // In id order. Later regions live in Data/Monsters/<Region>.cs and are appended here.
+        public static MonsterDef[] All { get { return all ?? (all = Assemble()); } }
+        static MonsterDef[] all;
+
+        static MonsterDef[] Assemble()
+        {
+            var list = new System.Collections.Generic.List<MonsterDef>(Core);
+            list.AddRange(HighspireMonsters());
+            list.AddRange(SaltmarrowMonsters());
+            list.AddRange(EldermereMonsters());
+            list.AddRange(LastlightMonsters());
+            return list.ToArray();
+        }
+
+        static readonly MonsterDef[] Core =
         {
             new MonsterDef { key = "emberling", name = "Emberling", level = 1, color = new Color(.86f, .38f, .25f),
                 width = .85f, height = .9f, hp = 40, speed = 1.6f, damage = 7, xp = 7, goldMin = 4, goldRange = 5,

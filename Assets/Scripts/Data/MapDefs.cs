@@ -251,19 +251,46 @@ namespace AshenVale
         }
     }
 
-    public static class Maps
+    public static partial class Maps
     {
         // Map ids are stored in save files: never renumber, only add.
         public const int Emberfields = 0, Mosswood = 1, Emberhaven = 2, HollowDen = 3, Kingsroad = 4, Cinderford = 5, AshenMarsh = 6,
-                         AmberleafTrail = 7, MossgateHollow = 8, ShaleCliffs = 9, ThornGlade = 10;
+                         AmberleafTrail = 7, MossgateHollow = 8, ShaleCliffs = 9, ThornGlade = 10,
+                         // Region 3, Highspire (Maps/Highspire.cs): dwarves in the snowy mountains above Shale Cliffs
+                         FrostpinePass = 11, Highspire = 12, GlacierSteps = 13, WindwardRidge = 14, IronveinMines = 15,
+                         DeepForge = 16, CrystalHollow = 17, ColossusVault = 18,
+                         // Region 4, the Saltmarrow coast (Maps/Saltmarrow.cs): pirate beaches east of the Ashen Marsh
+                         BrackwaterShore = 19, Saltmarrow = 20, WreckersReef = 21, SmugglersCove = 22, BlackGalleon = 23,
+                         GallowsPoint = 24, SirensGrotto = 25, CaptainsHold = 26,
+                         // Region 5, the deep forest (Maps/Eldermere.cs): the magicians' woods north of Saltmarrow
+                         ThistledownTrail = 27, Eldermere = 28, Glimmerwood = 29, HollowLibrary = 30, Owlkeep = 31,
+                         SpellbrokenGlade = 32, Moonwell = 33, ArchmageSanctum = 34,
+                         // Region 6, the ruins (Maps/Lastlight.cs): the city under the forest that was only a story
+                         ForgottenStair = 35, Lastlight = 36, SunkenAvenue = 37, HallOfIdols = 38, WeepingCatacombs = 39,
+                         BlackZiggurat = 40, Oubliette = 41, SleepersThrone = 42;
         public const int FirstTown = Emberhaven;    // every hero knows it; where you wake if nothing else is known
 
         // The world so far (west to east):
         //   Emberhaven (town) - Emberfields - Amberleaf Trail - Mossgate Hollow - Mosswood - Kingsroad - Cinderford (town) - Ashen Marsh
         //                                                        '- top ledge: Shale Cliffs     '- secret ledge, top left: Hollow Den
         //                                                           (up the mountain)          '- east end: Thornmother's Glade (boss)
-        // In id order: All[i].id == i.
-        public static readonly MapDef[] All =
+        // In id order: All[i].id == i. Later regions live in Data/Maps/<Region>.cs and are appended here.
+        public static MapDef[] All { get { return all ?? (all = Assemble()); } }
+        static MapDef[] all;
+
+        static MapDef[] Assemble()
+        {
+            var list = new List<MapDef>(Core);
+            list.AddRange(HighspireMaps());
+            list.AddRange(SaltmarrowMaps());
+            list.AddRange(EldermereMaps());
+            list.AddRange(LastlightMaps());
+            for (int i = 0; i < list.Count; i++)
+                if (list[i].id != i) Debug.LogError("Maps.All is out of order at " + i + ": " + list[i].name + " has id " + list[i].id);
+            return list.ToArray();
+        }
+
+        static readonly MapDef[] Core =
         {
             MapLayout.WithBackdrop(MapLayout.Build(Emberfields, "Emberfields", "autumn", MapKind.Field, EmberfieldsLayout,
                     new[] { MapLayout.S('a', Monsters.Emberling), MapLayout.S('b', Monsters.AshSprout),
@@ -294,7 +321,7 @@ namespace AshenVale
             MapLayout.Build(AshenMarsh, "Ashen Marsh", "marsh", MapKind.Field, AshenMarshLayout,
                 new[] { MapLayout.S('t', Monsters.MarshToad), MapLayout.S('l', Monsters.BogLurker),
                         MapLayout.S('w', Monsters.AshWisp), MapLayout.S('k', Monsters.SunkenChest) },
-                new[] { MapLayout.L('E', Cinderford, 'E') }),
+                new[] { MapLayout.L('E', Cinderford, 'E'), MapLayout.L('P', BrackwaterShore, 'P') }),
             // The path from Emberfields down toward Mosswood. Until Amberleaf Trail has its own picture
             // (Art/Backdrops/amberleaf_trail.png), it shows the Emberfields forest mirrored.
             MapLayout.WithBackdrop(MapLayout.Build(AmberleafTrail, "Amberleaf Trail", "autumn", MapKind.Field, AmberleafTrailLayout,
@@ -310,7 +337,7 @@ namespace AshenVale
             // The way on to Highspire will open from the summit later.
             MapLayout.Build(ShaleCliffs, "Shale Cliffs", "cliffs", MapKind.Field, ShaleCliffsLayout,
                 new[] { MapLayout.S('g', Monsters.CragGoat), MapLayout.S('r', Monsters.RockMite), MapLayout.S('k', Monsters.MossyChest) },
-                new[] { MapLayout.L('G', MossgateHollow, 'G') }),
+                new[] { MapLayout.L('G', MossgateHollow, 'G'), MapLayout.L('H', FrostpinePass, 'H') }),
             // Region 1's boss glade, off the east end of Mosswood: a bramble-walled clearing with two ledges to
             // shoot from. Thornmother waits in the middle and comes back a few minutes after she falls.
             MapLayout.WithBackdrop(MapLayout.Build(ThornGlade, "Thornmother's Glade", "forest", MapKind.Field, ThornGladeLayout,
@@ -410,7 +437,7 @@ namespace AshenVale
         // right, where a chest may wait. Goats charge along the shelves; mites cling to the high rock.
         const string ShaleCliffsLayout = @"
             ..........................................................
-            ........................................r.....g...r....k..
+            ........................................r.....g...r..k.H.
             ....................................=====================.
             ..............................g.....r.....................
             ............................===========...................
@@ -455,7 +482,7 @@ namespace AshenVale
             ..........|.....=============.............=============.............===========.....
             ..........|..t........................t..........................l..................
             ..........|========.............=============...............===========.............
-            .E..@.....|.t...........t.............l...........t.............l.............t.....
+            .E..@.....|.t...........t.............l...........t.............l.............t..P.
             ####################################################################################";
 
         // Downhill: arrive on the high ledge at the top left and walk the terraces down to the exit on the right.

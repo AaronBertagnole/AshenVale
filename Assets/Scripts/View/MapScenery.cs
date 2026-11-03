@@ -215,6 +215,196 @@ namespace AshenVale
                     platformBody = new Color(.35f, .30f, .24f), platformTop = new Color(.48f, .54f, .33f),
                     accent = new Color(.80f, .86f, .70f), farStyle = "deadtrees", midStyle = "reeds",
                 };
+                // ---- Highspire: snow fields, the dwarven hall, the mines, the forge, the crystal hollow
+                case "snow": return new Theme
+                {
+                    skyBottom = new Color(.93f, .95f, .98f), skyTop = new Color(.55f, .68f, .88f),
+                    far = new Color(.72f, .78f, .88f), farDark = new Color(.60f, .66f, .78f),
+                    mid = new Color(.86f, .92f, .97f), midDark = new Color(.30f, .36f, .42f),
+                    groundBody = new Color(.44f, .48f, .56f), groundTop = new Color(.93f, .95f, .98f),
+                    platformBody = new Color(.50f, .54f, .62f), platformTop = new Color(.95f, .97f, 1f),
+                    accent = new Color(1f, 1f, 1f), farStyle = "mountains", midStyle = "bigtrees",
+                    ladderRail = new Color(.38f, .30f, .22f), ladderRung = new Color(.58f, .46f, .32f),
+                    hanging = new Color(.70f, .78f, .88f),
+                    flecks = new[] { new Color(1f, 1f, 1f), new Color(.80f, .88f, .96f) },
+                };
+                case "hold": return new Theme     // Highspire: a stone hall cut into the mountain, warm windows
+                {
+                    skyBottom = new Color(.80f, .84f, .92f), skyTop = new Color(.40f, .50f, .72f),
+                    far = new Color(.60f, .66f, .78f), farDark = new Color(.50f, .56f, .68f),
+                    mid = new Color(.42f, .44f, .50f), midDark = new Color(.30f, .32f, .38f),
+                    groundBody = new Color(.30f, .31f, .36f), groundTop = new Color(.58f, .60f, .66f),
+                    platformBody = new Color(.36f, .37f, .42f), platformTop = new Color(.62f, .64f, .70f),
+                    accent = new Color(1f, .72f, .35f), farStyle = "mountains", midStyle = "houses",
+                };
+                case "mine": return new Theme     // Ironvein: timbered shafts in brown rock
+                {
+                    skyBottom = new Color(.16f, .13f, .11f), skyTop = new Color(.07f, .06f, .05f),
+                    far = new Color(.26f, .21f, .17f), farDark = new Color(.20f, .16f, .13f),
+                    mid = new Color(.40f, .30f, .20f), midDark = new Color(.30f, .22f, .15f),
+                    groundBody = new Color(.24f, .20f, .17f), groundTop = new Color(.46f, .40f, .34f),
+                    platformBody = new Color(.36f, .26f, .17f), platformTop = new Color(.56f, .42f, .27f),
+                    accent = new Color(1f, .78f, .45f), farStyle = "stalactites", midStyle = "timbers", outdoors = false,
+                    ladderRail = new Color(.38f, .28f, .18f), ladderRung = new Color(.56f, .42f, .27f),
+                };
+                case "forge": return new Theme    // the Deep Forge and the vault: black stone lit from below by slag
+                {
+                    skyBottom = new Color(.30f, .12f, .06f), skyTop = new Color(.08f, .05f, .05f),
+                    far = new Color(.24f, .16f, .14f), farDark = new Color(.17f, .11f, .10f),
+                    mid = new Color(.34f, .24f, .20f), midDark = new Color(.24f, .16f, .14f),
+                    groundBody = new Color(.20f, .17f, .17f), groundTop = new Color(.40f, .36f, .36f),
+                    platformBody = new Color(.28f, .24f, .24f), platformTop = new Color(.48f, .42f, .40f),
+                    accent = new Color(1f, .55f, .18f), farStyle = "stalactites", midStyle = "crystals", outdoors = false,
+                    ladderRail = new Color(.30f, .30f, .34f), ladderRung = new Color(.48f, .48f, .52f),
+                };
+                case "crystal": return new Theme  // Crystal Hollow: the cave theme gone ice-blue
+                {
+                    skyBottom = new Color(.10f, .16f, .26f), skyTop = new Color(.04f, .06f, .12f),
+                    far = new Color(.18f, .26f, .40f), farDark = new Color(.14f, .20f, .32f),
+                    mid = new Color(.26f, .36f, .52f), midDark = new Color(.20f, .28f, .42f),
+                    groundBody = new Color(.20f, .24f, .34f), groundTop = new Color(.44f, .52f, .68f),
+                    platformBody = new Color(.30f, .36f, .50f), platformTop = new Color(.56f, .66f, .84f),
+                    accent = new Color(.65f, .92f, 1f), farStyle = "stalactites", midStyle = "crystals", outdoors = false,
+                };
+                // ---- Saltmarrow: the beach, the port, the reef, sea caves, the galleon, the gallows cliffs
+                case "beach": return new Theme
+                {
+                    skyBottom = new Color(1f, .92f, .78f), skyTop = new Color(.40f, .68f, .92f),
+                    far = new Color(.30f, .62f, .80f), farDark = new Color(.22f, .50f, .70f),
+                    mid = new Color(.36f, .66f, .36f), midDark = new Color(.52f, .38f, .24f),
+                    groundBody = new Color(.72f, .60f, .40f), groundTop = new Color(.94f, .86f, .62f),
+                    platformBody = new Color(.66f, .54f, .36f), platformTop = new Color(.92f, .84f, .60f),
+                    accent = new Color(1f, .98f, .85f), farStyle = "sea", midStyle = "palms",
+                    ladderRail = new Color(.50f, .36f, .22f), ladderRung = new Color(.70f, .54f, .34f),
+                    hanging = new Color(.60f, .50f, .34f),
+                };
+                case "port": return new Theme     // Saltmarrow: timber quay, masts behind
+                {
+                    skyBottom = new Color(.98f, .84f, .66f), skyTop = new Color(.38f, .58f, .84f),
+                    far = new Color(.32f, .58f, .76f), farDark = new Color(.24f, .48f, .66f),
+                    mid = new Color(.58f, .44f, .30f), midDark = new Color(.40f, .28f, .18f),
+                    groundBody = new Color(.42f, .30f, .20f), groundTop = new Color(.70f, .54f, .36f),
+                    platformBody = new Color(.46f, .32f, .20f), platformTop = new Color(.74f, .56f, .36f),
+                    accent = new Color(1f, .82f, .48f), farStyle = "sea", midStyle = "houses",
+                };
+                case "reef": return new Theme     // Wreckers' Reef: dark rock in the surf, wreck timbers
+                {
+                    skyBottom = new Color(.86f, .90f, .90f), skyTop = new Color(.36f, .56f, .76f),
+                    far = new Color(.26f, .52f, .66f), farDark = new Color(.18f, .40f, .56f),
+                    mid = new Color(.36f, .40f, .40f), midDark = new Color(.30f, .22f, .16f),
+                    groundBody = new Color(.30f, .34f, .36f), groundTop = new Color(.52f, .58f, .56f),
+                    platformBody = new Color(.40f, .30f, .20f), platformTop = new Color(.60f, .46f, .30f),
+                    accent = new Color(.90f, .96f, 1f), farStyle = "sea", midStyle = "crystals",
+                    hanging = new Color(.30f, .48f, .40f),
+                };
+                case "cove": return new Theme     // Smugglers' Cove and the grotto: sea caves lit teal from the water
+                {
+                    skyBottom = new Color(.08f, .20f, .22f), skyTop = new Color(.03f, .08f, .10f),
+                    far = new Color(.14f, .26f, .28f), farDark = new Color(.10f, .20f, .22f),
+                    mid = new Color(.24f, .34f, .34f), midDark = new Color(.18f, .26f, .26f),
+                    groundBody = new Color(.20f, .24f, .24f), groundTop = new Color(.40f, .48f, .46f),
+                    platformBody = new Color(.34f, .26f, .18f), platformTop = new Color(.54f, .42f, .28f),
+                    accent = new Color(.45f, .95f, .85f), farStyle = "stalactites", midStyle = "timbers", outdoors = false,
+                };
+                case "galleon": return new Theme  // the Black Galleon and the hold: tarred timber, lantern light
+                {
+                    skyBottom = new Color(.30f, .22f, .20f), skyTop = new Color(.10f, .08f, .10f),
+                    far = new Color(.22f, .18f, .16f), farDark = new Color(.16f, .12f, .11f),
+                    mid = new Color(.34f, .24f, .16f), midDark = new Color(.22f, .15f, .10f),
+                    groundBody = new Color(.26f, .18f, .12f), groundTop = new Color(.48f, .34f, .22f),
+                    platformBody = new Color(.30f, .20f, .13f), platformTop = new Color(.52f, .36f, .22f),
+                    accent = new Color(1f, .74f, .36f), farStyle = "stalactites", midStyle = "timbers", outdoors = false,
+                };
+                case "gallows": return new Theme  // Gallows Point: grey storm over the cliffs
+                {
+                    skyBottom = new Color(.62f, .64f, .66f), skyTop = new Color(.26f, .30f, .38f),
+                    far = new Color(.30f, .40f, .48f), farDark = new Color(.22f, .30f, .38f),
+                    mid = new Color(.38f, .40f, .42f), midDark = new Color(.26f, .26f, .28f),
+                    groundBody = new Color(.32f, .34f, .36f), groundTop = new Color(.50f, .56f, .48f),
+                    platformBody = new Color(.38f, .40f, .42f), platformTop = new Color(.54f, .58f, .52f),
+                    accent = new Color(.80f, .84f, .88f), farStyle = "sea", midStyle = "deadtrees",
+                };
+                // ---- Eldermere: the deep forest, the magicians' village, the hollow library, the moonwell
+                case "deepwood": return new Theme
+                {
+                    skyBottom = new Color(.30f, .48f, .40f), skyTop = new Color(.08f, .18f, .20f),
+                    far = new Color(.12f, .28f, .26f), farDark = new Color(.08f, .20f, .20f),
+                    mid = new Color(.14f, .36f, .26f), midDark = new Color(.20f, .14f, .10f),
+                    groundBody = new Color(.18f, .15f, .12f), groundTop = new Color(.22f, .46f, .28f),
+                    platformBody = new Color(.30f, .20f, .13f), platformTop = new Color(.26f, .52f, .30f),
+                    accent = new Color(.75f, 1f, .55f), farStyle = "pines", midStyle = "bigtrees",
+                    ladderRail = new Color(.28f, .20f, .14f), ladderRung = new Color(.46f, .34f, .22f),
+                    hanging = new Color(.18f, .36f, .22f),
+                    flecks = new[] { new Color(.60f, .90f, .45f), new Color(.85f, .75f, 1f) },
+                };
+                case "wizardtown": return new Theme   // Eldermere: timber houses in the trees, violet lantern light
+                {
+                    skyBottom = new Color(.52f, .46f, .66f), skyTop = new Color(.14f, .14f, .30f),
+                    far = new Color(.18f, .30f, .32f), farDark = new Color(.12f, .22f, .26f),
+                    mid = new Color(.46f, .36f, .30f), midDark = new Color(.30f, .22f, .20f),
+                    groundBody = new Color(.26f, .22f, .20f), groundTop = new Color(.50f, .44f, .36f),
+                    platformBody = new Color(.34f, .26f, .20f), platformTop = new Color(.56f, .46f, .34f),
+                    accent = new Color(.80f, .62f, 1f), farStyle = "pines", midStyle = "houses",
+                };
+                case "library": return new Theme      // the hollow library and the sanctum: dark wood and old paper
+                {
+                    skyBottom = new Color(.22f, .16f, .20f), skyTop = new Color(.08f, .06f, .10f),
+                    far = new Color(.26f, .20f, .18f), farDark = new Color(.18f, .14f, .13f),
+                    mid = new Color(.44f, .30f, .22f), midDark = new Color(.30f, .20f, .15f),
+                    groundBody = new Color(.24f, .18f, .14f), groundTop = new Color(.46f, .36f, .28f),
+                    platformBody = new Color(.36f, .24f, .16f), platformTop = new Color(.58f, .44f, .30f),
+                    accent = new Color(.85f, .65f, 1f), farStyle = "stalactites", midStyle = "shelves", outdoors = false,
+                };
+                case "moonwell": return new Theme     // the Moonwell: silver light under the boughs
+                {
+                    skyBottom = new Color(.20f, .30f, .40f), skyTop = new Color(.06f, .10f, .18f),
+                    far = new Color(.14f, .24f, .30f), farDark = new Color(.10f, .18f, .24f),
+                    mid = new Color(.20f, .36f, .40f), midDark = new Color(.16f, .14f, .12f),
+                    groundBody = new Color(.18f, .20f, .24f), groundTop = new Color(.40f, .52f, .56f),
+                    platformBody = new Color(.26f, .22f, .18f), platformTop = new Color(.44f, .58f, .60f),
+                    accent = new Color(.80f, .95f, 1f), farStyle = "pines", midStyle = "crystals", outdoors = false,
+                };
+                // ---- Lastlight: the ruins, the camp, the catacombs, the ziggurat
+                case "ruins": return new Theme
+                {
+                    skyBottom = new Color(.42f, .20f, .18f), skyTop = new Color(.10f, .06f, .10f),
+                    far = new Color(.24f, .18f, .20f), farDark = new Color(.16f, .12f, .14f),
+                    mid = new Color(.36f, .32f, .32f), midDark = new Color(.24f, .20f, .22f),
+                    groundBody = new Color(.22f, .19f, .20f), groundTop = new Color(.42f, .38f, .36f),
+                    platformBody = new Color(.30f, .26f, .27f), platformTop = new Color(.48f, .44f, .42f),
+                    accent = new Color(1f, .45f, .25f), farStyle = "pillars", midStyle = "pillars",
+                    ladderRail = new Color(.26f, .24f, .26f), ladderRung = new Color(.44f, .40f, .40f),
+                    hanging = new Color(.20f, .24f, .18f),
+                };
+                case "ruintown": return new Theme     // Lastlight: tents and torches in a broken forum
+                {
+                    skyBottom = new Color(.50f, .28f, .22f), skyTop = new Color(.12f, .08f, .12f),
+                    far = new Color(.26f, .20f, .22f), farDark = new Color(.18f, .14f, .16f),
+                    mid = new Color(.50f, .40f, .30f), midDark = new Color(.34f, .26f, .22f),
+                    groundBody = new Color(.24f, .20f, .20f), groundTop = new Color(.46f, .40f, .36f),
+                    platformBody = new Color(.32f, .26f, .24f), platformTop = new Color(.50f, .44f, .40f),
+                    accent = new Color(1f, .70f, .35f), farStyle = "pillars", midStyle = "houses",
+                };
+                case "catacomb": return new Theme     // the hall of idols, the catacombs, the oubliette: bone and old stone
+                {
+                    skyBottom = new Color(.14f, .12f, .12f), skyTop = new Color(.05f, .04f, .05f),
+                    far = new Color(.22f, .19f, .18f), farDark = new Color(.15f, .13f, .12f),
+                    mid = new Color(.46f, .42f, .36f), midDark = new Color(.30f, .27f, .24f),
+                    groundBody = new Color(.20f, .18f, .17f), groundTop = new Color(.38f, .35f, .32f),
+                    platformBody = new Color(.28f, .25f, .23f), platformTop = new Color(.44f, .40f, .36f),
+                    accent = new Color(.55f, .95f, .65f), farStyle = "stalactites", midStyle = "pillars", outdoors = false,
+                    ladderRail = new Color(.30f, .28f, .26f), ladderRung = new Color(.48f, .44f, .40f),
+                };
+                case "ziggurat": return new Theme     // the black ziggurat and the throne: black stone, violet fire
+                {
+                    skyBottom = new Color(.20f, .06f, .22f), skyTop = new Color(.04f, .02f, .06f),
+                    far = new Color(.14f, .10f, .16f), farDark = new Color(.09f, .06f, .11f),
+                    mid = new Color(.18f, .14f, .20f), midDark = new Color(.12f, .09f, .14f),
+                    groundBody = new Color(.12f, .10f, .13f), groundTop = new Color(.28f, .24f, .30f),
+                    platformBody = new Color(.16f, .13f, .18f), platformTop = new Color(.32f, .26f, .34f),
+                    accent = new Color(.75f, .25f, 1f), farStyle = "pillars", midStyle = "pillars",
+                    ladderRail = new Color(.20f, .18f, .22f), ladderRung = new Color(.36f, .30f, .38f),
+                };
                 default: return new Theme   // "meadow"
                 {
                     skyBottom = new Color(.74f, .90f, 1f), skyTop = new Color(.36f, .62f, .93f),
@@ -486,6 +676,25 @@ namespace AshenVale
                         Sprites.Blob("Snow cap", new Color(.95f, .95f, 1f, .85f), 1.8f, 1.2f, FarOrder + 1, layer, x, G + h * .55f);
                     }
                     break;
+                case "pillars":
+                    for (float x = x0; x < x1; x += 2.5f + (float)rng.NextDouble() * 3f)
+                    {
+                        float h = 3f + (float)rng.NextDouble() * 7f;
+                        Sprites.Block("Far column", rng.Next(2) == 0 ? theme.far : theme.farDark, .9f + (float)rng.NextDouble() * .5f, h, FarOrder, layer, x, G + h * .5f);
+                        if (rng.Next(3) == 0) Sprites.Block("Lintel", theme.farDark, 4f, .6f, FarOrder, layer, x + 1.5f, G + h);
+                    }
+                    break;
+                case "sea":
+                    Sprites.Band("Sea", theme.far, theme.farDark, (x1 - x0) + 10f, 5f, FarOrder, layer, (x0 + x1) * .5f, G + 2f);
+                    Sprites.Band("Horizon", new Color(theme.accent.r, theme.accent.g, theme.accent.b, .5f), new Color(theme.accent.r, theme.accent.g, theme.accent.b, 0f),
+                                 (x1 - x0) + 10f, .5f, FarOrder + 1, layer, (x0 + x1) * .5f, G + 4.6f);
+                    for (float x = x0; x < x1; x += 9f + (float)rng.NextDouble() * 9f)
+                    {
+                        Sprites.Block("Hull", theme.farDark, 1.6f, .35f, FarOrder + 1, layer, x, G + 4.4f);
+                        Sprites.Block("Mast", theme.farDark, .12f, 1.3f, FarOrder + 1, layer, x, G + 5.1f);
+                        Sprites.Block("Sail", new Color(theme.accent.r, theme.accent.g, theme.accent.b, .8f), .8f, .9f, FarOrder + 2, layer, x + .3f, G + 5.2f);
+                    }
+                    break;
                 case "deadtrees":
                     Sprites.Blob("Far bank", theme.farDark, (x1 - x0) + 10f, 4f, FarOrder, layer, (x0 + x1) * .5f, G - .5f);
                     for (float x = x0; x < x1; x += 2f + (float)rng.NextDouble() * 3f)
@@ -534,6 +743,53 @@ namespace AshenVale
                         Sprites.Block("Trunk", theme.midDark, .6f, h, MidOrder, layer, x, G + h * .5f);
                         for (int i = 0; i < 3; i++)
                             Sprites.Blob("Canopy", theme.mid, 3f + (float)rng.NextDouble(), 2.4f, MidOrder + 1, layer, x - 1f + i, G + h + (i == 1 ? .6f : 0));
+                    }
+                    break;
+                case "pillars":   // ruins: broken columns, rubble, a brazier here and there
+                    for (float x = x0; x < x1; x += 3f + (float)rng.NextDouble() * 3.5f)
+                    {
+                        float h = 1.5f + (float)rng.NextDouble() * 4f;
+                        Sprites.Block("Column", theme.mid, .8f, h, MidOrder, layer, x, G + h * .5f);
+                        Sprites.Block("Capital", theme.midDark, 1.2f, .3f, MidOrder + 1, layer, x, G + h);
+                        Sprites.Blob("Rubble", theme.midDark, 2f + (float)rng.NextDouble(), .8f, MidOrder + 1, layer, x + 1f, G + .2f);
+                        if (rng.Next(3) == 0)
+                            Sprites.Blob("Brazier", new Color(theme.accent.r, theme.accent.g, theme.accent.b, .85f), .5f, .7f, MidOrder + 2, layer, x + .4f, G + h + .5f);
+                    }
+                    break;
+                case "shelves":   // bookcases: tall cases with rows of coloured spines
+                    for (float x = x0; x < x1; x += 2.6f + (float)rng.NextDouble() * 1.5f)
+                    {
+                        float h = 3f + (float)rng.NextDouble() * 2.5f, w = 2f;
+                        Sprites.Block("Bookcase", theme.mid, w, h, MidOrder, layer, x, G + h * .5f);
+                        for (float sy = .5f; sy < h - .4f; sy += .7f)
+                            for (float sx = -w * .42f; sx < w * .42f; sx += .3f)
+                                Sprites.Block("Spine", new Color(.3f + (float)rng.NextDouble() * .6f, .2f + (float)rng.NextDouble() * .4f, .2f + (float)rng.NextDouble() * .6f),
+                                              .22f, .45f, MidOrder + 1, layer, x + sx, G + sy);
+                    }
+                    break;
+                case "palms":
+                    for (float x = x0; x < x1; x += 3.5f + (float)rng.NextDouble() * 4f)
+                    {
+                        float h = 3.5f + (float)rng.NextDouble() * 2.5f, lean = (float)rng.NextDouble() * .8f - .4f;
+                        var trunk = Sprites.Block("Palm trunk", theme.midDark, .35f, h, MidOrder, layer, x + lean * h * .5f, G + h * .5f);
+                        trunk.transform.rotation = Quaternion.Euler(0, 0, -lean * 40f);
+                        for (int i = 0; i < 5; i++)
+                        {
+                            var frond = Sprites.Blob("Frond", theme.mid, 2.4f, .5f, MidOrder + 1, layer, x + lean * h, G + h);
+                            frond.transform.rotation = Quaternion.Euler(0, 0, -70f + i * 35f);
+                            frond.transform.localScale = new Vector3(1f, 1f, 1f);
+                        }
+                    }
+                    break;
+                case "timbers":   // mine props: posts and a cap beam, a lamp on some
+                    for (float x = x0; x < x1; x += 3.2f + (float)rng.NextDouble() * 2.5f)
+                    {
+                        float h = 3f + (float)rng.NextDouble() * 1.5f, w = 2.2f + (float)rng.NextDouble();
+                        Sprites.Block("Post", theme.mid, .35f, h, MidOrder + 1, layer, x - w * .5f, G + h * .5f);
+                        Sprites.Block("Post", theme.mid, .35f, h, MidOrder + 1, layer, x + w * .5f, G + h * .5f);
+                        Sprites.Block("Beam", theme.midDark, w + .7f, .4f, MidOrder + 1, layer, x, G + h);
+                        if (rng.Next(2) == 0)
+                            Sprites.Blob("Lamp", new Color(theme.accent.r, theme.accent.g, theme.accent.b, .85f), .4f, .5f, MidOrder + 2, layer, x, G + h - .5f);
                     }
                     break;
                 case "crystals":

@@ -35,7 +35,15 @@ namespace AshenVale
     {
         // Stored in save files by number: never renumber, only add.
         public const int EmberAsh = 0, SproutLeaf = 1, EmberCore = 2, MossTuft = 3, BoarTusk = 4, ShadeEssence = 5,
-                         WraithSilk = 6, ToadSlime = 7, LurkerScale = 8, WispEmber = 9;
+                         WraithSilk = 6, ToadSlime = 7, LurkerScale = 8, WispEmber = 9,
+                         // Highspire (snowy mountains, items Lv 16-25)
+                         FrostPelt = 10, TrollTooth = 11, DwarfRune = 12,
+                         // Saltmarrow coast (items Lv 26-35)
+                         KelpWeave = 13, SharkFang = 14, PirateGold = 15,
+                         // The deep forest (items Lv 36-45)
+                         SpiderSilk = 16, OwlFeather = 17, ArcaneDust = 18,
+                         // The ruins (items Lv 46+)
+                         ShadowWeave = 19, CursedBone = 20, VoidShard = 21;
 
         public static readonly PartDef[] All =
         {
@@ -49,6 +57,18 @@ namespace AshenVale
             new PartDef { name = "Toad Slime", price = 12, color = new Color(.55f, .75f, .35f) },
             new PartDef { name = "Lurker Scale", price = 14, color = new Color(.35f, .6f, .6f) },
             new PartDef { name = "Wisp Ember", price = 30, color = new Color(1f, .95f, .7f) },
+            new PartDef { name = "Frost Pelt", price = 18, color = new Color(.85f, .92f, 1f) },
+            new PartDef { name = "Troll Tooth", price = 20, color = new Color(.9f, .85f, .7f) },
+            new PartDef { name = "Dwarf Rune", price = 45, color = new Color(.4f, .8f, 1f) },
+            new PartDef { name = "Kelp Weave", price = 26, color = new Color(.3f, .6f, .45f) },
+            new PartDef { name = "Shark Fang", price = 30, color = new Color(.95f, .95f, .9f) },
+            new PartDef { name = "Pirate Gold", price = 70, color = new Color(1f, .85f, .3f) },
+            new PartDef { name = "Spider Silk", price = 36, color = new Color(.9f, .9f, .95f) },
+            new PartDef { name = "Owl Feather", price = 40, color = new Color(.6f, .5f, .4f) },
+            new PartDef { name = "Arcane Dust", price = 95, color = new Color(.7f, .5f, 1f) },
+            new PartDef { name = "Shadow Weave", price = 48, color = new Color(.3f, .25f, .4f) },
+            new PartDef { name = "Cursed Bone", price = 52, color = new Color(.8f, .78f, .7f) },
+            new PartDef { name = "Void Shard", price = 130, color = new Color(.5f, .1f, .6f) },
         };
     }
 
@@ -57,7 +77,9 @@ namespace AshenVale
     // An upgrade always succeeds. It costs gold plus parts from monsters of the item's level band:
     //   items Lv 1-5    weapons: Ember Ash + Ember Core      armor: Sprout Leaf + Ember Core     (Emberfields)
     //   items Lv 6-10   weapons: Boar Tusk + Wraith Silk     armor: Moss Tuft + Shade Essence   (Mosswood, Kingsroad, Hollow Den)
-    //   items Lv 11+    weapons: Lurker Scale + Wisp Ember   armor: Toad Slime + Wisp Ember     (Ashen Marsh)
+    //   items Lv 11-15  weapons: Lurker Scale + Wisp Ember   armor: Toad Slime + Wisp Ember     (Ashen Marsh)
+    //   items Lv 16-25  Troll Tooth / Frost Pelt + Dwarf Rune (Highspire); 26-35 Shark Fang / Kelp Weave + Pirate Gold (coast);
+    //   36-45 Owl Feather / Spider Silk + Arcane Dust (deep forest); 46+ Cursed Bone / Shadow Weave + Void Shard (ruins)
     // The second part is the rare one, needed from +3 on.
     public struct UpgradeCost
     {
@@ -68,12 +90,17 @@ namespace AshenVale
     {
         public const int InventoryTarget = 100;     // Upgrade targets: 0-3 worn slot, 100 + i inventory item i
 
-        static readonly int[] WeaponParts = { Parts.EmberAsh, Parts.EmberCore, Parts.BoarTusk, Parts.WraithSilk, Parts.LurkerScale, Parts.WispEmber };
-        static readonly int[] ArmorParts = { Parts.SproutLeaf, Parts.EmberCore, Parts.MossTuft, Parts.ShadeEssence, Parts.ToadSlime, Parts.WispEmber };
+        // Main part, rare part per tier (see Tier): Emberhaven, Mosswood, Ashen Marsh, Highspire, the coast, the deep forest, the ruins.
+        static readonly int[] WeaponParts = { Parts.EmberAsh, Parts.EmberCore, Parts.BoarTusk, Parts.WraithSilk, Parts.LurkerScale, Parts.WispEmber,
+                                              Parts.TrollTooth, Parts.DwarfRune, Parts.SharkFang, Parts.PirateGold, Parts.OwlFeather, Parts.ArcaneDust,
+                                              Parts.CursedBone, Parts.VoidShard };
+        static readonly int[] ArmorParts = { Parts.SproutLeaf, Parts.EmberCore, Parts.MossTuft, Parts.ShadeEssence, Parts.ToadSlime, Parts.WispEmber,
+                                             Parts.FrostPelt, Parts.DwarfRune, Parts.KelpWeave, Parts.PirateGold, Parts.SpiderSilk, Parts.ArcaneDust,
+                                             Parts.ShadowWeave, Parts.VoidShard };
 
         public static int Step(int baseStat) { return baseStat <= 0 ? 0 : Mathf.Max(1, Mathf.RoundToInt(baseStat * Tuning.UpgradeStatGain)); }
 
-        public static int Tier(int itemLevel) { return itemLevel <= 5 ? 0 : itemLevel <= 10 ? 1 : 2; }
+        public static int Tier(int itemLevel) { return itemLevel <= 5 ? 0 : itemLevel <= 10 ? 1 : itemLevel <= 15 ? 2 : itemLevel <= 25 ? 3 : itemLevel <= 35 ? 4 : itemLevel <= 45 ? 5 : 6; }
 
         // Cost of the next upgrade (from +k to +k+1).
         public static UpgradeCost Cost(Item item)

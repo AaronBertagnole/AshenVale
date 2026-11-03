@@ -29,18 +29,56 @@ namespace AshenVale
                 if (spots != null) return spots;
                 var s = new AtlasSpot[Maps.All.Length];
                 for (int i = 0; i < s.Length; i++) s[i] = new AtlasSpot { x = .5f, y = .5f };   // until it is placed
-                // West to east along the road, as in MapDefs; Hollow Den hides up behind Mosswood.
-                Place(s, Maps.Emberhaven,     .06f, .62f);
-                Place(s, Maps.Emberfields,    .18f, .48f);
-                Place(s, Maps.AmberleafTrail, .29f, .62f);
-                Place(s, Maps.MossgateHollow, .40f, .44f);
-                Place(s, Maps.Mosswood,       .52f, .32f);
-                Place(s, Maps.HollowDen,      .45f, .10f, true);
-                Place(s, Maps.ShaleCliffs,    .33f, .16f);
-                Place(s, Maps.ThornGlade,     .60f, .20f);
-                Place(s, Maps.Kingsroad,      .65f, .47f);
-                Place(s, Maps.Cinderford,     .79f, .58f);
-                Place(s, Maps.AshenMarsh,     .93f, .74f);
+                // The world map holds five regions: Emberhaven's lands across the bottom left, Highspire's mountains
+                // above them, the coast to the east, the deep forest north of the coast and the ruins at the top.
+                // Region 1, west to east along the road; Hollow Den hides up behind Mosswood.
+                Place(s, Maps.Emberhaven,     .05f, .80f);
+                Place(s, Maps.Emberfields,    .12f, .72f);
+                Place(s, Maps.AmberleafTrail, .18f, .82f);
+                Place(s, Maps.MossgateHollow, .24f, .70f);
+                Place(s, Maps.Mosswood,       .31f, .62f);
+                Place(s, Maps.HollowDen,      .27f, .52f, true);
+                Place(s, Maps.ShaleCliffs,    .20f, .52f);
+                Place(s, Maps.ThornGlade,     .36f, .52f);
+                Place(s, Maps.Kingsroad,      .39f, .74f);
+                Place(s, Maps.Cinderford,     .47f, .84f);
+                Place(s, Maps.AshenMarsh,     .55f, .92f);
+                // Region 3, Highspire: up the mountain from the Shale Cliffs summit, then under it.
+                Place(s, Maps.FrostpinePass,  .14f, .40f);
+                Place(s, Maps.Highspire,      .08f, .30f);
+                Place(s, Maps.GlacierSteps,   .14f, .20f);
+                Place(s, Maps.WindwardRidge,  .22f, .12f);
+                Place(s, Maps.IronveinMines,  .30f, .20f);
+                Place(s, Maps.CrystalHollow,  .36f, .10f, true);
+                Place(s, Maps.DeepForge,      .34f, .32f);
+                Place(s, Maps.ColossusVault,  .40f, .40f);
+                // Region 4, the coast: down to the sea east of the marsh, out along the reefs to the point.
+                Place(s, Maps.BrackwaterShore, .63f, .86f);
+                Place(s, Maps.Saltmarrow,      .71f, .93f);
+                Place(s, Maps.WreckersReef,    .79f, .86f);
+                Place(s, Maps.SirensGrotto,    .84f, .94f, true);
+                Place(s, Maps.SmugglersCove,   .87f, .80f);
+                Place(s, Maps.BlackGalleon,    .90f, .70f);
+                Place(s, Maps.GallowsPoint,    .93f, .58f);
+                Place(s, Maps.CaptainsHold,    .93f, .44f);
+                // Region 5, the deep forest: north from Saltmarrow's gate, in under the trees.
+                Place(s, Maps.ThistledownTrail, .68f, .76f);
+                Place(s, Maps.Eldermere,        .64f, .64f);
+                Place(s, Maps.Glimmerwood,      .70f, .52f);
+                Place(s, Maps.Moonwell,         .78f, .46f, true);
+                Place(s, Maps.HollowLibrary,    .64f, .42f);
+                Place(s, Maps.Owlkeep,          .72f, .32f);
+                Place(s, Maps.SpellbrokenGlade, .80f, .24f);
+                Place(s, Maps.ArchmageSanctum,  .88f, .30f);
+                // Region 6, the ruins: down the stair from the glade, across the top of the map.
+                Place(s, Maps.ForgottenStair,   .74f, .14f);
+                Place(s, Maps.Lastlight,        .64f, .08f);
+                Place(s, Maps.SunkenAvenue,     .56f, .16f);
+                Place(s, Maps.HallOfIdols,      .48f, .08f);
+                Place(s, Maps.Oubliette,        .40f, .14f, true);
+                Place(s, Maps.WeepingCatacombs, .46f, .26f);
+                Place(s, Maps.BlackZiggurat,    .50f, .36f);
+                Place(s, Maps.SleepersThrone,   .56f, .46f);
                 spots = s;
                 return spots;
             }
