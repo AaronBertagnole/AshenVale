@@ -324,6 +324,46 @@ namespace AshenVale
                     platformBody = new Color(.38f, .40f, .42f), platformTop = new Color(.54f, .58f, .52f),
                     accent = new Color(.80f, .84f, .88f), farStyle = "sea", midStyle = "deadtrees",
                 };
+                // ---- Eldermere: the deep forest, the magicians' village, the hollow library, the moonwell
+                case "deepwood": return new Theme
+                {
+                    skyBottom = new Color(.30f, .48f, .40f), skyTop = new Color(.08f, .18f, .20f),
+                    far = new Color(.12f, .28f, .26f), farDark = new Color(.08f, .20f, .20f),
+                    mid = new Color(.14f, .36f, .26f), midDark = new Color(.20f, .14f, .10f),
+                    groundBody = new Color(.18f, .15f, .12f), groundTop = new Color(.22f, .46f, .28f),
+                    platformBody = new Color(.30f, .20f, .13f), platformTop = new Color(.26f, .52f, .30f),
+                    accent = new Color(.75f, 1f, .55f), farStyle = "pines", midStyle = "bigtrees",
+                    ladderRail = new Color(.28f, .20f, .14f), ladderRung = new Color(.46f, .34f, .22f),
+                    hanging = new Color(.18f, .36f, .22f),
+                    flecks = new[] { new Color(.60f, .90f, .45f), new Color(.85f, .75f, 1f) },
+                };
+                case "wizardtown": return new Theme   // Eldermere: timber houses in the trees, violet lantern light
+                {
+                    skyBottom = new Color(.52f, .46f, .66f), skyTop = new Color(.14f, .14f, .30f),
+                    far = new Color(.18f, .30f, .32f), farDark = new Color(.12f, .22f, .26f),
+                    mid = new Color(.46f, .36f, .30f), midDark = new Color(.30f, .22f, .20f),
+                    groundBody = new Color(.26f, .22f, .20f), groundTop = new Color(.50f, .44f, .36f),
+                    platformBody = new Color(.34f, .26f, .20f), platformTop = new Color(.56f, .46f, .34f),
+                    accent = new Color(.80f, .62f, 1f), farStyle = "pines", midStyle = "houses",
+                };
+                case "library": return new Theme      // the hollow library and the sanctum: dark wood and old paper
+                {
+                    skyBottom = new Color(.22f, .16f, .20f), skyTop = new Color(.08f, .06f, .10f),
+                    far = new Color(.26f, .20f, .18f), farDark = new Color(.18f, .14f, .13f),
+                    mid = new Color(.44f, .30f, .22f), midDark = new Color(.30f, .20f, .15f),
+                    groundBody = new Color(.24f, .18f, .14f), groundTop = new Color(.46f, .36f, .28f),
+                    platformBody = new Color(.36f, .24f, .16f), platformTop = new Color(.58f, .44f, .30f),
+                    accent = new Color(.85f, .65f, 1f), farStyle = "stalactites", midStyle = "shelves", outdoors = false,
+                };
+                case "moonwell": return new Theme     // the Moonwell: silver light under the boughs
+                {
+                    skyBottom = new Color(.20f, .30f, .40f), skyTop = new Color(.06f, .10f, .18f),
+                    far = new Color(.14f, .24f, .30f), farDark = new Color(.10f, .18f, .24f),
+                    mid = new Color(.20f, .36f, .40f), midDark = new Color(.16f, .14f, .12f),
+                    groundBody = new Color(.18f, .20f, .24f), groundTop = new Color(.40f, .52f, .56f),
+                    platformBody = new Color(.26f, .22f, .18f), platformTop = new Color(.44f, .58f, .60f),
+                    accent = new Color(.80f, .95f, 1f), farStyle = "pines", midStyle = "crystals", outdoors = false,
+                };
                 default: return new Theme   // "meadow"
                 {
                     skyBottom = new Color(.74f, .90f, 1f), skyTop = new Color(.36f, .62f, .93f),
@@ -654,6 +694,17 @@ namespace AshenVale
                         Sprites.Block("Trunk", theme.midDark, .6f, h, MidOrder, layer, x, G + h * .5f);
                         for (int i = 0; i < 3; i++)
                             Sprites.Blob("Canopy", theme.mid, 3f + (float)rng.NextDouble(), 2.4f, MidOrder + 1, layer, x - 1f + i, G + h + (i == 1 ? .6f : 0));
+                    }
+                    break;
+                case "shelves":   // bookcases: tall cases with rows of coloured spines
+                    for (float x = x0; x < x1; x += 2.6f + (float)rng.NextDouble() * 1.5f)
+                    {
+                        float h = 3f + (float)rng.NextDouble() * 2.5f, w = 2f;
+                        Sprites.Block("Bookcase", theme.mid, w, h, MidOrder, layer, x, G + h * .5f);
+                        for (float sy = .5f; sy < h - .4f; sy += .7f)
+                            for (float sx = -w * .42f; sx < w * .42f; sx += .3f)
+                                Sprites.Block("Spine", new Color(.3f + (float)rng.NextDouble() * .6f, .2f + (float)rng.NextDouble() * .4f, .2f + (float)rng.NextDouble() * .6f),
+                                              .22f, .45f, MidOrder + 1, layer, x + sx, G + sy);
                     }
                     break;
                 case "palms":

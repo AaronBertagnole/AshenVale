@@ -32,12 +32,20 @@ Ashen Marsh - Brackwater Shore - Saltmarrow (town) - Wreckers' Reef - Smugglers'
                                                      hole at the reef's end: Siren's Grotto (Lv 28-31)
 ```
 
+```
+Saltmarrow (north gate) - Thistledown Trail - Eldermere (town) - Glimmerwood - The Hollow Library - Owlkeep - Spellbroken Glade - The Archmage's Sanctum
+                          Lv 35-36                                Lv 36-39  \   Lv 39-41             Lv 41-43   Lv 43-44           (boss, Lv 44)
+                                                                  highest bough: Moonwell (Lv 37-40)
+```
+
 New heroes start in Emberhaven; Emberfields is through the portal on the right. A portal on Mossgate Hollow's top
 ledge climbs to Shale Cliffs, and from its summit the Frostpine Pass leads up into the snow: Highspire, the dwarves'
 hall, then the glacier, the ridge, and down into the mines and the old forge under the mountain, where the Rusted
 Colossus (the war golem the dwarves built and could not stop) waits in its vault. East past the Ashen Marsh the
 land runs down to the Saltmarrow coast, where pirates were common once: a port that is still a port, then the reefs,
-the smugglers' caves, the beached Black Galleon and Gallows Point, with Captain Marrow holding the top of the cliffs. Region layouts live in
+the smugglers' caves, the beached Black Galleon and Gallows Point, with Captain Marrow holding the top of the cliffs.
+North of Saltmarrow the deep forest closes over the road: Eldermere, where the magicians lived, their hollow library,
+the owls' keep, the glade where the spells broke loose, and the Hollow Archmage keeping what is left of his sanctum. Region layouts live in
 `Assets/Scripts/Data/Maps/<Region>.cs`, their monsters in `Data/Monsters/<Region>.cs`.
 Every monster kind has a fixed level, like classic MapleStory, and monsters far below your level give less XP.
 Some monsters leave you alone until you hit them; after that they hunt you like the aggressive ones do.
@@ -64,7 +72,7 @@ solo). She rears up before slamming the roots (step back or jump), calls thorn s
 her health. Everyone alive in the glade gets her XP; she always drops Wraith Silk and spills parts like a chest, and
 returns three minutes after she falls. Hits show damage numbers; hers show in red over you.
 
-Monsters also drop parts (chests spill several). The smithies in Emberhaven, Cinderford, Highspire and Saltmarrow spend parts and gold to upgrade gear
+Monsters also drop parts (chests spill several). The smithies in Emberhaven, Cinderford, Highspire, Saltmarrow and Eldermere spend parts and gold to upgrade gear
 from +1 to +5, about 12% of the item's base stats each time. Which parts depends on the item's level band and slot.
 
 Maps are text pictures in `Assets/Scripts/Data/MapDefs.cs` and `Data/Maps/*.cs` (the legend is in the comment above `MapLayout`).

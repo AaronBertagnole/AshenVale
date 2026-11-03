@@ -61,6 +61,15 @@ namespace AshenVale
                 Place(s, Maps.BlackGalleon,    .92f, .70f);
                 Place(s, Maps.GallowsPoint,    .95f, .58f);
                 Place(s, Maps.CaptainsHold,    .97f, .46f);
+                // Region 5, the deep forest: north from Saltmarrow's gate, in under the trees.
+                Place(s, Maps.ThistledownTrail, .68f, .76f);
+                Place(s, Maps.Eldermere,        .64f, .64f);
+                Place(s, Maps.Glimmerwood,      .70f, .52f);
+                Place(s, Maps.Moonwell,         .78f, .46f, true);
+                Place(s, Maps.HollowLibrary,    .64f, .42f);
+                Place(s, Maps.Owlkeep,          .72f, .32f);
+                Place(s, Maps.SpellbrokenGlade, .80f, .24f);
+                Place(s, Maps.ArchmageSanctum,  .88f, .30f);
                 spots = s;
                 return spots;
             }

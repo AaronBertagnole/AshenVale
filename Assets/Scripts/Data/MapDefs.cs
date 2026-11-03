@@ -261,7 +261,10 @@ namespace AshenVale
                          DeepForge = 16, CrystalHollow = 17, ColossusVault = 18,
                          // Region 4, the Saltmarrow coast (Maps/Saltmarrow.cs): pirate beaches east of the Ashen Marsh
                          BrackwaterShore = 19, Saltmarrow = 20, WreckersReef = 21, SmugglersCove = 22, BlackGalleon = 23,
-                         GallowsPoint = 24, SirensGrotto = 25, CaptainsHold = 26;
+                         GallowsPoint = 24, SirensGrotto = 25, CaptainsHold = 26,
+                         // Region 5, the deep forest (Maps/Eldermere.cs): the magicians' woods north of Saltmarrow
+                         ThistledownTrail = 27, Eldermere = 28, Glimmerwood = 29, HollowLibrary = 30, Owlkeep = 31,
+                         SpellbrokenGlade = 32, Moonwell = 33, ArchmageSanctum = 34;
         public const int FirstTown = Emberhaven;    // every hero knows it; where you wake if nothing else is known
 
         // The world so far (west to east):
@@ -277,6 +280,7 @@ namespace AshenVale
             var list = new List<MapDef>(Core);
             list.AddRange(HighspireMaps());
             list.AddRange(SaltmarrowMaps());
+            list.AddRange(EldermereMaps());
             for (int i = 0; i < list.Count; i++)
                 if (list[i].id != i) Debug.LogError("Maps.All is out of order at " + i + ": " + list[i].name + " has id " + list[i].id);
             return list.ToArray();

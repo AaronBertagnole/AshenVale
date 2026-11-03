@@ -19,7 +19,7 @@ namespace AshenVale
 
                 MapLayout.Build(Saltmarrow, "Saltmarrow", "port", MapKind.Town, SaltmarrowLayout,
                     new MapLayout.Spawn[0],
-                    new[] { MapLayout.L('Q', BrackwaterShore, 'Q'), MapLayout.L('R', WreckersReef, 'R') }),
+                    new[] { MapLayout.L('Q', BrackwaterShore, 'Q'), MapLayout.L('R', WreckersReef, 'R'), MapLayout.L('W', ThistledownTrail, 'W') }),
 
                 MapLayout.Build(WreckersReef, "Wreckers' Reef", "reef", MapKind.Field, WreckersReefLayout,
                     new[] { MapLayout.S('c', Monsters.SandCrab), MapLayout.S('e', Monsters.ReefEel),
@@ -74,7 +74,7 @@ namespace AshenVale
             ....................................................
             ....................................................
             ....................................................
-            .&..Q.......$........$.......%...@......^........R..
+            .&..Q.......$........$.......%...@......^....W...R..
             ####################################################";
 
         // Rocks and wreck timbers stepping out into the surf; the Siren's Grotto hides in a hole at the far end.

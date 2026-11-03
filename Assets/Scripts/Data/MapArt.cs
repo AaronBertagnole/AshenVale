@@ -150,6 +150,16 @@ namespace AshenVale
             a[Maps.SirensGrotto] = a[Maps.SmugglersCove];
             a[Maps.BlackGalleon] = new MapArtDef { ambient = new[] { Embers() } };
             a[Maps.CaptainsHold] = a[Maps.BlackGalleon];
+            // Eldermere: fireflies in the wood, loose magic in the library and the glade
+            var wood = new MapArtDef { ambient = new[] { Fireflies(), Pollen() } };
+            a[Maps.ThistledownTrail] = wood;
+            a[Maps.Eldermere] = new MapArtDef { ambient = new[] { Fireflies() } };
+            a[Maps.Glimmerwood] = wood;
+            a[Maps.Owlkeep] = wood;
+            a[Maps.HollowLibrary] = new MapArtDef { ambient = new[] { Sparkles() } };
+            a[Maps.SpellbrokenGlade] = new MapArtDef { ambient = new[] { Sparkles(), Fireflies() } };
+            a[Maps.Moonwell] = new MapArtDef { ambient = new[] { Sparkles() } };
+            a[Maps.ArchmageSanctum] = a[Maps.HollowLibrary];
             return a;
         }
 
@@ -181,6 +191,18 @@ namespace AshenVale
         {
             return new AmbientDef { name = "Snow", drift = Drift.Fall, aroundView = true, count = 45, tint = new Color(1f, 1f, 1f, .8f),
                                     sizeMin = .05f, sizeMax = .1f, speed = .4f, sway = .3f, rate = .3f, order = 14 };
+        }
+
+        static AmbientDef Fireflies()
+        {
+            return new AmbientDef { name = "Fireflies", drift = Drift.Float, aroundView = true, count = 30, tint = new Color(.7f, 1f, .45f, .9f),
+                                    sizeMin = .06f, sizeMax = .12f, sway = .6f, rate = .3f, order = 14 };
+        }
+
+        static AmbientDef Sparkles()
+        {
+            return new AmbientDef { name = "Loose magic", drift = Drift.Rise, aroundView = true, count = 35, tint = new Color(.85f, .6f, 1f, .85f),
+                                    sizeMin = .05f, sizeMax = .14f, speed = .35f, sway = .6f, rate = .5f, order = 14 };
         }
 
         static AmbientDef Spray()
