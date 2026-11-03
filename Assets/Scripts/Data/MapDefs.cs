@@ -251,19 +251,34 @@ namespace AshenVale
         }
     }
 
-    public static class Maps
+    public static partial class Maps
     {
         // Map ids are stored in save files: never renumber, only add.
         public const int Emberfields = 0, Mosswood = 1, Emberhaven = 2, HollowDen = 3, Kingsroad = 4, Cinderford = 5, AshenMarsh = 6,
-                         AmberleafTrail = 7, MossgateHollow = 8, ShaleCliffs = 9, ThornGlade = 10;
+                         AmberleafTrail = 7, MossgateHollow = 8, ShaleCliffs = 9, ThornGlade = 10,
+                         // Region 3, Highspire (Maps/Highspire.cs): dwarves in the snowy mountains above Shale Cliffs
+                         FrostpinePass = 11, Highspire = 12, GlacierSteps = 13, WindwardRidge = 14, IronveinMines = 15,
+                         DeepForge = 16, CrystalHollow = 17, ColossusVault = 18;
         public const int FirstTown = Emberhaven;    // every hero knows it; where you wake if nothing else is known
 
         // The world so far (west to east):
         //   Emberhaven (town) - Emberfields - Amberleaf Trail - Mossgate Hollow - Mosswood - Kingsroad - Cinderford (town) - Ashen Marsh
         //                                                        '- top ledge: Shale Cliffs     '- secret ledge, top left: Hollow Den
         //                                                           (up the mountain)          '- east end: Thornmother's Glade (boss)
-        // In id order: All[i].id == i.
-        public static readonly MapDef[] All =
+        // In id order: All[i].id == i. Later regions live in Data/Maps/<Region>.cs and are appended here.
+        public static MapDef[] All { get { return all ?? (all = Assemble()); } }
+        static MapDef[] all;
+
+        static MapDef[] Assemble()
+        {
+            var list = new List<MapDef>(Core);
+            list.AddRange(HighspireMaps());
+            for (int i = 0; i < list.Count; i++)
+                if (list[i].id != i) Debug.LogError("Maps.All is out of order at " + i + ": " + list[i].name + " has id " + list[i].id);
+            return list.ToArray();
+        }
+
+        static readonly MapDef[] Core =
         {
             MapLayout.WithBackdrop(MapLayout.Build(Emberfields, "Emberfields", "autumn", MapKind.Field, EmberfieldsLayout,
                     new[] { MapLayout.S('a', Monsters.Emberling), MapLayout.S('b', Monsters.AshSprout),
@@ -310,7 +325,7 @@ namespace AshenVale
             // The way on to Highspire will open from the summit later.
             MapLayout.Build(ShaleCliffs, "Shale Cliffs", "cliffs", MapKind.Field, ShaleCliffsLayout,
                 new[] { MapLayout.S('g', Monsters.CragGoat), MapLayout.S('r', Monsters.RockMite), MapLayout.S('k', Monsters.MossyChest) },
-                new[] { MapLayout.L('G', MossgateHollow, 'G') }),
+                new[] { MapLayout.L('G', MossgateHollow, 'G'), MapLayout.L('H', FrostpinePass, 'H') }),
             // Region 1's boss glade, off the east end of Mosswood: a bramble-walled clearing with two ledges to
             // shoot from. Thornmother waits in the middle and comes back a few minutes after she falls.
             MapLayout.WithBackdrop(MapLayout.Build(ThornGlade, "Thornmother's Glade", "forest", MapKind.Field, ThornGladeLayout,
@@ -410,7 +425,7 @@ namespace AshenVale
         // right, where a chest may wait. Goats charge along the shelves; mites cling to the high rock.
         const string ShaleCliffsLayout = @"
             ..........................................................
-            ........................................r.....g...r....k..
+            ........................................r.....g...r..k.H.
             ....................................=====================.
             ..............................g.....r.....................
             ............................===========...................

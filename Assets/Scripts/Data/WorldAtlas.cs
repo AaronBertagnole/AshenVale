@@ -29,18 +29,29 @@ namespace AshenVale
                 if (spots != null) return spots;
                 var s = new AtlasSpot[Maps.All.Length];
                 for (int i = 0; i < s.Length; i++) s[i] = new AtlasSpot { x = .5f, y = .5f };   // until it is placed
-                // West to east along the road, as in MapDefs; Hollow Den hides up behind Mosswood.
-                Place(s, Maps.Emberhaven,     .06f, .62f);
-                Place(s, Maps.Emberfields,    .18f, .48f);
-                Place(s, Maps.AmberleafTrail, .29f, .62f);
-                Place(s, Maps.MossgateHollow, .40f, .44f);
-                Place(s, Maps.Mosswood,       .52f, .32f);
-                Place(s, Maps.HollowDen,      .45f, .10f, true);
-                Place(s, Maps.ShaleCliffs,    .33f, .16f);
-                Place(s, Maps.ThornGlade,     .60f, .20f);
-                Place(s, Maps.Kingsroad,      .65f, .47f);
-                Place(s, Maps.Cinderford,     .79f, .58f);
-                Place(s, Maps.AshenMarsh,     .93f, .74f);
+                // The world map holds five regions: Emberhaven's lands across the bottom left, Highspire's mountains
+                // above them, the coast to the east, the deep forest north of the coast and the ruins at the top.
+                // Region 1, west to east along the road; Hollow Den hides up behind Mosswood.
+                Place(s, Maps.Emberhaven,     .05f, .80f);
+                Place(s, Maps.Emberfields,    .12f, .72f);
+                Place(s, Maps.AmberleafTrail, .18f, .82f);
+                Place(s, Maps.MossgateHollow, .24f, .70f);
+                Place(s, Maps.Mosswood,       .31f, .62f);
+                Place(s, Maps.HollowDen,      .27f, .52f, true);
+                Place(s, Maps.ShaleCliffs,    .20f, .52f);
+                Place(s, Maps.ThornGlade,     .36f, .52f);
+                Place(s, Maps.Kingsroad,      .39f, .74f);
+                Place(s, Maps.Cinderford,     .47f, .84f);
+                Place(s, Maps.AshenMarsh,     .55f, .92f);
+                // Region 3, Highspire: up the mountain from the Shale Cliffs summit, then under it.
+                Place(s, Maps.FrostpinePass,  .14f, .40f);
+                Place(s, Maps.Highspire,      .08f, .30f);
+                Place(s, Maps.GlacierSteps,   .14f, .20f);
+                Place(s, Maps.WindwardRidge,  .22f, .12f);
+                Place(s, Maps.IronveinMines,  .30f, .20f);
+                Place(s, Maps.CrystalHollow,  .36f, .10f, true);
+                Place(s, Maps.DeepForge,      .34f, .32f);
+                Place(s, Maps.ColossusVault,  .40f, .40f);
                 spots = s;
                 return spots;
             }

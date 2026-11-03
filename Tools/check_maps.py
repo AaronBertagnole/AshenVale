@@ -1,4 +1,4 @@
-"""Checks the map layouts in Assets/Scripts/Data/MapDefs.cs without opening Unity.
+"""Checks the map layouts in Assets/Scripts/Data (MapDefs.cs and Maps/*.cs) without opening Unity.
 
     python Tools/check_maps.py            check every map
     python Tools/check_maps.py --print    also print the layouts
@@ -20,16 +20,19 @@ SPEED = 5.3          # slowest hero
 DT = 1 / 60.0
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SOURCE = os.path.join(ROOT, 'Assets', 'Scripts', 'Data', 'MapDefs.cs')
+DATA = os.path.join(ROOT, 'Assets', 'Scripts', 'Data')   # MapDefs.cs plus Maps/<Region>.cs
 
 # ------------------------------------------------------------------ read MapDefs.cs
 
 def read_source():
-    src = open(SOURCE, encoding='utf-8').read()
+    src = ''
+    for folder, _, files in sorted(os.walk(DATA)):
+        for f in sorted(files):
+            if f.endswith('.cs'): src += open(os.path.join(folder, f), encoding='utf-8').read() + '\n'
     layouts = {name: text for name, text in re.findall(r'const string (\w+) = @"(.*?)";', src, re.S)}
     ids = {}
     m = re.search(r'public const int (Emberfields[^;]*);', src)
-    for part in m.group(1).split(','):
+    for part in re.sub(r'//[^\n]*', '', m.group(1)).split(','):
         k, v = part.split('=')
         ids[k.strip()] = int(v)
     maps = {}

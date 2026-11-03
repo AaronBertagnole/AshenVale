@@ -20,8 +20,17 @@ Emberhaven (town) - Emberfields - Amberleaf Trail - Mossgate Hollow - Mosswood -
                                                         (up the mountain, Lv 9-10)
 ```
 
+```
+Shale Cliffs (summit) - Frostpine Pass - Highspire (town) - Glacier Steps - Windward Ridge - Ironvein Mines - The Deep Forge - The Colossus' Vault
+                        Lv 15-17                           Lv 16-19        Lv 15-19         Lv 21-23     \   Lv 20-22        (boss, Lv 24)
+                                                                                     hidden ledge at the top: Crystal Hollow (Lv 18-22)
+```
+
 New heroes start in Emberhaven; Emberfields is through the portal on the right. A portal on Mossgate Hollow's top
-ledge climbs to Shale Cliffs, the first step up the mountain (its summit will lead on to Highspire later).
+ledge climbs to Shale Cliffs, and from its summit the Frostpine Pass leads up into the snow: Highspire, the dwarves'
+hall, then the glacier, the ridge, and down into the mines and the old forge under the mountain, where the Rusted
+Colossus (the war golem the dwarves built and could not stop) waits in its vault. Region layouts live in
+`Assets/Scripts/Data/Maps/<Region>.cs`, their monsters in `Data/Monsters/<Region>.cs`.
 Every monster kind has a fixed level, like classic MapleStory, and monsters far below your level give less XP.
 Some monsters leave you alone until you hit them; after that they hunt you like the aggressive ones do.
 Walk into a town to find it; its waystone then lets you travel between found towns. **T** opens a portal to
@@ -47,10 +56,10 @@ solo). She rears up before slamming the roots (step back or jump), calls thorn s
 her health. Everyone alive in the glade gets her XP; she always drops Wraith Silk and spills parts like a chest, and
 returns three minutes after she falls. Hits show damage numbers; hers show in red over you.
 
-Monsters also drop parts (chests spill several). The smithies in Emberhaven and Cinderford spend parts and gold to upgrade gear
+Monsters also drop parts (chests spill several). The smithies in Emberhaven, Cinderford and Highspire spend parts and gold to upgrade gear
 from +1 to +5, about 12% of the item's base stats each time. Which parts depends on the item's level band and slot.
 
-Maps are text pictures in `Assets/Scripts/Data/MapDefs.cs` (the legend is in the comment above `MapLayout`).
+Maps are text pictures in `Assets/Scripts/Data/MapDefs.cs` and `Data/Maps/*.cs` (the legend is in the comment above `MapLayout`).
 After editing one, run `python Tools/check_maps.py`: it checks that every platform can really be reached,
 every ladder and marker stands on something, and every portal leads somewhere and back.
 

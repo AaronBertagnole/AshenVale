@@ -130,6 +130,16 @@ namespace AshenVale
             a[Maps.AshenMarsh] = new MapArtDef { ambient = new[] { Ash() } };
             a[Maps.ShaleCliffs] = new MapArtDef { ambient = new[] { Snow() } };
             a[Maps.ThornGlade] = a[Maps.Mosswood];     // shows Mosswood's pictures until it has its own
+            // Highspire: snow on the open maps, embers underground
+            var snow = new MapArtDef { ambient = new[] { Snow() } };
+            a[Maps.FrostpinePass] = snow;
+            a[Maps.Highspire] = snow;
+            a[Maps.GlacierSteps] = snow;
+            a[Maps.WindwardRidge] = new MapArtDef { ambient = new[] { Snow(), Snow() } };    // a blizzard up here
+            a[Maps.IronveinMines] = new MapArtDef { ambient = new[] { Ash() } };              // rock dust
+            a[Maps.DeepForge] = new MapArtDef { ambient = new[] { Embers() } };
+            a[Maps.ColossusVault] = a[Maps.DeepForge];
+            a[Maps.CrystalHollow] = new MapArtDef { ambient = new[] { Motes() } };
             return a;
         }
 
@@ -161,6 +171,12 @@ namespace AshenVale
         {
             return new AmbientDef { name = "Snow", drift = Drift.Fall, aroundView = true, count = 45, tint = new Color(1f, 1f, 1f, .8f),
                                     sizeMin = .05f, sizeMax = .1f, speed = .4f, sway = .3f, rate = .3f, order = 14 };
+        }
+
+        static AmbientDef Embers()
+        {
+            return new AmbientDef { name = "Embers", drift = Drift.Rise, aroundView = true, count = 35, tint = new Color(1f, .6f, .2f, .8f),
+                                    sizeMin = .05f, sizeMax = .12f, speed = .5f, sway = .4f, rate = .4f, order = 14 };
         }
 
         static AmbientDef Ash()

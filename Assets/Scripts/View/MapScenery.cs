@@ -215,6 +215,57 @@ namespace AshenVale
                     platformBody = new Color(.35f, .30f, .24f), platformTop = new Color(.48f, .54f, .33f),
                     accent = new Color(.80f, .86f, .70f), farStyle = "deadtrees", midStyle = "reeds",
                 };
+                // ---- Highspire: snow fields, the dwarven hall, the mines, the forge, the crystal hollow
+                case "snow": return new Theme
+                {
+                    skyBottom = new Color(.93f, .95f, .98f), skyTop = new Color(.55f, .68f, .88f),
+                    far = new Color(.72f, .78f, .88f), farDark = new Color(.60f, .66f, .78f),
+                    mid = new Color(.86f, .92f, .97f), midDark = new Color(.30f, .36f, .42f),
+                    groundBody = new Color(.44f, .48f, .56f), groundTop = new Color(.93f, .95f, .98f),
+                    platformBody = new Color(.50f, .54f, .62f), platformTop = new Color(.95f, .97f, 1f),
+                    accent = new Color(1f, 1f, 1f), farStyle = "mountains", midStyle = "bigtrees",
+                    ladderRail = new Color(.38f, .30f, .22f), ladderRung = new Color(.58f, .46f, .32f),
+                    hanging = new Color(.70f, .78f, .88f),
+                    flecks = new[] { new Color(1f, 1f, 1f), new Color(.80f, .88f, .96f) },
+                };
+                case "hold": return new Theme     // Highspire: a stone hall cut into the mountain, warm windows
+                {
+                    skyBottom = new Color(.80f, .84f, .92f), skyTop = new Color(.40f, .50f, .72f),
+                    far = new Color(.60f, .66f, .78f), farDark = new Color(.50f, .56f, .68f),
+                    mid = new Color(.42f, .44f, .50f), midDark = new Color(.30f, .32f, .38f),
+                    groundBody = new Color(.30f, .31f, .36f), groundTop = new Color(.58f, .60f, .66f),
+                    platformBody = new Color(.36f, .37f, .42f), platformTop = new Color(.62f, .64f, .70f),
+                    accent = new Color(1f, .72f, .35f), farStyle = "mountains", midStyle = "houses",
+                };
+                case "mine": return new Theme     // Ironvein: timbered shafts in brown rock
+                {
+                    skyBottom = new Color(.16f, .13f, .11f), skyTop = new Color(.07f, .06f, .05f),
+                    far = new Color(.26f, .21f, .17f), farDark = new Color(.20f, .16f, .13f),
+                    mid = new Color(.40f, .30f, .20f), midDark = new Color(.30f, .22f, .15f),
+                    groundBody = new Color(.24f, .20f, .17f), groundTop = new Color(.46f, .40f, .34f),
+                    platformBody = new Color(.36f, .26f, .17f), platformTop = new Color(.56f, .42f, .27f),
+                    accent = new Color(1f, .78f, .45f), farStyle = "stalactites", midStyle = "timbers", outdoors = false,
+                    ladderRail = new Color(.38f, .28f, .18f), ladderRung = new Color(.56f, .42f, .27f),
+                };
+                case "forge": return new Theme    // the Deep Forge and the vault: black stone lit from below by slag
+                {
+                    skyBottom = new Color(.30f, .12f, .06f), skyTop = new Color(.08f, .05f, .05f),
+                    far = new Color(.24f, .16f, .14f), farDark = new Color(.17f, .11f, .10f),
+                    mid = new Color(.34f, .24f, .20f), midDark = new Color(.24f, .16f, .14f),
+                    groundBody = new Color(.20f, .17f, .17f), groundTop = new Color(.40f, .36f, .36f),
+                    platformBody = new Color(.28f, .24f, .24f), platformTop = new Color(.48f, .42f, .40f),
+                    accent = new Color(1f, .55f, .18f), farStyle = "stalactites", midStyle = "crystals", outdoors = false,
+                    ladderRail = new Color(.30f, .30f, .34f), ladderRung = new Color(.48f, .48f, .52f),
+                };
+                case "crystal": return new Theme  // Crystal Hollow: the cave theme gone ice-blue
+                {
+                    skyBottom = new Color(.10f, .16f, .26f), skyTop = new Color(.04f, .06f, .12f),
+                    far = new Color(.18f, .26f, .40f), farDark = new Color(.14f, .20f, .32f),
+                    mid = new Color(.26f, .36f, .52f), midDark = new Color(.20f, .28f, .42f),
+                    groundBody = new Color(.20f, .24f, .34f), groundTop = new Color(.44f, .52f, .68f),
+                    platformBody = new Color(.30f, .36f, .50f), platformTop = new Color(.56f, .66f, .84f),
+                    accent = new Color(.65f, .92f, 1f), farStyle = "stalactites", midStyle = "crystals", outdoors = false,
+                };
                 default: return new Theme   // "meadow"
                 {
                     skyBottom = new Color(.74f, .90f, 1f), skyTop = new Color(.36f, .62f, .93f),
@@ -534,6 +585,17 @@ namespace AshenVale
                         Sprites.Block("Trunk", theme.midDark, .6f, h, MidOrder, layer, x, G + h * .5f);
                         for (int i = 0; i < 3; i++)
                             Sprites.Blob("Canopy", theme.mid, 3f + (float)rng.NextDouble(), 2.4f, MidOrder + 1, layer, x - 1f + i, G + h + (i == 1 ? .6f : 0));
+                    }
+                    break;
+                case "timbers":   // mine props: posts and a cap beam, a lamp on some
+                    for (float x = x0; x < x1; x += 3.2f + (float)rng.NextDouble() * 2.5f)
+                    {
+                        float h = 3f + (float)rng.NextDouble() * 1.5f, w = 2.2f + (float)rng.NextDouble();
+                        Sprites.Block("Post", theme.mid, .35f, h, MidOrder + 1, layer, x - w * .5f, G + h * .5f);
+                        Sprites.Block("Post", theme.mid, .35f, h, MidOrder + 1, layer, x + w * .5f, G + h * .5f);
+                        Sprites.Block("Beam", theme.midDark, w + .7f, .4f, MidOrder + 1, layer, x, G + h);
+                        if (rng.Next(2) == 0)
+                            Sprites.Blob("Lamp", new Color(theme.accent.r, theme.accent.g, theme.accent.b, .85f), .4f, .5f, MidOrder + 2, layer, x, G + h - .5f);
                     }
                     break;
                 case "crystals":
