@@ -34,7 +34,7 @@ namespace AshenVale
     public static class Parts
     {
         // Stored in save files by number: never renumber, only add.
-        public const int EmberAsh = 0, SproutLeaf = 1, EmberCore = 2, MossTuft = 3, BoarTusk = 4, ShadeEssence = 5,
+        public const int ShrewTuft = 0, SproutLeaf = 1, EmberCore = 2, MossTuft = 3, BoarTusk = 4, ShadeEssence = 5,
                          WraithSilk = 6, ToadSlime = 7, LurkerScale = 8, WispEmber = 9,
                          // Highspire (snowy mountains, items Lv 16-25)
                          FrostPelt = 10, TrollTooth = 11, DwarfRune = 12,
@@ -43,11 +43,12 @@ namespace AshenVale
                          // The deep forest (items Lv 36-45)
                          SpiderSilk = 16, OwlFeather = 17, ArcaneDust = 18,
                          // The ruins (items Lv 46+)
-                         ShadowWeave = 19, CursedBone = 20, VoidShard = 21;
+                         ShadowWeave = 19, CursedBone = 20, VoidShard = 21,
+                         HedgehogQuill = 22;    // Emberfields' elite; sold, not smithed
 
         public static readonly PartDef[] All =
         {
-            new PartDef { name = "Ember Ash", price = 4, color = new Color(.95f, .45f, .25f) },
+            new PartDef { name = "Shrew Tuft", price = 4, color = new Color(.72f, .56f, .38f) },
             new PartDef { name = "Sprout Leaf", price = 4, color = new Color(.65f, .85f, .35f) },
             new PartDef { name = "Ember Core", price = 15, color = new Color(1f, .3f, .55f) },
             new PartDef { name = "Moss Tuft", price = 7, color = new Color(.3f, .75f, .45f) },
@@ -69,13 +70,14 @@ namespace AshenVale
             new PartDef { name = "Shadow Weave", price = 48, color = new Color(.3f, .25f, .4f) },
             new PartDef { name = "Cursed Bone", price = 52, color = new Color(.8f, .78f, .7f) },
             new PartDef { name = "Void Shard", price = 130, color = new Color(.5f, .1f, .6f) },
+            new PartDef { name = "Hedgehog Quill", price = 9, color = new Color(.8f, .7f, .5f) },
         };
     }
 
     // What a smithy upgrade costs. Each +1 adds about 12% of the item's base stats (at least 1), up to +5,
     // so a fully upgraded item is roughly 60% stronger: worth the grind, but no runaway power.
     // An upgrade always succeeds. It costs gold plus parts from monsters of the item's level band:
-    //   items Lv 1-5    weapons: Ember Ash + Ember Core      armor: Sprout Leaf + Ember Core     (Emberfields)
+    //   items Lv 1-5    weapons: Shrew Tuft + Ember Core      armor: Sprout Leaf + Ember Core     (Emberfields)
     //   items Lv 6-10   weapons: Boar Tusk + Wraith Silk     armor: Moss Tuft + Shade Essence   (Mosswood, Kingsroad, Hollow Den)
     //   items Lv 11-15  weapons: Lurker Scale + Wisp Ember   armor: Toad Slime + Wisp Ember     (Ashen Marsh)
     //   items Lv 16-25  Troll Tooth / Frost Pelt + Dwarf Rune (Highspire); 26-35 Shark Fang / Kelp Weave + Pirate Gold (coast);
@@ -91,7 +93,7 @@ namespace AshenVale
         public const int InventoryTarget = 100;     // Upgrade targets: 0-3 worn slot, 100 + i inventory item i
 
         // Main part, rare part per tier (see Tier): Emberhaven, Mosswood, Ashen Marsh, Highspire, the coast, the deep forest, the ruins.
-        static readonly int[] WeaponParts = { Parts.EmberAsh, Parts.EmberCore, Parts.BoarTusk, Parts.WraithSilk, Parts.LurkerScale, Parts.WispEmber,
+        static readonly int[] WeaponParts = { Parts.ShrewTuft, Parts.EmberCore, Parts.BoarTusk, Parts.WraithSilk, Parts.LurkerScale, Parts.WispEmber,
                                               Parts.TrollTooth, Parts.DwarfRune, Parts.SharkFang, Parts.PirateGold, Parts.OwlFeather, Parts.ArcaneDust,
                                               Parts.CursedBone, Parts.VoidShard };
         static readonly int[] ArmorParts = { Parts.SproutLeaf, Parts.EmberCore, Parts.MossTuft, Parts.ShadeEssence, Parts.ToadSlime, Parts.WispEmber,

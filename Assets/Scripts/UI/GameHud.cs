@@ -899,7 +899,7 @@ namespace AshenVale
             Fill(new Rect(r.xMax - 1, r.y, 1, r.height), color);
         }
 
-        // "PARTS  Ember Ash 12 · Boar Tusk 3" (only the ones you carry).
+        // "PARTS  Shrew Tuft 12 · Boar Tusk 3" (only the ones you carry).
         static string PartsLine(Character ch)
         {
             var text = new System.Text.StringBuilder("PARTS  ");
