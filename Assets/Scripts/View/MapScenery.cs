@@ -266,6 +266,64 @@ namespace AshenVale
                     platformBody = new Color(.30f, .36f, .50f), platformTop = new Color(.56f, .66f, .84f),
                     accent = new Color(.65f, .92f, 1f), farStyle = "stalactites", midStyle = "crystals", outdoors = false,
                 };
+                // ---- Saltmarrow: the beach, the port, the reef, sea caves, the galleon, the gallows cliffs
+                case "beach": return new Theme
+                {
+                    skyBottom = new Color(1f, .92f, .78f), skyTop = new Color(.40f, .68f, .92f),
+                    far = new Color(.30f, .62f, .80f), farDark = new Color(.22f, .50f, .70f),
+                    mid = new Color(.36f, .66f, .36f), midDark = new Color(.52f, .38f, .24f),
+                    groundBody = new Color(.72f, .60f, .40f), groundTop = new Color(.94f, .86f, .62f),
+                    platformBody = new Color(.66f, .54f, .36f), platformTop = new Color(.92f, .84f, .60f),
+                    accent = new Color(1f, .98f, .85f), farStyle = "sea", midStyle = "palms",
+                    ladderRail = new Color(.50f, .36f, .22f), ladderRung = new Color(.70f, .54f, .34f),
+                    hanging = new Color(.60f, .50f, .34f),
+                };
+                case "port": return new Theme     // Saltmarrow: timber quay, masts behind
+                {
+                    skyBottom = new Color(.98f, .84f, .66f), skyTop = new Color(.38f, .58f, .84f),
+                    far = new Color(.32f, .58f, .76f), farDark = new Color(.24f, .48f, .66f),
+                    mid = new Color(.58f, .44f, .30f), midDark = new Color(.40f, .28f, .18f),
+                    groundBody = new Color(.42f, .30f, .20f), groundTop = new Color(.70f, .54f, .36f),
+                    platformBody = new Color(.46f, .32f, .20f), platformTop = new Color(.74f, .56f, .36f),
+                    accent = new Color(1f, .82f, .48f), farStyle = "sea", midStyle = "houses",
+                };
+                case "reef": return new Theme     // Wreckers' Reef: dark rock in the surf, wreck timbers
+                {
+                    skyBottom = new Color(.86f, .90f, .90f), skyTop = new Color(.36f, .56f, .76f),
+                    far = new Color(.26f, .52f, .66f), farDark = new Color(.18f, .40f, .56f),
+                    mid = new Color(.36f, .40f, .40f), midDark = new Color(.30f, .22f, .16f),
+                    groundBody = new Color(.30f, .34f, .36f), groundTop = new Color(.52f, .58f, .56f),
+                    platformBody = new Color(.40f, .30f, .20f), platformTop = new Color(.60f, .46f, .30f),
+                    accent = new Color(.90f, .96f, 1f), farStyle = "sea", midStyle = "crystals",
+                    hanging = new Color(.30f, .48f, .40f),
+                };
+                case "cove": return new Theme     // Smugglers' Cove and the grotto: sea caves lit teal from the water
+                {
+                    skyBottom = new Color(.08f, .20f, .22f), skyTop = new Color(.03f, .08f, .10f),
+                    far = new Color(.14f, .26f, .28f), farDark = new Color(.10f, .20f, .22f),
+                    mid = new Color(.24f, .34f, .34f), midDark = new Color(.18f, .26f, .26f),
+                    groundBody = new Color(.20f, .24f, .24f), groundTop = new Color(.40f, .48f, .46f),
+                    platformBody = new Color(.34f, .26f, .18f), platformTop = new Color(.54f, .42f, .28f),
+                    accent = new Color(.45f, .95f, .85f), farStyle = "stalactites", midStyle = "timbers", outdoors = false,
+                };
+                case "galleon": return new Theme  // the Black Galleon and the hold: tarred timber, lantern light
+                {
+                    skyBottom = new Color(.30f, .22f, .20f), skyTop = new Color(.10f, .08f, .10f),
+                    far = new Color(.22f, .18f, .16f), farDark = new Color(.16f, .12f, .11f),
+                    mid = new Color(.34f, .24f, .16f), midDark = new Color(.22f, .15f, .10f),
+                    groundBody = new Color(.26f, .18f, .12f), groundTop = new Color(.48f, .34f, .22f),
+                    platformBody = new Color(.30f, .20f, .13f), platformTop = new Color(.52f, .36f, .22f),
+                    accent = new Color(1f, .74f, .36f), farStyle = "stalactites", midStyle = "timbers", outdoors = false,
+                };
+                case "gallows": return new Theme  // Gallows Point: grey storm over the cliffs
+                {
+                    skyBottom = new Color(.62f, .64f, .66f), skyTop = new Color(.26f, .30f, .38f),
+                    far = new Color(.30f, .40f, .48f), farDark = new Color(.22f, .30f, .38f),
+                    mid = new Color(.38f, .40f, .42f), midDark = new Color(.26f, .26f, .28f),
+                    groundBody = new Color(.32f, .34f, .36f), groundTop = new Color(.50f, .56f, .48f),
+                    platformBody = new Color(.38f, .40f, .42f), platformTop = new Color(.54f, .58f, .52f),
+                    accent = new Color(.80f, .84f, .88f), farStyle = "sea", midStyle = "deadtrees",
+                };
                 default: return new Theme   // "meadow"
                 {
                     skyBottom = new Color(.74f, .90f, 1f), skyTop = new Color(.36f, .62f, .93f),
@@ -537,6 +595,17 @@ namespace AshenVale
                         Sprites.Blob("Snow cap", new Color(.95f, .95f, 1f, .85f), 1.8f, 1.2f, FarOrder + 1, layer, x, G + h * .55f);
                     }
                     break;
+                case "sea":
+                    Sprites.Band("Sea", theme.far, theme.farDark, (x1 - x0) + 10f, 5f, FarOrder, layer, (x0 + x1) * .5f, G + 2f);
+                    Sprites.Band("Horizon", new Color(theme.accent.r, theme.accent.g, theme.accent.b, .5f), new Color(theme.accent.r, theme.accent.g, theme.accent.b, 0f),
+                                 (x1 - x0) + 10f, .5f, FarOrder + 1, layer, (x0 + x1) * .5f, G + 4.6f);
+                    for (float x = x0; x < x1; x += 9f + (float)rng.NextDouble() * 9f)
+                    {
+                        Sprites.Block("Hull", theme.farDark, 1.6f, .35f, FarOrder + 1, layer, x, G + 4.4f);
+                        Sprites.Block("Mast", theme.farDark, .12f, 1.3f, FarOrder + 1, layer, x, G + 5.1f);
+                        Sprites.Block("Sail", new Color(theme.accent.r, theme.accent.g, theme.accent.b, .8f), .8f, .9f, FarOrder + 2, layer, x + .3f, G + 5.2f);
+                    }
+                    break;
                 case "deadtrees":
                     Sprites.Blob("Far bank", theme.farDark, (x1 - x0) + 10f, 4f, FarOrder, layer, (x0 + x1) * .5f, G - .5f);
                     for (float x = x0; x < x1; x += 2f + (float)rng.NextDouble() * 3f)
@@ -585,6 +654,20 @@ namespace AshenVale
                         Sprites.Block("Trunk", theme.midDark, .6f, h, MidOrder, layer, x, G + h * .5f);
                         for (int i = 0; i < 3; i++)
                             Sprites.Blob("Canopy", theme.mid, 3f + (float)rng.NextDouble(), 2.4f, MidOrder + 1, layer, x - 1f + i, G + h + (i == 1 ? .6f : 0));
+                    }
+                    break;
+                case "palms":
+                    for (float x = x0; x < x1; x += 3.5f + (float)rng.NextDouble() * 4f)
+                    {
+                        float h = 3.5f + (float)rng.NextDouble() * 2.5f, lean = (float)rng.NextDouble() * .8f - .4f;
+                        var trunk = Sprites.Block("Palm trunk", theme.midDark, .35f, h, MidOrder, layer, x + lean * h * .5f, G + h * .5f);
+                        trunk.transform.rotation = Quaternion.Euler(0, 0, -lean * 40f);
+                        for (int i = 0; i < 5; i++)
+                        {
+                            var frond = Sprites.Blob("Frond", theme.mid, 2.4f, .5f, MidOrder + 1, layer, x + lean * h, G + h);
+                            frond.transform.rotation = Quaternion.Euler(0, 0, -70f + i * 35f);
+                            frond.transform.localScale = new Vector3(1f, 1f, 1f);
+                        }
                     }
                     break;
                 case "timbers":   // mine props: posts and a cap beam, a lamp on some

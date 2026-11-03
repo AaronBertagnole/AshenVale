@@ -140,6 +140,16 @@ namespace AshenVale
             a[Maps.DeepForge] = new MapArtDef { ambient = new[] { Embers() } };
             a[Maps.ColossusVault] = a[Maps.DeepForge];
             a[Maps.CrystalHollow] = new MapArtDef { ambient = new[] { Motes() } };
+            // Saltmarrow: spray on the open coast, rain on the point, lantern motes below decks
+            var spray = new MapArtDef { ambient = new[] { Spray() } };
+            a[Maps.BrackwaterShore] = spray;
+            a[Maps.Saltmarrow] = spray;
+            a[Maps.WreckersReef] = spray;
+            a[Maps.GallowsPoint] = new MapArtDef { ambient = new[] { Rain() } };
+            a[Maps.SmugglersCove] = new MapArtDef { ambient = new[] { Motes() } };
+            a[Maps.SirensGrotto] = a[Maps.SmugglersCove];
+            a[Maps.BlackGalleon] = new MapArtDef { ambient = new[] { Embers() } };
+            a[Maps.CaptainsHold] = a[Maps.BlackGalleon];
             return a;
         }
 
@@ -171,6 +181,18 @@ namespace AshenVale
         {
             return new AmbientDef { name = "Snow", drift = Drift.Fall, aroundView = true, count = 45, tint = new Color(1f, 1f, 1f, .8f),
                                     sizeMin = .05f, sizeMax = .1f, speed = .4f, sway = .3f, rate = .3f, order = 14 };
+        }
+
+        static AmbientDef Spray()
+        {
+            return new AmbientDef { name = "Sea spray", drift = Drift.Float, aroundView = true, count = 30, tint = new Color(.9f, .97f, 1f, .7f),
+                                    sizeMin = .05f, sizeMax = .12f, sway = .5f, rate = .5f, order = 14 };
+        }
+
+        static AmbientDef Rain()
+        {
+            return new AmbientDef { name = "Rain", drift = Drift.Fall, aroundView = true, count = 70, tint = new Color(.75f, .82f, .9f, .55f),
+                                    sizeMin = .04f, sizeMax = .07f, speed = 3f, sway = .1f, rate = .1f, order = 14 };
         }
 
         static AmbientDef Embers()

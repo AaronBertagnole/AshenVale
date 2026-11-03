@@ -258,7 +258,10 @@ namespace AshenVale
                          AmberleafTrail = 7, MossgateHollow = 8, ShaleCliffs = 9, ThornGlade = 10,
                          // Region 3, Highspire (Maps/Highspire.cs): dwarves in the snowy mountains above Shale Cliffs
                          FrostpinePass = 11, Highspire = 12, GlacierSteps = 13, WindwardRidge = 14, IronveinMines = 15,
-                         DeepForge = 16, CrystalHollow = 17, ColossusVault = 18;
+                         DeepForge = 16, CrystalHollow = 17, ColossusVault = 18,
+                         // Region 4, the Saltmarrow coast (Maps/Saltmarrow.cs): pirate beaches east of the Ashen Marsh
+                         BrackwaterShore = 19, Saltmarrow = 20, WreckersReef = 21, SmugglersCove = 22, BlackGalleon = 23,
+                         GallowsPoint = 24, SirensGrotto = 25, CaptainsHold = 26;
         public const int FirstTown = Emberhaven;    // every hero knows it; where you wake if nothing else is known
 
         // The world so far (west to east):
@@ -273,6 +276,7 @@ namespace AshenVale
         {
             var list = new List<MapDef>(Core);
             list.AddRange(HighspireMaps());
+            list.AddRange(SaltmarrowMaps());
             for (int i = 0; i < list.Count; i++)
                 if (list[i].id != i) Debug.LogError("Maps.All is out of order at " + i + ": " + list[i].name + " has id " + list[i].id);
             return list.ToArray();
@@ -309,7 +313,7 @@ namespace AshenVale
             MapLayout.Build(AshenMarsh, "Ashen Marsh", "marsh", MapKind.Field, AshenMarshLayout,
                 new[] { MapLayout.S('t', Monsters.MarshToad), MapLayout.S('l', Monsters.BogLurker),
                         MapLayout.S('w', Monsters.AshWisp), MapLayout.S('k', Monsters.SunkenChest) },
-                new[] { MapLayout.L('E', Cinderford, 'E') }),
+                new[] { MapLayout.L('E', Cinderford, 'E'), MapLayout.L('P', BrackwaterShore, 'P') }),
             // The path from Emberfields down toward Mosswood. Until Amberleaf Trail has its own picture
             // (Art/Backdrops/amberleaf_trail.png), it shows the Emberfields forest mirrored.
             MapLayout.WithBackdrop(MapLayout.Build(AmberleafTrail, "Amberleaf Trail", "autumn", MapKind.Field, AmberleafTrailLayout,
@@ -470,7 +474,7 @@ namespace AshenVale
             ..........|.....=============.............=============.............===========.....
             ..........|..t........................t..........................l..................
             ..........|========.............=============...............===========.............
-            .E..@.....|.t...........t.............l...........t.............l.............t.....
+            .E..@.....|.t...........t.............l...........t.............l.............t..P.
             ####################################################################################";
 
         // Downhill: arrive on the high ledge at the top left and walk the terraces down to the exit on the right.

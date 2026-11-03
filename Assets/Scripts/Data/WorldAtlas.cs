@@ -52,6 +52,15 @@ namespace AshenVale
                 Place(s, Maps.CrystalHollow,  .36f, .10f, true);
                 Place(s, Maps.DeepForge,      .34f, .32f);
                 Place(s, Maps.ColossusVault,  .40f, .40f);
+                // Region 4, the coast: down to the sea east of the marsh, out along the reefs to the point.
+                Place(s, Maps.BrackwaterShore, .63f, .86f);
+                Place(s, Maps.Saltmarrow,      .71f, .93f);
+                Place(s, Maps.WreckersReef,    .79f, .86f);
+                Place(s, Maps.SirensGrotto,    .84f, .94f, true);
+                Place(s, Maps.SmugglersCove,   .87f, .80f);
+                Place(s, Maps.BlackGalleon,    .92f, .70f);
+                Place(s, Maps.GallowsPoint,    .95f, .58f);
+                Place(s, Maps.CaptainsHold,    .97f, .46f);
                 spots = s;
                 return spots;
             }

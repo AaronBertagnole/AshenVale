@@ -50,7 +50,10 @@ namespace AshenVale
                          Thornmother = 18, ThornSprout = 19,
                          // Highspire (Monsters/Highspire.cs)
                          FrostWolf = 20, SnowHare = 21, IcicleBat = 22, RimeWisp = 23, FrostTroll = 24, ForgeImp = 25,
-                         SlagBeetle = 26, RuneSentinel = 27, CaveTroll = 28, RustedColossus = 29, FrostChest = 30;
+                         SlagBeetle = 26, RuneSentinel = 27, CaveTroll = 28, RustedColossus = 29, FrostChest = 30,
+                         // Saltmarrow coast (Monsters/Saltmarrow.cs)
+                         SandCrab = 31, GullHarpy = 32, TideLurcher = 33, ReefEel = 34, CutlassRat = 35, PowderMonkey = 36,
+                         BarrelMimic = 37, DeckGhoul = 38, BosunWraith = 39, HangedCorsair = 40, CaptainMarrow = 41, BarnacleChest = 42;
 
         // In id order. Later regions live in Data/Monsters/<Region>.cs and are appended here.
         public static MonsterDef[] All { get { return all ?? (all = Assemble()); } }
@@ -60,6 +63,7 @@ namespace AshenVale
         {
             var list = new System.Collections.Generic.List<MonsterDef>(Core);
             list.AddRange(HighspireMonsters());
+            list.AddRange(SaltmarrowMonsters());
             return list.ToArray();
         }
 
