@@ -58,9 +58,9 @@ namespace AshenVale
                 Place(s, Maps.WreckersReef,    .79f, .86f);
                 Place(s, Maps.SirensGrotto,    .84f, .94f, true);
                 Place(s, Maps.SmugglersCove,   .87f, .80f);
-                Place(s, Maps.BlackGalleon,    .92f, .70f);
-                Place(s, Maps.GallowsPoint,    .95f, .58f);
-                Place(s, Maps.CaptainsHold,    .97f, .46f);
+                Place(s, Maps.BlackGalleon,    .90f, .70f);
+                Place(s, Maps.GallowsPoint,    .93f, .58f);
+                Place(s, Maps.CaptainsHold,    .93f, .44f);
                 // Region 5, the deep forest: north from Saltmarrow's gate, in under the trees.
                 Place(s, Maps.ThistledownTrail, .68f, .76f);
                 Place(s, Maps.Eldermere,        .64f, .64f);
@@ -74,11 +74,11 @@ namespace AshenVale
                 Place(s, Maps.ForgottenStair,   .74f, .14f);
                 Place(s, Maps.Lastlight,        .64f, .08f);
                 Place(s, Maps.SunkenAvenue,     .56f, .16f);
-                Place(s, Maps.HallOfIdols,      .50f, .08f);
-                Place(s, Maps.Oubliette,        .46f, .18f, true);
-                Place(s, Maps.WeepingCatacombs, .58f, .28f);
-                Place(s, Maps.BlackZiggurat,    .52f, .38f);
-                Place(s, Maps.SleepersThrone,   .58f, .48f);
+                Place(s, Maps.HallOfIdols,      .48f, .08f);
+                Place(s, Maps.Oubliette,        .40f, .14f, true);
+                Place(s, Maps.WeepingCatacombs, .46f, .26f);
+                Place(s, Maps.BlackZiggurat,    .50f, .36f);
+                Place(s, Maps.SleepersThrone,   .56f, .46f);
                 spots = s;
                 return spots;
             }
