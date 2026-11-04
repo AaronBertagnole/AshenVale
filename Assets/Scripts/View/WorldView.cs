@@ -187,7 +187,12 @@ namespace AshenVale
             var h = p.Hero;
             if (p.dead) return "death";
             if (p.hurtVisual > 0) return "hurt";
-            if (p.attackVisual > 0) return p.lastWasSkill ? h.skillAnim : (p.comboStep % 2 == 0 ? h.basicAnimA : h.basicAnimB);
+            if (p.attackVisual > 0)
+            {
+                // comboStep is bumped before the swing, so the knight's first basic attack (step 1) is the thrust.
+                bool useA = h.dragonKnight ? p.comboStep % 2 == 1 : p.comboStep % 2 == 0;
+                return p.lastWasSkill ? h.skillAnim : (useA ? h.basicAnimA : h.basicAnimB);
+            }
             if (p.climbing) return "run";
             if (p.crouching) return "idle";
             if (!p.grounded) return p.vy > 0 ? "jump" : "fall";
