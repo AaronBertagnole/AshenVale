@@ -152,8 +152,8 @@ Body sizes (width x height, in px at 100 px per unit) from `Assets/Scripts/Data/
 | Key | Monster | Lv | Body |
 |---|---|---|---|
 | `hedge_shrew` | Hedge Shrew | 1 | 96 x 58 (painted: idle 8 frames, move 8) |
-| `ash_sprout` | Ash Sprout | 2 | 80 x 80 |
-| `thornback_hedgehog` | Thornback Hedgehog | 4 | 120 x 90 |
+| `ash_sprout` | Ash Sprout | 2 | 76 x 92 (painted, idle) |
+| `thornback_hedgehog` | Thornback Hedgehog | 4 | 120 x 86 (painted, idle) |
 | `old_chest` | Old Chest | 4 | 100 x 80 |
 | `moss_crawler` | Moss Crawler | 6 | 100 x 70 |
 | `bramble_boar` | Bramble Boar | 8 | 140 x 100 |
@@ -194,7 +194,7 @@ unless one of these files exists (a merchant or smith character standing in fron
 ### Monster parts: `Art/Parts/<part>.png`
 
 A painted icon per part, 64 x 64 with a transparent background, named after the part in lower case with underscores
-(`shrew_tuft.png`, `sprout_leaf.png`, `moss_tuft.png`, `ember_core.png` so far). A part with an icon shows it when it drops (half a unit
+(`shrew_tuft.png`, `sprout_leaf.png`, `moss_tuft.png`, `ember_core.png`, `hedgehog_quill.png` so far). A part with an icon shows it when it drops (half a unit
 tall) and in the bag's materials tab and the merchant's sell list; parts without one stay coloured blobs.
 
 ### Potions: `Art/Items/hp_potion.png`, `mp_potion.png`
