@@ -3,7 +3,7 @@ using UnityEngine;
 namespace AshenVale
 {
     // One kind of monster. Like classic MapleStory, every monster kind has a fixed level and fixed stats:
-    // an Emberling is always a level 1 Emberling, whoever meets it. Maps say which monsters live where
+    // a Hedge Shrew is always a level 1 Hedge Shrew, whoever meets it. Maps say which monsters live where
     // (see MapDefs), so a map's level range comes from its monsters.
     //
     // Behaviour:
@@ -43,7 +43,7 @@ namespace AshenVale
     public static partial class Monsters
     {
         // The first four keep their old numbers.
-        public const int Emberling = 0, EliteEmberling = 1, MossCrawler = 2, VioletWraith = 3,
+        public const int HedgeShrew = 0, ThornbackHedgehog = 1, MossCrawler = 2, VioletWraith = 3,
                          AshSprout = 4, OldChest = 5, BrambleBoar = 6, MossyChest = 7, DenShade = 8,
                          MarshToad = 9, BogLurker = 10, AshWisp = 11, SunkenChest = 12,
                          LeafBeetle = 13, EmberFox = 14, Mossling = 15, CragGoat = 16, RockMite = 17,
@@ -77,13 +77,13 @@ namespace AshenVale
 
         static readonly MonsterDef[] Core =
         {
-            new MonsterDef { key = "emberling", name = "Emberling", level = 1, color = new Color(.86f, .38f, .25f),
-                width = .85f, height = .9f, hp = 40, speed = 1.6f, damage = 7, xp = 7, goldMin = 4, goldRange = 5,
-                part = Parts.EmberAsh },
-            new MonsterDef { key = "elite_emberling", name = "Elite Emberling", level = 4, color = new Color(.78f, .25f, .62f),
-                width = 1.15f, height = 1.35f, hp = 130, speed = 1.5f, damage = 14, xp = 22, goldMin = 14, goldRange = 9,
+            new MonsterDef { key = "hedge_shrew", name = "Hedge Shrew", level = 1, color = new Color(.62f, .48f, .34f),
+                width = .85f, height = .6f, hp = 40, speed = 1.8f, damage = 7, xp = 7, goldMin = 4, goldRange = 5,
+                part = Parts.ShrewTuft },          // scurries through the leaf litter of Emberfields
+            new MonsterDef { key = "thornback_hedgehog", name = "Thornback Hedgehog", level = 4, color = new Color(.45f, .32f, .22f),
+                width = 1.2f, height = .9f, hp = 130, speed = 1.5f, damage = 14, xp = 22, goldMin = 14, goldRange = 9,
                 aggressive = true, respawn = 15f,
-                part = Parts.EmberCore, partChance = .5f },
+                part = Parts.HedgehogQuill, partChance = .5f },
             new MonsterDef { key = "moss_crawler", name = "Moss Crawler", level = 6, color = new Color(.31f, .71f, .45f),
                 width = 1f, height = .7f, hp = 140, speed = 1.4f, damage = 14, xp = 20, goldMin = 15, goldRange = 10,
                 part = Parts.MossTuft },
@@ -97,7 +97,7 @@ namespace AshenVale
             new MonsterDef { key = "old_chest", name = "Old Chest", level = 4, color = new Color(.62f, .43f, .22f),
                 width = 1f, height = .8f, hp = 100, speed = 0f, damage = 0, xp = 20, goldMin = 35, goldRange = 25,
                 harmless = true, respawn = 45f, itemChance = .6f,
-                chestParts = new[] { Parts.EmberAsh, Parts.SproutLeaf, Parts.EmberAsh, Parts.SproutLeaf, Parts.EmberCore } },
+                chestParts = new[] { Parts.ShrewTuft, Parts.SproutLeaf, Parts.ShrewTuft, Parts.HedgehogQuill, Parts.EmberCore } },
             new MonsterDef { key = "bramble_boar", name = "Bramble Boar", level = 8, color = new Color(.55f, .38f, .27f),
                 width = 1.4f, height = 1f, hp = 200, speed = 2.6f, damage = 20, xp = 26, goldMin = 19, goldRange = 12,
                 aggressive = true,

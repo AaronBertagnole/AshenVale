@@ -293,8 +293,8 @@ namespace AshenVale
         static readonly MapDef[] Core =
         {
             MapLayout.WithBackdrop(MapLayout.Build(Emberfields, "Emberfields", "autumn", MapKind.Field, EmberfieldsLayout,
-                    new[] { MapLayout.S('a', Monsters.Emberling), MapLayout.S('b', Monsters.AshSprout),
-                            MapLayout.S('c', Monsters.EliteEmberling), MapLayout.S('k', Monsters.OldChest) },
+                    new[] { MapLayout.S('a', Monsters.HedgeShrew), MapLayout.S('b', Monsters.AshSprout),
+                            MapLayout.S('c', Monsters.ThornbackHedgehog), MapLayout.S('k', Monsters.OldChest) },
                     new[] { MapLayout.L('A', Emberhaven, 'A'), MapLayout.L('B', AmberleafTrail, 'B') }),
                 "Art/Backdrops/emberfields", 116f / 724f, 42f),   // path 116 px above the bottom of the 724 px picture
             MapLayout.WithBackdrop(MapLayout.Build(Mosswood, "Mosswood", "forest", MapKind.Field, MosswoodLayout,
