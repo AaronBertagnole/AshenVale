@@ -125,9 +125,9 @@ If a picture's path is not 116 px above the bottom, give the map its own `MapLay
 | `sky.png` | Fills the screen behind everything, fixed to the camera | 2560 x 1440 | centre (scaled to cover) |
 | `far.png` | Distant hills, mountains, trees. Tiles sideways; transparent above the silhouettes | 2048 x 1000 | bottom edge, about at ground level |
 | `mid.png` | Nearer trees, houses, rocks. Tiles sideways; transparent above | 2048 x 700 | bottom edge, about at ground level |
-| `ground.png` | The ground strip. Tiles sideways; its **top edge is the walking surface** | 256 x 160 | top edge |
+| `ground.png` | The ground strip. Tiles sideways; its **top edge is the walking surface** (a theme can set `groundSurface` in MapScenery when the tile shows a strip of path above the edge, so feet land on the edge) | 256 x 160 | top edge |
 | `ground_back.png` | Optional strip just behind your feet, fading out at its top, so the ground blends into a backdrop | 256 x 70 | bottom edge, on the walking surface |
-| `platform_mid.png` | Middle of a platform, tiles sideways; **top edge is the walking surface** | 100 x 70 | top edge |
+| `platform_mid.png` | Middle of a platform, tiles sideways; **top edge is the walking surface** (`platformSurface`, as for the ground) | 100 x 70 | top edge |
 | `platform_left.png`, `platform_right.png` | Optional rounded ends for platforms | 100 x 70 each | top edge |
 | `ladder.png` | One section of ladder (or rope), tiles upward | 60 x 100 | bottom edge |
 
