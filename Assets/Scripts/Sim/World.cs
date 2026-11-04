@@ -182,7 +182,7 @@ namespace AshenVale
 
             // Cancel a committed attack/leap when interrupted; no delayed hits after death/teleport.
             if (p.Hero.dragonKnight && (p.knockTime > 0 || p.climbing))
-            { p.attackPending = false; p.attackVisual = 0; p.leapActive = false; p.landVisual = 0; }
+            { p.attackPending = false; p.attackVisual = 0; p.leapActive = false; p.landVisual = p.fangLungeTime = 0; }
             Move(p, def, input, dt, !town);
             if (p.attackPending)
             {
@@ -190,6 +190,8 @@ namespace AshenVale
                 if (p.attackWindup <= 0)
                 {
                     p.attackPending = false;
+                    if (p.Hero.dragonKnight && p.lastWasSkill && p.grounded)
+                        p.fangLungeTime = Mathf.Max(0f, p.Hero.fangLungeDuration);
                     ResolveMelee(p, map, p.lastWasSkill, p.attackDamage, p.attackFacing);
                 }
             }
@@ -264,9 +266,18 @@ namespace AshenVale
                 { p.dashTime = Tuning.DashTime; p.dashCooldown = Tuning.DashCooldown; p.immunity = Mathf.Max(p.immunity, Tuning.DashImmunity); }
             }
             if (knocked) p.vx = p.knockVx;
+            else if (p.fangLungeTime > 0 && p.grounded)
+            {
+                // Integrate only the remaining lunge time, including a partial final tick.
+                float step = Mathf.Min(dt, p.fangLungeTime);
+                p.vx = p.attackFacing * Mathf.Max(0f, p.Hero.fangLungeDistance) /
+                    Mathf.Max(.001f, p.Hero.fangLungeDuration) * step / Mathf.Max(.000001f, dt);
+                p.fangLungeTime = Mathf.Max(0f, p.fangLungeTime - step);
+            }
             else if (p.leapActive) p.vx = p.leapDirection * p.Hero.leapSpeed;
             else if (p.dashTime > 0) { p.dashTime -= dt; p.vx = p.facing * Tuning.DashSpeed; }
             else p.vx = axis * p.Hero.moveSpeed * (p.crouching ? Tuning.CrouchSpeedFactor : 1f);
+            if (!p.grounded) p.fangLungeTime = 0;
             p.x = Mathf.Clamp(p.x + (p.climbing ? 0 : p.vx * dt), def.minX, def.maxX);
 
             if (p.climbing)
@@ -304,7 +315,7 @@ namespace AshenVale
         void Teleport(PlayerState p, int mapId, float x, float y)
         {
             p.attackPending = p.leapActive = false;
-            p.attackWindup = p.attackVisual = p.attackDuration = p.landVisual = 0;
+            p.attackWindup = p.attackVisual = p.attackDuration = p.landVisual = p.fangLungeTime = 0;
             bool arriving = p.map != mapId;
             p.map = mapId;
             p.ch.SeeMap(mapId);     // the world map shows every map you have been to
@@ -412,7 +423,7 @@ namespace AshenVale
         void ResolveMelee(PlayerState p, MapRuntime map, bool skill, int damage, int facing)
         {
             var hero = p.Hero;
-            events.Add(new SimEvent { kind = hero.dragonKnight ? (skill ? SimEventKind.DragonFang : SimEventKind.DragonThrust) : SimEventKind.Slash, map = map.def.id, playerId = p.id, heavy = skill, facing = facing,
+            events.Add(new SimEvent { kind = hero.dragonKnight ? (skill ? SimEventKind.DragonFang : (p.comboStep % 2 == 0 ? SimEventKind.DragonSweep : SimEventKind.DragonThrust)) : SimEventKind.Slash, map = map.def.id, playerId = p.id, heavy = skill, facing = facing,
                                       x = p.x + facing * (skill ? 1.5f : 1.1f), y = p.y + 1.1f });
             // Reach is measured to the monster's near edge, not its centre (so a wide boss can be hit from where you
             // touch it), and the weapon's height band (knees to above the head) must overlap the monster's body, so a
@@ -738,6 +749,7 @@ namespace AshenVale
 
         void Hurt(MapRuntime map, PlayerState p, MonsterState m, int damage)
         {
+            p.fangLungeTime = 0;
             p.hp -= DamageTaken(damage, p);
             p.immunity = Tuning.HitImmunity;
             p.hurtVisual = Tuning.HurtFlash;

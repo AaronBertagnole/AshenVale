@@ -332,7 +332,7 @@ namespace AshenVale
         public void HostAfterTicks(float dt)
         {
             if (CurrentRole != Role.Host || !handlersRegistered) return;
-            foreach (var e in world.events) if (e.kind == SimEventKind.Slash || e.kind == SimEventKind.BossSlam || e.kind == SimEventKind.DragonThrust || e.kind == SimEventKind.DragonFang || e.kind == SimEventKind.DragonFissure) pendingEvents.Add(e);
+            foreach (var e in world.events) if (e.kind == SimEventKind.Slash || e.kind == SimEventKind.BossSlam || e.kind == SimEventKind.DragonThrust || e.kind == SimEventKind.DragonFang || e.kind == SimEventKind.DragonFissure || e.kind == SimEventKind.DragonSweep) pendingEvents.Add(e);
             snapshotTimer += dt;
             characterTimer += dt;
             if (snapshotTimer >= SnapshotInterval)
