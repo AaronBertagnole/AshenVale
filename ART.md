@@ -164,8 +164,8 @@ Body sizes (width x height, in px at 100 px per unit) from `Assets/Scripts/Data/
 | `bog_lurker` | Bog Lurker | 13 | 140 x 110 |
 | `ash_wisp` | Ash Wisp | 14 | 80 x 90 (floats) |
 | `sunken_chest` | Sunken Chest | 15 | 110 x 90 |
-| `leaf_beetle` | Leaf Beetle | 3 | 95 x 70 |
-| `mossling` | Mossling | 4 | 80 x 75 |
+| `leaf_beetle` | Leaf Beetle | 3 | 96 x 67 (painted: idle 8 frames, move 8) |
+| `mossling` | Mossling | 4 | 80 x 89 (painted: idle 8 frames, move 8) |
 | `ember_fox` | Ember Fox | 5 | 110 x 85 |
 
 The body size is what touches and gets hit; art can be a bit bigger (ears, tails, glow).
