@@ -136,7 +136,8 @@ If a picture's path is not 116 px above the bottom, give the map its own `MapLay
 ### Monsters: `Art/Monsters/<key>/<animation>/00.png, 01.png, ...`
 
 Frames are numbered from `00`, play at 8 per second and are drawn **facing right** (the game mirrors them).
-Put the monster's feet at the bottom centre of the image. `idle` is required to switch a monster to art;
+Put the monster's feet at the bottom centre of the image (the bottom edge of the picture sits on the floor, whatever
+pivot Unity imports it with). `idle` is required to switch a monster to art;
 the others are optional (`idle` is used in their place).
 
 | Animation | Used when |
@@ -150,7 +151,7 @@ Body sizes (width x height, in px at 100 px per unit) from `Assets/Scripts/Data/
 
 | Key | Monster | Lv | Body |
 |---|---|---|---|
-| `hedge_shrew` | Hedge Shrew | 1 | 85 x 60 |
+| `hedge_shrew` | Hedge Shrew | 1 | 96 x 58 (painted: idle 8 frames, move 8) |
 | `ash_sprout` | Ash Sprout | 2 | 80 x 80 |
 | `thornback_hedgehog` | Thornback Hedgehog | 4 | 120 x 90 |
 | `old_chest` | Old Chest | 4 | 100 x 80 |
