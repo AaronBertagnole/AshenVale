@@ -51,6 +51,11 @@ namespace AshenVale
         public int MaxMp { get { return Hero.baseMp + Tuning.MpPerLevel * (ch.level - 1); } }
 
         public float attackCooldown, attackVisual, dashCooldown, dashTime, immunity, hurtVisual;
+        // Transient combat state; do not add to CharacterData/save files.
+        public float attackWindup, attackDuration;
+        public bool attackPending, leapActive;
+        public int attackFacing, attackDamage, attackSerial;
+        public float leapDirection;
         public int comboStep;
         public bool lastWasSkill;
 
@@ -114,7 +119,7 @@ namespace AshenVale
         public HashSet<int> hitSet;   // monster ids already hit; shared by every arrow of one volley
     }
 
-    public enum SimEventKind { Slash, MonsterHit, LevelUp, PlayerDied, BossSlam }
+    public enum SimEventKind { Slash, MonsterHit, LevelUp, PlayerDied, BossSlam, DragonThrust, DragonFang, DragonFissure }
 
     // Something that happened during a tick, for the view (effects, sounds, numbers) and later for the network.
     public struct SimEvent
