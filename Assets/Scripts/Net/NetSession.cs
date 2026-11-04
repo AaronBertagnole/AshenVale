@@ -332,7 +332,7 @@ namespace AshenVale
         public void HostAfterTicks(float dt)
         {
             if (CurrentRole != Role.Host || !handlersRegistered) return;
-            foreach (var e in world.events) if (e.kind == SimEventKind.Slash || e.kind == SimEventKind.BossSlam) pendingEvents.Add(e);
+            foreach (var e in world.events) if (e.kind == SimEventKind.Slash || e.kind == SimEventKind.BossSlam || e.kind == SimEventKind.DragonThrust || e.kind == SimEventKind.DragonFang || e.kind == SimEventKind.DragonFissure) pendingEvents.Add(e);
             snapshotTimer += dt;
             characterTimer += dt;
             if (snapshotTimer >= SnapshotInterval)
@@ -386,6 +386,7 @@ namespace AshenVale
                     w.WriteValueSafe((byte)flags);
                     w.WriteValueSafe((byte)(p.comboStep & 255));
                     w.WriteValueSafe(p.attackVisual); w.WriteValueSafe(p.hurtVisual); w.WriteValueSafe(p.immunity);
+                    w.WriteValueSafe(p.attackDuration); w.WriteValueSafe((byte)(p.attackSerial & 255));    // the knight's attack clips are timed from these
                     w.WriteValueSafe((short)p.hp); w.WriteValueSafe((short)p.mp); w.WriteValueSafe((short)p.ch.level);
                     w.WriteValueSafe(p.deathClock); w.WriteValueSafe(p.portalCast);
                     w.WriteValueSafe((byte)p.portalMap); w.WriteValueSafe(p.portalX); w.WriteValueSafe(p.portalY);
@@ -420,7 +421,7 @@ namespace AshenVale
                 {
                     if (e.map != viewer.map) continue;
                     w.WriteValueSafe(e.x); w.WriteValueSafe(e.y); w.WriteValueSafe((sbyte)e.facing); w.WriteValueSafe(e.heavy);
-                    w.WriteValueSafe(e.kind == SimEventKind.BossSlam);
+                    w.WriteValueSafe((byte)e.kind);        // Slash, BossSlam or one of the Dragon Knight's effects
                 }
                 nm.CustomMessagingManager.SendNamedMessage(MsgSnapshot, client, w, NetworkDelivery.ReliableFragmentedSequenced);
             }
@@ -506,6 +507,7 @@ namespace AshenVale
                 r.ReadValueSafe(out byte flags);
                 r.ReadValueSafe(out byte combo);
                 r.ReadValueSafe(out float attackVisual); r.ReadValueSafe(out float hurtVisual); r.ReadValueSafe(out float immunity);
+                r.ReadValueSafe(out float attackDuration); r.ReadValueSafe(out byte attackSerial);
                 r.ReadValueSafe(out short hp); r.ReadValueSafe(out short mp); r.ReadValueSafe(out short level);
                 r.ReadValueSafe(out float deathClock); r.ReadValueSafe(out float portalCast);
                 r.ReadValueSafe(out byte portalMap); r.ReadValueSafe(out float portalX); r.ReadValueSafe(out float portalY);
@@ -530,6 +532,7 @@ namespace AshenVale
                 p.returnReady = (flags & 64) != 0;
                 p.comboStep = combo;
                 p.attackVisual = attackVisual; p.hurtVisual = hurtVisual; p.immunity = immunity;
+                p.attackDuration = attackDuration; p.attackSerial = attackSerial;
                 p.hp = hp; p.mp = mp;
                 p.deathClock = deathClock; p.portalCast = portalCast;
                 p.portalMap = Mathf.Clamp(portalMap, 0, Maps.All.Length - 1); p.portalX = portalX; p.portalY = portalY;
@@ -616,8 +619,8 @@ namespace AshenVale
             for (int i = 0; i < slashCount; i++)
             {
                 r.ReadValueSafe(out float x); r.ReadValueSafe(out float y); r.ReadValueSafe(out sbyte facing); r.ReadValueSafe(out bool heavy);
-                r.ReadValueSafe(out bool slam);
-                world.events.Add(new SimEvent { kind = slam ? SimEventKind.BossSlam : SimEventKind.Slash, map = shown, x = x, y = y, facing = facing < 0 ? -1 : 1, heavy = heavy });
+                r.ReadValueSafe(out byte kind);
+                world.events.Add(new SimEvent { kind = (SimEventKind)kind, map = shown, x = x, y = y, facing = facing < 0 ? -1 : 1, heavy = heavy });
             }
         }
     }

@@ -76,6 +76,11 @@ unopened chest moves on after 3 minutes. One chest per map at a time; the secret
 Keys can be changed from the Esc menu (**CONTROLS**): two keys per action, saved on your PC. Every label in the game
 shows your bound keys. The merchant also buys monster parts, and what you pick up is listed at the bottom left.
 
+The **Dragon Knight** fights with commitment (playtest): a basic thrust/sweep has a short windup before the spear
+lands and holds him in place for the swing; **Dragon Fang** (the skill, 25 MP) pierces further through a group; and
+his dash is **Wyrm Leap** (15 MP, from the ground only), a forward leap whose landing cracks the floor and hits
+everything close on both sides. Being knocked back interrupts an attack or a leap. The Ranger is unchanged.
+
 **Thornmother**, the first boss, waits in her glade off the east end of Mosswood (Lv 9, a party job or a well-geared
 solo). She rears up before slamming the roots (step back or jump), calls thorn sprouts, and rages below a third of
 her health. Everyone alive in the glade gets her XP; she always drops Wraith Silk and spills parts like a chest, and

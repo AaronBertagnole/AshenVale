@@ -8,8 +8,8 @@ namespace AshenVale
     // It only reads the World (plus its event list, which it clears); it never changes game state.
     public sealed class WorldView
     {
-        sealed class HeroView { public GameObject go; public SpriteRenderer sr; public string anim = ""; public float clock, lastHp = -1; }
-        sealed class SlashFx { public GameObject obj; public SpriteRenderer sr; public float life, duration, x, y; public int direction; public bool ring; }
+        sealed class HeroView { public GameObject go; public SpriteRenderer sr; public string anim = ""; public float clock, lastHp = -1; public int attackSerial = -1; }
+        sealed class SlashFx { public GameObject obj; public SpriteRenderer sr; public float life, duration, x, y; public int direction; public bool ring; public int dragon; }
 
         // A number that pops up where something was hurt or healed and drifts upward (GameHud draws them).
         public sealed class FloatingNumber
@@ -145,6 +145,7 @@ namespace AshenVale
             {
                 if (e.map != shownMap) continue;
                 if (e.kind == SimEventKind.Slash) SpawnSlash(e);
+                else if (e.kind == SimEventKind.DragonThrust || e.kind == SimEventKind.DragonFang || e.kind == SimEventKind.DragonFissure) SpawnDragonFx(e);
                 else if (e.kind == SimEventKind.BossSlam) SpawnSlamRing(e);
             }
             world.events.Clear();
@@ -197,6 +198,8 @@ namespace AshenVale
         {
             var h = p.Hero;
             string clip = ChooseAnimation(p);
+            if (p.Hero.dragonKnight && p.attackVisual > 0 && p.attackSerial != v.attackSerial)
+            { v.attackSerial = p.attackSerial; v.clock = 0; }
             if (clip != v.anim) { v.anim = clip; v.clock = 0; }
             v.clock += frameDt;
             Sprite[] frames = Sprites.Hero(h.folder + "/" + clip);
@@ -204,6 +207,15 @@ namespace AshenVale
             if (frames.Length > 0)
             {
                 int index = Mathf.FloorToInt(v.clock * fps);
+                if (h.dragonKnight && p.attackVisual > 0 && p.attackDuration > 0)
+                {
+                    // Reserve the first half of the clip for windup; contact at the windup boundary.
+                    float elapsed = p.attackDuration - p.attackVisual;
+                    float windup = p.lastWasSkill ? h.skillWindup : h.basicWindup;
+                    float phase = elapsed < windup ? .5f * elapsed / windup :
+                        .5f + .5f * (elapsed - windup) / Mathf.Max(.01f, p.attackDuration - windup);
+                    index = Mathf.Min(frames.Length - 1, Mathf.FloorToInt(phase * frames.Length));
+                }
                 bool once = clip == "death" || clip == "hurt" || clip == h.basicAnimA || clip == h.basicAnimB || clip == h.skillAnim;
                 index = once ? Mathf.Min(index, frames.Length - 1) : index % frames.Length;
                 v.sr.sprite = frames[index];
@@ -505,6 +517,54 @@ namespace AshenVale
 
         // ---------------------------------------------------------------- effects and camera
 
+        // Temporary procedural effects: no external art required for the combat playtest.
+        void SpawnDragonFx(SimEvent e)
+        {
+            bool fissure = e.kind == SimEventKind.DragonFissure;
+            bool fang = e.kind == SimEventKind.DragonFang;
+            var root = new GameObject(fissure ? "Wyrm Leap Fissure" : fang ? "Dragon Fang" : "Spear Thrust");
+            root.transform.position = new Vector3(e.x, e.y + (fissure ? .04f : 0), 0);
+            var sr = root.AddComponent<SpriteRenderer>();
+            // Share the same sprite material as existing effects (works with the current render pipeline).
+            var sample = Sprites.Block("FX material", Color.white, .01f, .01f, SlashOrder);
+            sr.sharedMaterial = sample.GetComponent<SpriteRenderer>().sharedMaterial;
+            Object.Destroy(sample);
+            if (fissure)
+            {
+                var points = new Vector3[15];
+                for (int i = 0; i < points.Length; i++)
+                    points[i] = new Vector3(-1.65f + i * 3.3f / 14f, i % 2 == 0 ? 0 : .07f, 0);
+                DragonLine(root, sr.sharedMaterial, points, .055f);
+                for (int i = -2; i <= 2; i++)
+                    DragonLine(root, sr.sharedMaterial, new [] { new Vector3(i * .55f, 0, 0), new Vector3(i * .55f + .15f, .24f, 0), new Vector3(i * .55f + .08f, .38f, 0) }, .025f);
+            }
+            else
+            {
+                float length = fang ? 2.8f : 1.6f;
+                DragonLine(root, sr.sharedMaterial, new [] { new Vector3(-length * .5f, 0, 0), new Vector3(length * .5f, 0, 0) }, fang ? .07f : .035f);
+                DragonLine(root, sr.sharedMaterial, new [] { new Vector3(length * .5f - .3f, .17f, 0), new Vector3(length * .5f, 0, 0), new Vector3(length * .5f - .3f, -.17f, 0) }, .045f);
+                if (fang)
+                {
+                    // Angular spectral jaws opening around the piercing spear.
+                    for (int side = -1; side <= 1; side += 2)
+                        DragonLine(root, sr.sharedMaterial, new [] { new Vector3(-1.1f, side * .15f, 0), new Vector3(-.5f, side * .48f, 0), new Vector3(.3f, side * .35f, 0), new Vector3(.65f, side * .12f, 0) }, .07f);
+                }
+            }
+            float duration = fissure ? .55f : fang ? .32f : .2f;
+            slashes.Add(new SlashFx { obj = root, sr = sr, life = duration, duration = duration,
+                direction = e.facing, x = e.x, y = e.y, dragon = fissure ? 3 : fang ? 2 : 1 });
+        }
+
+        static void DragonLine(GameObject parent, Material material, Vector3[] points, float width)
+        {
+            var child = new GameObject("Ember stroke"); child.transform.SetParent(parent.transform, false);
+            var line = child.AddComponent<LineRenderer>();
+            line.sharedMaterial = material; line.useWorldSpace = false;
+            line.positionCount = points.Length; line.SetPositions(points);
+            line.startWidth = line.endWidth = width; line.sortingOrder = SlashOrder;
+            line.startColor = line.endColor = new Color(1f, .58f, .18f, .9f);
+        }
+
         void SpawnSlash(SimEvent e)
         {
             var obj = Sprites.Block(e.heavy ? "Dragon Strike VFX" : "Spear Slash VFX", new Color(1, .1f, .17f, .8f), e.heavy ? 2.8f : 1.35f, e.heavy ? .18f : .09f, SlashOrder);
@@ -532,6 +592,15 @@ namespace AshenVale
                 fx.life -= dt;
                 if (fx.life <= 0) { Object.Destroy(fx.obj); slashes.RemoveAt(i); continue; }
                 float t = fx.life / fx.duration;
+                if (fx.dragon != 0)
+                {
+                    float age = 1f - t;
+                    float grow = Mathf.Min(1f, age * 5f);
+                    fx.obj.transform.localScale = new Vector3((fx.dragon == 3 ? 1 : fx.direction) * (.25f + .75f * grow), 1, 1);
+                    foreach (var line in fx.obj.GetComponentsInChildren<LineRenderer>())
+                        line.startColor = line.endColor = new Color(1f, .58f, .18f, t * .95f);
+                    continue;
+                }
                 if (fx.ring)
                 {
                     float grow = 1f - t;

@@ -179,7 +179,24 @@ namespace AshenVale
             p.dashCooldown = Mathf.Max(0, p.dashCooldown - dt);
             p.immunity = Mathf.Max(0, p.immunity - dt);
 
+            // Cancel a committed attack/leap when interrupted; no delayed hits after death/teleport.
+            if (p.Hero.dragonKnight && (p.knockTime > 0 || p.climbing))
+            { p.attackPending = false; p.attackVisual = 0; p.leapActive = false; }
             Move(p, def, input, dt, !town);
+            if (p.attackPending)
+            {
+                p.attackWindup -= dt;
+                if (p.attackWindup <= 0)
+                {
+                    p.attackPending = false;
+                    ResolveMelee(p, map, p.lastWasSkill, p.attackDamage, p.attackFacing);
+                }
+            }
+            if (p.leapActive && p.grounded)
+            {
+                p.leapActive = false;
+                LandDragonLeap(p, map);
+            }
 
             if (input.hpPotion && p.ch.hpPotions > 0 && p.hp < p.MaxHp) { p.ch.hpPotions--; p.hp = Mathf.Min(p.MaxHp, p.hp + Tuning.PotionHeal(Tuning.HpPotionHeal, Tuning.HpPotionShare, p.MaxHp)); }
             if (input.mpPotion && p.ch.mpPotions > 0 && p.mp < p.MaxMp) { p.ch.mpPotions--; p.mp = Mathf.Min(p.MaxMp, p.mp + Tuning.PotionHeal(Tuning.MpPotionHeal, Tuning.MpPotionShare, p.MaxMp)); }
@@ -200,15 +217,17 @@ namespace AshenVale
             float vertical = Mathf.Clamp(input.moveY, -1f, 1f);
             bool knocked = p.knockTime > 0;
             if (knocked) { p.knockTime -= dt; axis = 0; }
+            if (p.Hero.dragonKnight && (p.attackVisual > 0 || p.leapActive))
+            { axis = 0; vertical = 0; }
             if (axis != 0) p.facing = axis > 0 ? 1 : -1;
-            bool jump = input.jump && !knocked;
+            bool jump = input.jump && !knocked && !(p.Hero.dragonKnight && (p.attackVisual > 0 || p.leapActive));
             p.dropTimer = Mathf.Max(0, p.dropTimer - dt);
 
             Ladder nearby = new Ladder();
             bool atLadder = false;
             foreach (var ladder in def.ladders)
                 if (Mathf.Abs(p.x - ladder.x) < .68f && p.y >= ladder.bottom - .35f && p.y <= ladder.top + .45f) { nearby = ladder; atLadder = true; break; }
-            if (!p.climbing && atLadder && !knocked)
+            if (!p.climbing && atLadder && !knocked && !p.leapActive && !(p.Hero.dragonKnight && p.attackVisual > 0))
             {
                 // Up grabs a ladder you are below the top of; Down grabs one you are standing on top of.
                 bool climbUp = vertical > .1f && p.y < nearby.top - .05f;
@@ -228,8 +247,23 @@ namespace AshenVale
                 else { p.vy = Tuning.JumpSpeed; p.grounded = false; }
             }
             if (allowDash && input.dash && p.dashCooldown <= 0 && !knocked && !p.climbing)
-            { p.dashTime = Tuning.DashTime; p.dashCooldown = Tuning.DashCooldown; p.immunity = Mathf.Max(p.immunity, Tuning.DashImmunity); }
+            {
+                if (p.Hero.dragonKnight)
+                {
+                    if (p.grounded && p.attackVisual <= 0 && p.mp >= p.Hero.leapManaCost)
+                    {
+                        p.mp -= p.Hero.leapManaCost;
+                        p.dashCooldown = p.Hero.leapCooldown;
+                        p.leapActive = true; p.leapDirection = p.facing;
+                        p.grounded = false; p.crouching = false;
+                        p.dropTimer = 0; p.vy = p.Hero.leapJumpSpeed;
+                    }
+                }
+                else
+                { p.dashTime = Tuning.DashTime; p.dashCooldown = Tuning.DashCooldown; p.immunity = Mathf.Max(p.immunity, Tuning.DashImmunity); }
+            }
             if (knocked) p.vx = p.knockVx;
+            else if (p.leapActive) p.vx = p.leapDirection * p.Hero.leapSpeed;
             else if (p.dashTime > 0) { p.dashTime -= dt; p.vx = p.facing * Tuning.DashSpeed; }
             else p.vx = axis * p.Hero.moveSpeed * (p.crouching ? Tuning.CrouchSpeedFactor : 1f);
             p.x = Mathf.Clamp(p.x + (p.climbing ? 0 : p.vx * dt), def.minX, def.maxX);
@@ -268,6 +302,8 @@ namespace AshenVale
         // Puts a player somewhere instantly (map change, town, respawn), standing still.
         void Teleport(PlayerState p, int mapId, float x, float y)
         {
+            p.attackPending = p.leapActive = false;
+            p.attackWindup = p.attackVisual = p.attackDuration = 0;
             bool arriving = p.map != mapId;
             p.map = mapId;
             p.ch.SeeMap(mapId);     // the world map shows every map you have been to
@@ -334,15 +370,25 @@ namespace AshenVale
 
         void Attack(PlayerState p, MapRuntime map, bool skill)
         {
-            if (p.attackCooldown > 0) return;
+            if (p.attackCooldown > 0 || (p.Hero.dragonKnight && (p.leapActive || p.climbing || p.knockTime > 0))) return;
             var hero = p.Hero;
             if (skill && p.mp < hero.skillManaCost) return;
             if (skill) p.mp -= hero.skillManaCost;
             p.lastWasSkill = skill;
             if (!skill) p.comboStep++;
             p.attackCooldown = skill ? hero.skillCooldown : hero.attackCooldown;
-            p.attackVisual = skill ? Tuning.SkillAttackVisual : Tuning.BasicAttackVisual;
+            p.attackVisual = hero.dragonKnight ? p.attackCooldown : (skill ? Tuning.SkillAttackVisual : Tuning.BasicAttackVisual);
+            p.attackDuration = p.attackVisual;
+            p.attackSerial++;
             int damage = hero.baseDamage + p.ch.level * Tuning.DamagePerLevel + p.ch.BonusAttack + (skill ? hero.skillBonus : 0);
+
+            if (hero.dragonKnight)
+            {
+                p.attackPending = true;
+                p.attackWindup = skill ? hero.skillWindup : hero.basicWindup;
+                p.attackFacing = p.facing; p.attackDamage = damage;
+                return;
+            }
 
             if (hero.style == AttackStyle.Arrows)
             {
@@ -358,8 +404,14 @@ namespace AshenVale
                 return;
             }
 
-            events.Add(new SimEvent { kind = SimEventKind.Slash, map = map.def.id, playerId = p.id, heavy = skill, facing = p.facing,
-                                      x = p.x + p.facing * (skill ? 1.5f : 1.1f), y = p.y + 1.1f });
+            ResolveMelee(p, map, skill, damage, p.facing);
+        }
+
+        void ResolveMelee(PlayerState p, MapRuntime map, bool skill, int damage, int facing)
+        {
+            var hero = p.Hero;
+            events.Add(new SimEvent { kind = hero.dragonKnight ? (skill ? SimEventKind.DragonFang : SimEventKind.DragonThrust) : SimEventKind.Slash, map = map.def.id, playerId = p.id, heavy = skill, facing = facing,
+                                      x = p.x + facing * (skill ? 1.5f : 1.1f), y = p.y + 1.1f });
             // Reach is measured to the monster's near edge, not its centre (so a wide boss can be hit from where you
             // touch it), and the weapon's height band (knees to above the head) must overlap the monster's body, so a
             // tall boss can be hit from a ledge level with its trunk.
@@ -370,18 +422,32 @@ namespace AshenVale
                 var d = m.Def;
                 float edge = Mathf.Max(0f, Mathf.Abs(m.x - p.x) - d.width * .5f);
                 float bottom = m.y + d.hover, top = bottom + d.height;
-                if (edge <= range && p.y + 1.7f > bottom - .3f && p.y + .3f < top + .3f && (m.x - p.x) * p.facing >= -d.width * .5f) targets.Add(m);
+                if (edge <= range && p.y + 1.7f > bottom - .3f && p.y + .3f < top + .3f && (m.x - p.x) * facing >= -d.width * .5f) targets.Add(m);
             }
-            targets.Sort((a, b) => ((a.x - p.x) * p.facing).CompareTo((b.x - p.x) * p.facing));
+            targets.Sort((a, b) => ((a.x - p.x) * facing).CompareTo((b.x - p.x) * facing));
             for (int i = 0; i < targets.Count; i++)
             {
                 var m = targets[i];
                 int dealt = skill ? Mathf.Max(1, Mathf.RoundToInt(damage * Mathf.Pow(.8f, i))) : damage;
                 HitMonster(map, m, dealt, p);
                 if (skill) continue;                 // Dragon Strike carries on through the group
-                if (map.monsters.Contains(m)) { m.knockbackVelocity = p.facing * 5.5f; m.knockbackTime = .22f; }
+                if (map.monsters.Contains(m)) { m.knockbackVelocity = facing * 5.5f; m.knockbackTime = .22f; }
                 break;                                // a basic thrust stops at the nearest monster
             }
+        }
+
+        void LandDragonLeap(PlayerState p, MapRuntime map)
+        {
+            events.Add(new SimEvent { kind = SimEventKind.DragonFissure, map = p.map,
+                playerId = p.id, x = p.x, y = p.y, facing = p.facing });
+            int damage = p.Hero.baseDamage + p.ch.level * Tuning.DamagePerLevel + p.ch.BonusAttack + p.Hero.leapBonus;
+            // Snapshot targets: deaths remove entries from the live monster list.
+            var targets = new List<MonsterState>();
+            foreach (var m in map.monsters)
+                if (Mathf.Abs(m.y - p.currentFloor) < .35f &&
+                    Mathf.Abs(m.x - p.x) - m.Def.width * .5f <= p.Hero.fissureRange)
+                    targets.Add(m);
+            foreach (var m in targets) HitMonster(map, m, damage, p);
         }
 
         void UpdateShots(MapRuntime map, float dt)
@@ -680,6 +746,7 @@ namespace AshenVale
                 if (p.grounded) { p.vy = Tuning.KnockbackHop; p.grounded = false; }
             }
             if (p.hp > 0) return;
+            p.attackPending = p.leapActive = false; p.attackVisual = 0;
             p.hp = 0; p.dead = true; p.deathClock = 0; p.portalCast = 0; p.knockTime = 0;
             events.Add(new SimEvent { kind = SimEventKind.PlayerDied, map = map.def.id, playerId = p.id, x = p.x, y = p.y });
         }
