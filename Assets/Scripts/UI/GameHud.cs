@@ -780,10 +780,10 @@ namespace AshenVale
                 bool here = i == me.map, town = def.kind == MapKind.Town;
                 Vector2 at = AtlasPoint(area, i);
                 AtlasMarkerArt.Draw(at, scale, seen, town, def.hasBoss, here, DangerColor(def, ch.level),
-                    (mouse - at).sqrMagnitude < 20f * 20f * scale * scale);
-                AtlasText(area, at.x, at.y + 22 * scale, seen ? def.name : "???", atlasName);
-                AtlasText(area, at.x, at.y + 38 * scale, !seen ? "unexplored" : town ? "Town · waystone" : def.LevelText, atlasSub);
-                if ((mouse - at).sqrMagnitude < 20f * 20f * scale * scale) hovered = i;
+                    (mouse - at).sqrMagnitude < 14f * 14f * scale * scale);
+                AtlasText(area, at.x, at.y + 16 * scale, seen ? def.name : "???", atlasName);
+                AtlasText(area, at.x, at.y + 32 * scale, !seen ? "unexplored" : town ? "Town · waystone" : def.LevelText, atlasSub);
+                if ((mouse - at).sqrMagnitude < 14f * 14f * scale * scale) hovered = i;
             }
 
             int k = 0;
