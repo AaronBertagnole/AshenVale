@@ -145,7 +145,7 @@ namespace AshenVale
             {
                 if (e.map != shownMap) continue;
                 if (e.kind == SimEventKind.Slash) SpawnSlash(e);
-                else if (e.kind == SimEventKind.DragonThrust || e.kind == SimEventKind.DragonFang || e.kind == SimEventKind.DragonFissure) SpawnDragonFx(e);
+                else if (e.kind == SimEventKind.DragonThrust || e.kind == SimEventKind.DragonFang || e.kind == SimEventKind.DragonFissure || e.kind == SimEventKind.DragonSweep) SpawnDragonFx(e);
                 else if (e.kind == SimEventKind.BossSlam) SpawnSlamRing(e);
             }
             world.events.Clear();
@@ -538,6 +538,7 @@ namespace AshenVale
         {
             bool fissure = e.kind == SimEventKind.DragonFissure;
             bool fang = e.kind == SimEventKind.DragonFang;
+            bool sweep = e.kind == SimEventKind.DragonSweep;
             var root = new GameObject(fissure ? "Wyrm Leap Fissure" : fang ? "Dragon Fang" : "Spear Thrust");
             root.transform.position = new Vector3(e.x, e.y + (fissure ? .04f : 0), 0);
             var sr = root.AddComponent<SpriteRenderer>();
@@ -554,6 +555,24 @@ namespace AshenVale
                 for (int i = -2; i <= 2; i++)
                     DragonLine(root, sr.sharedMaterial, new [] { new Vector3(i * .55f, 0, 0), new Vector3(i * .55f + .15f, .24f, 0), new Vector3(i * .55f + .08f, .38f, 0) }, .025f);
             }
+            else if (sweep)
+            {
+                // Flattened crescent at torso height, following the polearm's lateral arc.
+                var arc = new Vector3[17];
+                for (int i = 0; i < arc.Length; i++)
+                {
+                    float angle = Mathf.Lerp(-1.35f, 1.35f, i / 16f);
+                    arc[i] = new Vector3(Mathf.Cos(angle) * 1.5f - .65f,
+                        Mathf.Sin(angle) * .48f, 0);
+                }
+                DragonLine(root, sr.sharedMaterial, arc, .075f);
+                var strokes = root.GetComponentsInChildren<LineRenderer>();
+                foreach (var line in strokes)
+                {
+                    line.startWidth = .015f; line.endWidth = .075f;
+                    line.numCapVertices = 2;
+                }
+            }
             else
             {
                 float length = fang ? 2.8f : 1.6f;
@@ -566,9 +585,9 @@ namespace AshenVale
                         DragonLine(root, sr.sharedMaterial, new [] { new Vector3(-1.1f, side * .15f, 0), new Vector3(-.5f, side * .48f, 0), new Vector3(.3f, side * .35f, 0), new Vector3(.65f, side * .12f, 0) }, .07f);
                 }
             }
-            float duration = fissure ? .55f : fang ? .32f : .2f;
+            float duration = fissure ? .55f : fang ? .32f : sweep ? .16f : .2f;
             slashes.Add(new SlashFx { obj = root, sr = sr, life = duration, duration = duration,
-                direction = e.facing, x = e.x, y = e.y, dragon = fissure ? 3 : fang ? 2 : 1 });
+                direction = e.facing, x = e.x, y = e.y, dragon = fissure ? 3 : fang ? 2 : sweep ? 4 : 1 });
         }
 
         static void DragonLine(GameObject parent, Material material, Vector3[] points, float width)
@@ -611,6 +630,8 @@ namespace AshenVale
                 if (fx.dragon != 0)
                 {
                     float age = 1f - t;
+                    if (fx.dragon == 4)
+                        fx.obj.transform.rotation = Quaternion.Euler(0, 0, fx.direction * Mathf.Lerp(-15f, 15f, age));
                     float grow = Mathf.Min(1f, age * 5f);
                     fx.obj.transform.localScale = new Vector3((fx.dragon == 3 ? 1 : fx.direction) * (.25f + .75f * grow), 1, 1);
                     foreach (var line in fx.obj.GetComponentsInChildren<LineRenderer>())
