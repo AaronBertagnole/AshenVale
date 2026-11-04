@@ -191,6 +191,12 @@ the rippling shimmer from the effect shader.
 On a painted scene these are optional: the painting already shows the shops, so nothing is drawn there
 unless one of these files exists (a merchant or smith character standing in front of the painting, for example).
 
+### Monster parts: `Art/Parts/<part>.png`
+
+A painted icon per part, 64 x 64 with a transparent background, named after the part in lower case with underscores
+(`shrew_tuft.png`, `sprout_leaf.png`, `moss_tuft.png` so far). A part with an icon shows it when it drops (half a unit
+tall) and in the bag's materials tab and the merchant's sell list; parts without one stay coloured blobs.
+
 ### World map: `Art/UI/world_map.png`
 
 The painted atlas shown behind the world map window (M): the owner's `AshenVale_World_Map` terrain (1536 x 1024, the

@@ -27,8 +27,10 @@ namespace AshenVale
     public sealed class PartDef
     {
         public string name;
-        public Color color;     // drop colour until parts have icons
+        public Color color;     // drop colour and text tint (the drop blob until the part has an icon)
         public int price;       // what the merchant pays for one
+        // Resources/Art/Parts/<key>.png: the part's painted icon (64 x 64), used for drops and in lists if present.
+        public string Key { get { return name.ToLowerInvariant().Replace(' ', '_'); } }
     }
 
     public static class Parts

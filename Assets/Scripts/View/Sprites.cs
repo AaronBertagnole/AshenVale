@@ -30,6 +30,12 @@ namespace AshenVale
             return result;
         }
 
+        // A part's painted icon (Resources/Art/Parts/<key>.png), or null until it has one.
+        public static Sprite PartIcon(int part)
+        {
+            return part >= 0 && part < Parts.All.Length ? Art("Art/Parts/" + Parts.All[part].Key) : null;
+        }
+
         // One optional sprite, e.g. "Art/Themes/meadow/sky". Null if that art doesn't exist yet.
         public static Sprite Art(string resourcePath)
         {
