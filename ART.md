@@ -197,7 +197,9 @@ unlabelled version; the game writes the names, roads and markers itself so unexp
 window takes the picture's own shape (up to 760 tall) and never stretches it. Places are drawn at the spots listed in
 `Assets/Scripts/Data/WorldAtlas.cs` (shares of the picture's width and height from the top left), copied from the
 pack's `WorldMapLocations.json`; a new picture with different landmark positions means moving those spots. Names are
-written in dark ink on small parchment patches, and the footer text sits on a parchment strip.
+written in dark ink on small parchment patches, and the footer text sits in the dark frame below the picture.
+Markers are the owner's gold atlas seals in `Art/UI/MapMarkers/` (town castle, hunting leaf, boss skull, unexplored
+compass, a compass ring for the place you are on, a small gem tinted by difficulty); the place you are on flashes.
 
 ### Heroes: `Assets/Resources/Heroes/<Hero>/<animation>/`
 
