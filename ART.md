@@ -192,11 +192,12 @@ unless one of these files exists (a merchant or smith character standing in fron
 
 ### World map: `Art/UI/world_map.png`
 
-Optional painted map of the whole world, shown behind the world map window (M) instead of plain parchment.
-About 2000 x 1160 (the window is up to 1000 x 580 and keeps that shape). Places are drawn on top of it at the
-spots listed in `Assets/Scripts/Data/WorldAtlas.cs` (shares of the width and height), so once a picture is in,
-move each spot onto its place in the picture. Leave room for the title at the top and two lines of text at the
-bottom; names are written in dark ink, so a light parchment-style picture reads best.
+The painted atlas shown behind the world map window (M): the owner's `AshenVale_World_Map` terrain (1536 x 1024, the
+unlabelled version; the game writes the names, roads and markers itself so unexplored places can stay hidden). The
+window takes the picture's own shape (up to 760 tall) and never stretches it. Places are drawn at the spots listed in
+`Assets/Scripts/Data/WorldAtlas.cs` (shares of the picture's width and height from the top left), copied from the
+pack's `WorldMapLocations.json`; a new picture with different landmark positions means moving those spots. Names are
+written in dark ink on small parchment patches, and the footer text sits on a parchment strip.
 
 ### Heroes: `Assets/Resources/Heroes/<Hero>/<animation>/`
 
