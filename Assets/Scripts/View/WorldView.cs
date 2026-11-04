@@ -399,8 +399,16 @@ namespace AshenVale
                                 : part ? Parts.All[d.value].name : "Gold drop";
                     Color color = d.kind == DropKind.HpPotion ? new Color(1, .22f, .32f) : d.kind == DropKind.MpPotion ? new Color(.22f, .48f, 1)
                                 : d.kind == DropKind.Item ? Loot.RarityColor(d.item.rarity) : part ? Parts.All[d.value].color : new Color(1, .81f, .18f);
-                    // Parts are small round blobs, everything else a little block (until drops get icons).
-                    go = part ? Sprites.Blob(name, color, .3f, .3f, DropOrder, null, 0, 0) : Sprites.Block(name, color, .28f, .34f, DropOrder);
+                    // Parts with a painted icon show it (half a unit tall); other parts are small round blobs and
+                    // everything else a little block, until they get icons too.
+                    var icon = part ? Sprites.PartIcon(d.value) : null;
+                    if (icon != null)
+                    {
+                        go = Sprites.Picture(name, icon, DropOrder, null, 0, 0);
+                        float k = .5f / Mathf.Max(.01f, icon.bounds.size.y);
+                        go.transform.localScale = new Vector3(k, k, 1f);
+                    }
+                    else go = part ? Sprites.Blob(name, color, .3f, .3f, DropOrder, null, 0, 0) : Sprites.Block(name, color, .28f, .34f, DropOrder);
                     dropViews[d.id] = go;
                 }
                 go.transform.position = new Vector3(d.x, d.y + Mathf.Sin(Time.time * 4 + d.x) * .1f, 0);

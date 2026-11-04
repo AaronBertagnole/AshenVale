@@ -597,7 +597,9 @@ namespace AshenVale
                 float y = shown++ * 38;
                 if (shown % 2 != 0) Fill(new Rect(0, y, area.width - 20, 36), new Color(1, 1, 1, .04f));
                 var part = Parts.All[i];
-                GUI.Label(new Rect(4, y + 4, 294, 28), part.name, partNameText);
+                var icon = Sprites.PartIcon(i);
+                if (icon != null) GUI.DrawTexture(new Rect(4, y + 2, 32, 32), icon.texture, ScaleMode.ScaleToFit, true);
+                GUI.Label(new Rect(icon != null ? 42 : 4, y + 4, 294, 28), part.name, partNameText);
                 GUI.Label(new Rect(312, y + 4, 90, 28), "x" + count, partNameText);
                 GUI.Label(new Rect(422, y + 4, 132, 28), (part.price * count) + " gold", partNameText);
             }
@@ -637,7 +639,9 @@ namespace AshenVale
                 if (ch.parts[i] <= 0) continue;
                 float y = r.y + 280 + shown * 28;
                 var part = Parts.All[i];
-                GUI.Label(new Rect(r.x + 320, y, 125, 26), part.name + " x" + ch.parts[i], partNameText);
+                var icon = Sprites.PartIcon(i);
+                if (icon != null) GUI.DrawTexture(new Rect(r.x + 320, y + 1, 24, 24), icon.texture, ScaleMode.ScaleToFit, true);
+                GUI.Label(new Rect(r.x + (icon != null ? 348 : 320), y, icon != null ? 100 : 125, 26), part.name + " x" + ch.parts[i], partNameText);
                 if (GUI.Button(new Rect(r.x + 452, y, 66, 26), "1  +" + part.price + "g")) { commands.SellPart(i, 1); break; }
                 if (GUI.Button(new Rect(r.x + 522, y, 70, 26), "All +" + part.price * ch.parts[i] + "g")) { commands.SellPart(i, 0); break; }
                 shown++;
