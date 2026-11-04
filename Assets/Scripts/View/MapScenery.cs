@@ -119,6 +119,9 @@ namespace AshenVale
             public Color ladderRail = new Color(.55f, .35f, .19f), ladderRung = new Color(.72f, .51f, .28f);
             public Color hanging = Color.clear;     // what hangs under platforms (clear: a darker shade of the platform)
             public Color[] flecks;                  // little leaves scattered on platform tops (null: none)
+            // Painted tiles cut from a picture show a strip of path in perspective above the ledge's edge, so the
+            // walking line sits a little below the tile's top; the tiles are drawn raised by this much (units).
+            public float groundSurface = 0f, platformSurface = 0f;
         }
 
         static Theme ThemeFor(string name)
@@ -145,6 +148,7 @@ namespace AshenVale
                     ladderRail = new Color(.37f, .28f, .18f), ladderRung = new Color(.58f, .42f, .26f),
                     hanging = new Color(.36f, .46f, .18f),
                     flecks = new[] { new Color(.75f, .23f, .11f), new Color(.93f, .43f, .14f), new Color(.98f, .80f, .51f), new Color(.71f, .36f, .18f) },
+                    groundSurface = .16f, platformSurface = .10f,
                 };
                 case "mossgate": return new Theme   // Mossgate Hollow: autumn turning to moss on the way into Mosswood
                 {
@@ -157,6 +161,7 @@ namespace AshenVale
                     ladderRail = new Color(.37f, .28f, .18f), ladderRung = new Color(.58f, .42f, .26f),
                     hanging = new Color(.30f, .48f, .22f),
                     flecks = new[] { new Color(.55f, .72f, .30f), new Color(.38f, .60f, .28f), new Color(.93f, .50f, .18f), new Color(.75f, .30f, .12f) },
+                    groundSurface = .16f, platformSurface = .10f,
                 };
                 case "forest": return new Theme
                 {
@@ -166,6 +171,7 @@ namespace AshenVale
                     groundBody = new Color(.27f, .21f, .16f), groundTop = new Color(.33f, .62f, .34f),
                     platformBody = new Color(.40f, .28f, .18f), platformTop = new Color(.40f, .70f, .38f),
                     accent = new Color(.95f, .92f, .55f), farStyle = "pines", midStyle = "bigtrees",
+                    groundSurface = .16f, platformSurface = .10f,
                 };
                 case "cave": return new Theme
                 {
@@ -184,6 +190,7 @@ namespace AshenVale
                     groundBody = new Color(.48f, .37f, .26f), groundTop = new Color(.80f, .68f, .45f),
                     platformBody = new Color(.50f, .40f, .28f), platformTop = new Color(.62f, .76f, .36f),
                     accent = new Color(1f, .93f, .62f), farStyle = "mountains", midStyle = "fields",
+                    groundSurface = .16f, platformSurface = .10f,
                 };
                 case "cliffs": return new Theme     // Shale Cliffs: grey-blue rock, pines, snowy peaks far off
                 {
@@ -840,10 +847,10 @@ namespace AshenVale
             float body = 0f;
             if (sprite != null)
             {
-                Sprites.Tiled("Ground art", sprite, w, sprite.bounds.size.y, GroundOrder + 1, root, mid, G);
+                Sprites.Tiled("Ground art", sprite, w, sprite.bounds.size.y, GroundOrder + 1, root, mid, G + theme.groundSurface);
                 body = sprite.bounds.size.y;
                 var back = Sprites.Art(art + "ground_back");   // optional strip behind your feet that fades into the backdrop
-                if (back != null) Sprites.Tiled("Ground back", back, w, back.bounds.size.y, GroundOrder + 1, root, mid, G);
+                if (back != null) Sprites.Tiled("Ground back", back, w, back.bounds.size.y, GroundOrder + 1, root, mid, G + theme.groundSurface);
             }
             else
             {
@@ -868,10 +875,11 @@ namespace AshenVale
                 var right = Sprites.Art(art + "platform_right");
                 float lw = left != null ? left.bounds.size.x : 0f, rw = right != null ? right.bounds.size.x : 0f;
                 if (lw + rw >= width) { lw = rw = 0f; left = right = null; }
-                if (left != null) Sprites.Picture("Platform left", left, PlatformOrder, root, p.left + lw * .5f, p.top);
-                if (right != null) Sprites.Picture("Platform right", right, PlatformOrder, root, p.right - rw * .5f, p.top);
+                float top = p.top + theme.platformSurface;
+                if (left != null) Sprites.Picture("Platform left", left, PlatformOrder, root, p.left + lw * .5f, top);
+                if (right != null) Sprites.Picture("Platform right", right, PlatformOrder, root, p.right - rw * .5f, top);
                 float inner = width - lw - rw;
-                Sprites.Tiled("Platform", middle, inner, middle.bounds.size.y, PlatformOrder, root, p.left + lw + inner * .5f, p.top);
+                Sprites.Tiled("Platform", middle, inner, middle.bounds.size.y, PlatformOrder, root, p.left + lw + inner * .5f, top);
                 return;
             }
             Sprites.Block("Platform earth", theme.platformBody, width, .5f, PlatformOrder, root, mid, p.top - .38f);
