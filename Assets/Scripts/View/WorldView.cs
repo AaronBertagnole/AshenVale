@@ -406,7 +406,7 @@ namespace AshenVale
                 GameObject go;
                 if (!dropViews.TryGetValue(d.id, out go))
                 {
-                    bool pop = dropsSynced;
+                    bool burst = dropsSynced;
                     bool part = d.kind == DropKind.Part && d.value >= 0 && d.value < Parts.All.Length;
                     string name = d.kind == DropKind.HpPotion ? "HP Potion" : d.kind == DropKind.MpPotion ? "MP Potion" : d.kind == DropKind.Item ? d.item.name
                                 : part ? Parts.All[d.value].name : "Gold drop";
@@ -423,7 +423,7 @@ namespace AshenVale
                     }
                     else go = part ? Sprites.Blob(name, color, .3f, .3f, DropOrder, null, 0, 0) : Sprites.Block(name, color, .28f, .34f, DropOrder);
                     dropViews[d.id] = go;
-                    if (pop) dropPops[d.id] = new DropPop { start = Time.time, fromX = burstX, rest = go.transform.localScale };
+                    if (burst) dropPops[d.id] = new DropPop { start = Time.time, fromX = burstX, rest = go.transform.localScale };
                 }
                 float x = d.x, y = d.y + Mathf.Sin(Time.time * 4 + d.x) * .1f;
                 DropPop pop;
