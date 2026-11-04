@@ -78,8 +78,8 @@ namespace AshenVale
         static readonly MonsterDef[] Core =
         {
             new MonsterDef { key = "hedge_shrew", name = "Hedge Shrew", level = 1, color = new Color(.62f, .48f, .34f),
-                width = .85f, height = .6f, hp = 40, speed = 1.8f, damage = 7, xp = 7, goldMin = 4, goldRange = 5,
-                part = Parts.ShrewTuft },          // scurries through the leaf litter of Emberfields
+                width = .96f, height = .58f, hp = 40, speed = 1.8f, damage = 7, xp = 7, goldMin = 4, goldRange = 5,
+                part = Parts.ShrewTuft },          // scurries through the leaf litter of Emberfields; art 96 x 58
             new MonsterDef { key = "thornback_hedgehog", name = "Thornback Hedgehog", level = 4, color = new Color(.45f, .32f, .22f),
                 width = 1.2f, height = .9f, hp = 130, speed = 1.5f, damage = 14, xp = 22, goldMin = 14, goldRange = 9,
                 aggressive = true, respawn = 15f,

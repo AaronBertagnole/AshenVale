@@ -301,9 +301,13 @@ namespace AshenVale
             var idle = MonsterFrames(d, "idle");
             if (idle.Length > 0)
             {
-                var art = Sprites.Picture("Art", idle[0], 0, root, 0, 0);
+                // The body pivot sits at the feet (squash and the hurt lean happen around it); the picture hangs
+                // under it with its bottom edge on the floor, whatever pivot the importer gave it.
+                v.body = new GameObject("Body").transform;
+                v.body.SetParent(root, false);
+                var art = Sprites.Picture("Art", idle[0], 0, v.body, 0, 0);
+                art.transform.localPosition = new Vector3(0, -idle[0].bounds.min.y, 0);
                 v.art = art.GetComponent<SpriteRenderer>();
-                v.body = art.transform;
             }
             else
             {
