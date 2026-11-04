@@ -31,12 +31,12 @@ namespace AshenVale
         {
             float flash = current ? .55f + .45f * Mathf.Sin(Time.unscaledTime * 5f) : 1f;    // 0.1 .. 1, about twice a second
             if (current || hovered)
-                Stamp(at, 41f * scale, 4, new Color(1f, 1f, 1f, current ? flash : .65f));
+                Stamp(at, 21f * scale, 4, new Color(1f, 1f, 1f, current ? flash : .65f));
             int kind = !seen ? 3 : town ? 0 : boss ? 2 : 1;
-            float size = !seen ? 24f : boss ? 32f : 30f;
+            float size = !seen ? 12f : boss ? 16f : 15f;
             Stamp(at, size * scale, kind, new Color(1f, 1f, 1f, current ? .4f + .6f * flash : 1f));
             if (seen && !town)
-                Stamp(at + new Vector2(10f, 10f) * scale, 11f * scale, 5, new Color(difficulty.r, difficulty.g, difficulty.b, current ? .4f + .6f * flash : 1f));
+                Stamp(at + new Vector2(5f, 5f) * scale, 6f * scale, 5, new Color(difficulty.r, difficulty.g, difficulty.b, current ? .4f + .6f * flash : 1f));
         }
     }
 }
