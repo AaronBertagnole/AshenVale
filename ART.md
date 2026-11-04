@@ -155,8 +155,8 @@ Body sizes (width x height, in px at 100 px per unit) from `Assets/Scripts/Data/
 | `ash_sprout` | Ash Sprout | 2 | 80 x 92 (painted: idle 8 frames, move 8) |
 | `thornback_hedgehog` | Thornback Hedgehog | 4 | 120 x 97 (painted: idle 8 frames, move 8) |
 | `old_chest` | Old Chest | 4 | 100 x 80 |
-| `moss_crawler` | Moss Crawler | 6 | 100 x 70 |
-| `bramble_boar` | Bramble Boar | 8 | 140 x 100 |
+| `moss_crawler` | Moss Crawler | 6 | 110 x 83 (painted: idle 8 frames, move 8) |
+| `bramble_boar` | Bramble Boar | 8 | 150 x 130 (painted: idle 8 frames, move 8) |
 | `mossy_chest` | Mossy Chest | 8 | 100 x 80 |
 | `den_shade` | Den Shade | 9 | 100 x 140 (floats a little) |
 | `violet_wraith` | Violet Wraith | 10 | 120 x 150 (floats a little) |
@@ -166,7 +166,7 @@ Body sizes (width x height, in px at 100 px per unit) from `Assets/Scripts/Data/
 | `sunken_chest` | Sunken Chest | 15 | 110 x 90 |
 | `leaf_beetle` | Leaf Beetle | 3 | 116 x 81 (painted: idle 8 frames, move 8) |
 | `mossling` | Mossling | 4 | 80 x 89 (painted: idle 8 frames, move 8) |
-| `ember_fox` | Ember Fox | 5 | 110 x 85 |
+| `ember_fox` | Ember Fox | 5 | 120 x 87 (painted: idle 8 frames, move 8) |
 
 The body size is what touches and gets hit; art can be a bit bigger (ears, tails, glow).
 
@@ -194,7 +194,7 @@ unless one of these files exists (a merchant or smith character standing in fron
 ### Monster parts: `Art/Parts/<part>.png`
 
 A painted icon per part, 64 x 64 with a transparent background, named after the part in lower case with underscores
-(`shrew_tuft.png`, `sprout_leaf.png`, `moss_tuft.png`, `ember_core.png`, `hedgehog_quill.png` so far). A part with an icon shows it when it drops (half a unit
+(`shrew_tuft.png`, `sprout_leaf.png`, `moss_tuft.png`, `ember_core.png`, `hedgehog_quill.png`, `boar_tusk.png` so far). A part with an icon shows it when it drops (half a unit
 tall) and in the bag's materials tab and the merchant's sell list; parts without one stay coloured blobs.
 
 ### Potions: `Art/Items/hp_potion.png`, `mp_potion.png`
