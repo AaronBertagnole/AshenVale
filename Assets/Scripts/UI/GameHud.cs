@@ -779,15 +779,10 @@ namespace AshenVale
                 var def = Maps.All[i];
                 bool here = i == me.map, town = def.kind == MapKind.Town;
                 Vector2 at = AtlasPoint(area, i);
-                if (here) Marker(at.x, at.y, (30f + 6f * Mathf.Sin(Time.unscaledTime * 4f)) * scale, new Color(1f, .9f, .35f, .5f), false);
-                if (!seen) Marker(at.x, at.y, 16 * scale, new Color(.62f, .57f, .5f));
-                else if (town) Square(at.x, at.y, 17 * scale, new Color(.95f, .74f, .34f));
-                else if (def.hasBoss) { Marker(at.x, at.y, 22 * scale, new Color(.3f, .08f, .1f)); Marker(at.x, at.y, 12 * scale, DangerColor(def, ch.level), false); }
-                else Marker(at.x, at.y, 18 * scale, DangerColor(def, ch.level));
-                if (!seen) GUI.Label(new Rect(at.x - 10, at.y - 10, 20, 20), "?", atlasName);
+                AtlasMarkerArt.Draw(at, scale, seen, town, def.hasBoss, here, DangerColor(def, ch.level),
+                    (mouse - at).sqrMagnitude < 20f * 20f * scale * scale);
                 AtlasText(area, at.x, at.y + 22 * scale, seen ? def.name : "???", atlasName);
                 AtlasText(area, at.x, at.y + 38 * scale, !seen ? "unexplored" : town ? "Town · waystone" : def.LevelText, atlasSub);
-                if (here) AtlasText(area, at.x, at.y - 29 * scale, "YOU ARE HERE", atlasSub);
                 if ((mouse - at).sqrMagnitude < 20f * 20f * scale * scale) hovered = i;
             }
 
@@ -806,7 +801,7 @@ namespace AshenVale
             var small = art != null ? atlasSmallLight : atlasSmall;
             GUI.Label(new Rect(footerRect.x, footerRect.y, footerRect.width, 20), "Discovered " + found + " of " + Maps.All.Length + " places", small);
             GUI.Label(new Rect(footerRect.x, footerRect.y + 20, footerRect.width, 20),
-                      "Circle: hunting ground (green about your level, red tougher, grey too easy)   ·   Ringed: a boss   ·   Square: town   ·   ?: not explored yet", small);
+                      "Castle: town   ·   Leaf: hunting ground   ·   Skull: boss   ·   Compass: unexplored   ·   Small gem: level difficulty", small);
             if (party.Length > 0) GUI.Label(new Rect(footerRect.x, footerRect.y + 40, footerRect.width, 20), "PARTY   " + party, small);
             if (hovered >= 0) AtlasTooltip(me, hovered, mouse);
         }
