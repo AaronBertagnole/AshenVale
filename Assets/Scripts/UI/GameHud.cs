@@ -83,7 +83,7 @@ namespace AshenVale
 
         GUIStyle titleText, barText, detailText, detailRight, bodyStyle, smallStyle, centeredStyle, menuButton, statusStyle, nameplate,
                  bannerTitle, bannerSub, worldLabel, mapLabel, minimapTitle, minimapHint, tooltipText,
-                 atlasTitle, atlasCorner, atlasName, atlasSub, atlasSmall, numberStyle, bigNumberStyle, bossName, inventoryTabText, activeInventoryTabText, partNameText;
+                 atlasTitle, atlasCorner, atlasName, atlasSub, atlasSmall, atlasSmallLight, atlasCornerLight, numberStyle, bigNumberStyle, bossName, inventoryTabText, activeInventoryTabText, partNameText;
         static Texture2D dotTexture;
         int bannerMap = -1;
         float bannerClock;
@@ -159,6 +159,10 @@ namespace AshenVale
             atlasSub = new GUIStyle(GUI.skin.label) { fontSize = 11, alignment = TextAnchor.MiddleCenter };
             atlasSub.normal.textColor = new Color(.42f, .30f, .18f);
             atlasSmall = new GUIStyle(GUI.skin.label) { fontSize = 12 };
+            atlasSmallLight = new GUIStyle(GUI.skin.label) { fontSize = 12 };
+            atlasSmallLight.normal.textColor = new Color(.85f, .78f, .62f);
+            atlasCornerLight = new GUIStyle(GUI.skin.label) { fontSize = 12, fontStyle = FontStyle.Bold, alignment = TextAnchor.UpperRight };
+            atlasCornerLight.normal.textColor = new Color(.92f, .84f, .66f);
             atlasSmall.normal.textColor = new Color(.32f, .22f, .12f);
             numberStyle = new GUIStyle(GUI.skin.label) { fontSize = 22, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
             bigNumberStyle = new GUIStyle(numberStyle) { fontSize = 30 };
@@ -722,28 +726,41 @@ namespace AshenVale
         {
             var ch = me.ch;
             var art = Sprites.Art(WorldMapArt);
-            // The painted atlas is 3:2 and the places sit on its landmarks, so it is shown at its own shape and never
-            // stretched; without a picture the parchment panel is wider and the places spread over an inset area.
+            // With the painted atlas: the picture at its own 3:2 shape, never stretched, places spread over all of it,
+            // and the text (close hint, footer) in the dark frame around it so nothing covers the paint. Without a
+            // picture: the parchment panel with a title, and the places over an inset area.
+            const float frameTop = 30, frameBottom = 72;
             float w, h;
             if (art != null)
             {
                 float aspect = art.texture.width / (float)art.texture.height;
-                h = Mathf.Min(Screen.height - 110, 760); w = h * aspect;
+                h = Mathf.Min(Screen.height - 60 - frameTop - frameBottom, 900); w = h * aspect;
                 if (w > Screen.width - 40) { w = Screen.width - 40; h = w / aspect; }
             }
             else { w = Mathf.Min(Screen.width - 40, 1000); h = Mathf.Min(Screen.height - 150, 580); }
-            Rect r = new Rect((Screen.width - w) / 2f, Mathf.Max(50, (Screen.height - h) / 2f - 10), w, h);
-            Fill(new Rect(r.x - 5, r.y - 5, r.width + 10, r.height + 10), new Color(.23f, .15f, .09f, .97f));
-            Rect area;
-            if (art != null) { GUI.DrawTexture(r, art.texture, ScaleMode.StretchToFill); area = r; }
+            Rect r = new Rect((Screen.width - w) / 2f, Mathf.Max(frameTop + 10, (Screen.height - h) / 2f), w, h);
+            float scale = Mathf.Clamp(w / 1000f, .8f, 1.8f);        // markers and names grow with the window
+            atlasName.fontSize = Mathf.RoundToInt(13 * scale);
+            atlasSub.fontSize = Mathf.RoundToInt(11 * scale);
+            Rect area, footerRect;
+            if (art != null)
+            {
+                Fill(new Rect(r.x - 6, r.y - frameTop, r.width + 12, r.height + frameTop + frameBottom), new Color(.23f, .15f, .09f, .97f));
+                GUI.DrawTexture(r, art.texture, ScaleMode.StretchToFill);
+                area = r;
+                GUI.Label(new Rect(r.x, r.y - frameTop + 6, r.width - 8, 20), "[" + Keys.Name(GameAction.WorldMap) + "] CLOSE", atlasCornerLight);
+                footerRect = new Rect(r.x + 10, r.yMax + 8, r.width - 20, frameBottom - 8);
+            }
             else
             {
+                Fill(new Rect(r.x - 5, r.y - 5, r.width + 10, r.height + 10), new Color(.23f, .15f, .09f, .97f));
                 Fill(r, new Color(.91f, .84f, .68f, .98f));
                 Outline(new Rect(r.x + 8, r.y + 8, r.width - 16, r.height - 16), new Color(.55f, .4f, .25f, .6f));
                 area = new Rect(r.x + 70, r.y + 72, r.width - 140, r.height - 160);
+                GUI.Label(new Rect(r.x, r.y + 14, r.width, 34), "WORLD MAP", atlasTitle);
+                GUI.Label(new Rect(r.x + 20, r.y + 20, r.width - 44, 20), "[" + Keys.Name(GameAction.WorldMap) + "] CLOSE", atlasCorner);
+                footerRect = new Rect(r.x + 26, r.yMax - 70, r.width - 52, 66);
             }
-            GUI.Label(new Rect(r.x, r.y + 14, r.width, 34), "WORLD MAP", atlasTitle);
-            GUI.Label(new Rect(r.x + 20, r.y + 20, r.width - 44, 20), "[" + Keys.Name(GameAction.WorldMap) + "] CLOSE", atlasCorner);
 
             foreach (var road in WorldAtlas.Roads)
             {
@@ -762,16 +779,16 @@ namespace AshenVale
                 var def = Maps.All[i];
                 bool here = i == me.map, town = def.kind == MapKind.Town;
                 Vector2 at = AtlasPoint(area, i);
-                if (here) Marker(at.x, at.y, 30f + 6f * Mathf.Sin(Time.unscaledTime * 4f), new Color(1f, .9f, .35f, .5f), false);
-                if (!seen) Marker(at.x, at.y, 16, new Color(.62f, .57f, .5f));
-                else if (town) Square(at.x, at.y, 17, new Color(.95f, .74f, .34f));
-                else if (def.hasBoss) { Marker(at.x, at.y, 22, new Color(.3f, .08f, .1f)); Marker(at.x, at.y, 12, DangerColor(def, ch.level), false); }
-                else Marker(at.x, at.y, 18, DangerColor(def, ch.level));
+                if (here) Marker(at.x, at.y, (30f + 6f * Mathf.Sin(Time.unscaledTime * 4f)) * scale, new Color(1f, .9f, .35f, .5f), false);
+                if (!seen) Marker(at.x, at.y, 16 * scale, new Color(.62f, .57f, .5f));
+                else if (town) Square(at.x, at.y, 17 * scale, new Color(.95f, .74f, .34f));
+                else if (def.hasBoss) { Marker(at.x, at.y, 22 * scale, new Color(.3f, .08f, .1f)); Marker(at.x, at.y, 12 * scale, DangerColor(def, ch.level), false); }
+                else Marker(at.x, at.y, 18 * scale, DangerColor(def, ch.level));
                 if (!seen) GUI.Label(new Rect(at.x - 10, at.y - 10, 20, 20), "?", atlasName);
-                AtlasText(at.x, at.y + 22, seen ? def.name : "???", atlasName);
-                AtlasText(at.x, at.y + 38, !seen ? "unexplored" : town ? "Town · waystone" : def.LevelText, atlasSub);
-                if (here) AtlasText(at.x, at.y - 29, "YOU ARE HERE", atlasSub);
-                if ((mouse - at).sqrMagnitude < 20f * 20f) hovered = i;
+                AtlasText(area, at.x, at.y + 22 * scale, seen ? def.name : "???", atlasName);
+                AtlasText(area, at.x, at.y + 38 * scale, !seen ? "unexplored" : town ? "Town · waystone" : def.LevelText, atlasSub);
+                if (here) AtlasText(area, at.x, at.y - 29 * scale, "YOU ARE HERE", atlasSub);
+                if ((mouse - at).sqrMagnitude < 20f * 20f * scale * scale) hovered = i;
             }
 
             int k = 0;
@@ -786,19 +803,21 @@ namespace AshenVale
                 k++;
             }
 
-            float footer = r.yMax - 70;
-            if (art != null) Fill(new Rect(r.x + 16, footer - 4, r.width - 32, party.Length > 0 ? 66 : 46), new Color(.91f, .84f, .68f, .85f));
-            GUI.Label(new Rect(r.x + 26, footer, r.width - 52, 20), "Discovered " + found + " of " + Maps.All.Length + " places", atlasSmall);
-            GUI.Label(new Rect(r.x + 26, footer + 20, r.width - 52, 20),
-                      "Circle: hunting ground (green about your level, red tougher, grey too easy)   ·   Ringed: a boss   ·   Square: town   ·   ?: not explored yet", atlasSmall);
-            if (party.Length > 0) GUI.Label(new Rect(r.x + 26, footer + 40, r.width - 52, 20), "PARTY   " + party, atlasSmall);
+            var small = art != null ? atlasSmallLight : atlasSmall;
+            GUI.Label(new Rect(footerRect.x, footerRect.y, footerRect.width, 20), "Discovered " + found + " of " + Maps.All.Length + " places", small);
+            GUI.Label(new Rect(footerRect.x, footerRect.y + 20, footerRect.width, 20),
+                      "Circle: hunting ground (green about your level, red tougher, grey too easy)   ·   Ringed: a boss   ·   Square: town   ·   ?: not explored yet", small);
+            if (party.Length > 0) GUI.Label(new Rect(footerRect.x, footerRect.y + 40, footerRect.width, 20), "PARTY   " + party, small);
             if (hovered >= 0) AtlasTooltip(me, hovered, mouse);
         }
 
-        // A world map label centred on (x, y), on a patch of parchment so roads don't run through the letters.
-        static void AtlasText(float x, float y, string text, GUIStyle style)
+        // A world map label centred on (x, y), on a patch of parchment so roads don't run through the letters;
+        // kept inside the map area so places near an edge don't spill off the picture.
+        static void AtlasText(Rect area, float x, float y, string text, GUIStyle style)
         {
             var size = style.CalcSize(new GUIContent(text));
+            x = Mathf.Clamp(x, area.x + size.x / 2f + 6f, area.xMax - size.x / 2f - 6f);
+            y = Mathf.Clamp(y, area.y + size.y / 2f + 2f, area.yMax - size.y / 2f - 2f);
             Fill(new Rect(x - size.x / 2f - 4f, y - size.y / 2f + 1f, size.x + 8f, size.y - 2f), new Color(.91f, .84f, .68f, .88f));
             GUI.Label(new Rect(x - size.x / 2f - 4f, y - size.y / 2f, size.x + 8f, size.y), text, style);
         }
