@@ -740,8 +740,8 @@ namespace AshenVale
             else { w = Mathf.Min(Screen.width - 40, 1000); h = Mathf.Min(Screen.height - 150, 580); }
             Rect r = new Rect((Screen.width - w) / 2f, Mathf.Max(frameTop + 10, (Screen.height - h) / 2f), w, h);
             float scale = Mathf.Clamp(w / 1000f, .8f, 1.8f);        // markers and names grow with the window
-            atlasName.fontSize = Mathf.RoundToInt(13 * scale);
-            atlasSub.fontSize = Mathf.RoundToInt(11 * scale);
+            atlasName.fontSize = Mathf.RoundToInt(10 * scale);
+            atlasSub.fontSize = Mathf.RoundToInt(8.5f * scale);
             Rect area, footerRect;
             if (art != null)
             {
@@ -780,10 +780,10 @@ namespace AshenVale
                 bool here = i == me.map, town = def.kind == MapKind.Town;
                 Vector2 at = AtlasPoint(area, i);
                 AtlasMarkerArt.Draw(at, scale, seen, town, def.hasBoss, here, DangerColor(def, ch.level),
-                    (mouse - at).sqrMagnitude < 14f * 14f * scale * scale);
-                AtlasText(area, at.x, at.y + 16 * scale, seen ? def.name : "???", atlasName);
-                AtlasText(area, at.x, at.y + 32 * scale, !seen ? "unexplored" : town ? "Town · waystone" : def.LevelText, atlasSub);
-                if ((mouse - at).sqrMagnitude < 14f * 14f * scale * scale) hovered = i;
+                    (mouse - at).sqrMagnitude < 16f * 16f * scale * scale);
+                AtlasText(area, at.x, at.y + 17 * scale, seen ? def.name : "???", atlasName);
+                AtlasText(area, at.x, at.y + 29 * scale, !seen ? "unexplored" : town ? "Town · waystone" : def.LevelText, atlasSub);
+                if ((mouse - at).sqrMagnitude < 16f * 16f * scale * scale) hovered = i;
             }
 
             int k = 0;
