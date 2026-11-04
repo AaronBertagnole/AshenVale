@@ -105,7 +105,12 @@ namespace AshenVale
                 var timer = Label("Cooldown seconds", button.transform, 1, 10, 40, 20, 12, HudTheme.Ivory, FontStyle.Bold); timer.alignment = TextAnchor.MiddleCenter;
                 var keyFrame = Panel("Key", button.transform, new Vector2(.5f, 0), new Vector2(.5f, 0), new Vector2(0, -5), new Vector2(42, 16));
                 var key = CenterLabel(keyFrame, "", 8, HudTheme.Ivory); key.resizeTextForBestFit = true; key.resizeTextMinSize = 6; key.resizeTextMaxSize = 8;
-                var count = Label("Count", button.transform, 2, 1, 38, 13, 8, HudTheme.Ivory); count.alignment = TextAnchor.MiddleRight;
+                // The slot's number (potions carried, skill mana) on a dark tag at the top right, with a shadow, so it reads over the icon.
+                var tag = Panel("Count tag", button.transform, new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1), new Vector2(30, 15));
+                tag.GetComponent<Image>().color = new Color(.02f, .06f, .08f, .9f);
+                var count = Label("Count", tag, 0, 0, 30, 15, 10, HudTheme.Ivory, FontStyle.Bold); count.alignment = TextAnchor.MiddleCenter;
+                count.resizeTextForBestFit = true; count.resizeTextMinSize = 7; count.resizeTextMaxSize = 10;
+                var shadow = count.gameObject.AddComponent<Shadow>(); shadow.effectColor = new Color(0, 0, 0, .8f); shadow.effectDistance = new Vector2(1, -1);
                 slots.Add(new ActionSlot { action = action, button = button, key = key, value = count, timer = timer, cooldown = mask });
             }
             xp = MeterAt(actions, 0, 55, 287, 5, new Color(.95f,.68f,.22f)); xp.text.gameObject.SetActive(false);
@@ -176,6 +181,7 @@ namespace AshenVale
                     case GameAction.HpPotion:slot.value.text="x"+ch.hpPotions;ready &= ch.hpPotions>0&&me.hp<me.MaxHp;break;
                     case GameAction.MpPotion:slot.value.text="x"+ch.mpPotions;ready &= ch.mpPotions>0&&me.mp<me.MaxMp;break;
                 }
+                slot.value.transform.parent.gameObject.SetActive(slot.value.text.Length > 0);
                 slot.cooldown.fillAmount=Mathf.Clamp01(time/Mathf.Max(.01f,duration));slot.timer.text=time>0?time.ToString("0.0"):"";
                 slot.button.interactable=ready&&time<=0;
             }
