@@ -126,7 +126,7 @@ namespace AshenVale
                 harmless = true, respawn = 45f, itemChance = .6f,
                 chestParts = new[] { Parts.ToadSlime, Parts.LurkerScale, Parts.ToadSlime, Parts.LurkerScale, Parts.WispEmber } },
             new MonsterDef { key = "leaf_beetle", name = "Leaf Beetle", level = 3, color = new Color(.62f, .45f, .2f),
-                width = .96f, height = .67f, hp = 85, speed = 1.1f, damage = 8, xp = 13, goldMin = 8, goldRange = 8,
+                width = 1.16f, height = .81f, hp = 85, speed = 1.1f, damage = 8, xp = 13, goldMin = 8, goldRange = 8,
                 part = Parts.SproutLeaf },
             new MonsterDef { key = "ember_fox", name = "Ember Fox", level = 5, color = new Color(.95f, .5f, .18f),
                 width = 1.1f, height = .85f, hp = 120, speed = 2.6f, damage = 13, xp = 18, goldMin = 12, goldRange = 9,
