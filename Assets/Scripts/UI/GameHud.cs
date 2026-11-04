@@ -721,19 +721,29 @@ namespace AshenVale
         void DrawWorldMap(PlayerState me)
         {
             var ch = me.ch;
-            float w = Mathf.Min(Screen.width - 40, 1000), h = Mathf.Min(Screen.height - 150, 580);
-            Rect r = new Rect((Screen.width - w) / 2f, Mathf.Max(60, (Screen.height - h) / 2f - 10), w, h);
-            Fill(new Rect(r.x - 5, r.y - 5, r.width + 10, r.height + 10), new Color(.23f, .15f, .09f, .97f));
             var art = Sprites.Art(WorldMapArt);
-            if (art != null) GUI.DrawTexture(r, art.texture, ScaleMode.StretchToFill);
+            // The painted atlas is 3:2 and the places sit on its landmarks, so it is shown at its own shape and never
+            // stretched; without a picture the parchment panel is wider and the places spread over an inset area.
+            float w, h;
+            if (art != null)
+            {
+                float aspect = art.texture.width / (float)art.texture.height;
+                h = Mathf.Min(Screen.height - 110, 760); w = h * aspect;
+                if (w > Screen.width - 40) { w = Screen.width - 40; h = w / aspect; }
+            }
+            else { w = Mathf.Min(Screen.width - 40, 1000); h = Mathf.Min(Screen.height - 150, 580); }
+            Rect r = new Rect((Screen.width - w) / 2f, Mathf.Max(50, (Screen.height - h) / 2f - 10), w, h);
+            Fill(new Rect(r.x - 5, r.y - 5, r.width + 10, r.height + 10), new Color(.23f, .15f, .09f, .97f));
+            Rect area;
+            if (art != null) { GUI.DrawTexture(r, art.texture, ScaleMode.StretchToFill); area = r; }
             else
             {
                 Fill(r, new Color(.91f, .84f, .68f, .98f));
                 Outline(new Rect(r.x + 8, r.y + 8, r.width - 16, r.height - 16), new Color(.55f, .4f, .25f, .6f));
+                area = new Rect(r.x + 70, r.y + 72, r.width - 140, r.height - 160);
             }
             GUI.Label(new Rect(r.x, r.y + 14, r.width, 34), "WORLD MAP", atlasTitle);
             GUI.Label(new Rect(r.x + 20, r.y + 20, r.width - 44, 20), "[" + Keys.Name(GameAction.WorldMap) + "] CLOSE", atlasCorner);
-            Rect area = new Rect(r.x + 70, r.y + 72, r.width - 140, r.height - 160);
 
             foreach (var road in WorldAtlas.Roads)
             {
@@ -777,6 +787,7 @@ namespace AshenVale
             }
 
             float footer = r.yMax - 70;
+            if (art != null) Fill(new Rect(r.x + 16, footer - 4, r.width - 32, party.Length > 0 ? 66 : 46), new Color(.91f, .84f, .68f, .85f));
             GUI.Label(new Rect(r.x + 26, footer, r.width - 52, 20), "Discovered " + found + " of " + Maps.All.Length + " places", atlasSmall);
             GUI.Label(new Rect(r.x + 26, footer + 20, r.width - 52, 20),
                       "Circle: hunting ground (green about your level, red tougher, grey too easy)   ·   Ringed: a boss   ·   Square: town   ·   ?: not explored yet", atlasSmall);
