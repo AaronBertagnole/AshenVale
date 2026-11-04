@@ -386,7 +386,7 @@ namespace AshenVale
                     w.WriteValueSafe((byte)flags);
                     w.WriteValueSafe((byte)(p.comboStep & 255));
                     w.WriteValueSafe(p.attackVisual); w.WriteValueSafe(p.hurtVisual); w.WriteValueSafe(p.immunity);
-                    w.WriteValueSafe(p.attackDuration); w.WriteValueSafe((byte)(p.attackSerial & 255));    // the knight's attack clips are timed from these
+                    w.WriteValueSafe(p.attackDuration); w.WriteValueSafe((byte)(p.attackSerial & 255)); w.WriteValueSafe(p.landVisual);    // the knight's attack clips are timed from these
                     w.WriteValueSafe((short)p.hp); w.WriteValueSafe((short)p.mp); w.WriteValueSafe((short)p.ch.level);
                     w.WriteValueSafe(p.deathClock); w.WriteValueSafe(p.portalCast);
                     w.WriteValueSafe((byte)p.portalMap); w.WriteValueSafe(p.portalX); w.WriteValueSafe(p.portalY);
@@ -507,7 +507,7 @@ namespace AshenVale
                 r.ReadValueSafe(out byte flags);
                 r.ReadValueSafe(out byte combo);
                 r.ReadValueSafe(out float attackVisual); r.ReadValueSafe(out float hurtVisual); r.ReadValueSafe(out float immunity);
-                r.ReadValueSafe(out float attackDuration); r.ReadValueSafe(out byte attackSerial);
+                r.ReadValueSafe(out float attackDuration); r.ReadValueSafe(out byte attackSerial); r.ReadValueSafe(out float landVisual);
                 r.ReadValueSafe(out short hp); r.ReadValueSafe(out short mp); r.ReadValueSafe(out short level);
                 r.ReadValueSafe(out float deathClock); r.ReadValueSafe(out float portalCast);
                 r.ReadValueSafe(out byte portalMap); r.ReadValueSafe(out float portalX); r.ReadValueSafe(out float portalY);
@@ -532,7 +532,7 @@ namespace AshenVale
                 p.returnReady = (flags & 64) != 0;
                 p.comboStep = combo;
                 p.attackVisual = attackVisual; p.hurtVisual = hurtVisual; p.immunity = immunity;
-                p.attackDuration = attackDuration; p.attackSerial = attackSerial;
+                p.attackDuration = attackDuration; p.attackSerial = attackSerial; p.landVisual = landVisual;
                 p.hp = hp; p.mp = mp;
                 p.deathClock = deathClock; p.portalCast = portalCast;
                 p.portalMap = Mathf.Clamp(portalMap, 0, Maps.All.Length - 1); p.portalX = portalX; p.portalY = portalY;

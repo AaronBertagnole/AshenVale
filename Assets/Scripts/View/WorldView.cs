@@ -193,6 +193,8 @@ namespace AshenVale
                 bool useA = h.dragonKnight ? p.comboStep % 2 == 1 : p.comboStep % 2 == 0;
                 return p.lastWasSkill ? h.skillAnim : (useA ? h.basicAnimA : h.basicAnimB);
             }
+            if (h.dragonKnight && p.leapActive) return "leap";
+            if (h.dragonKnight && p.landVisual > 0 && p.grounded && Mathf.Abs(p.vx) < .2f) return "land";
             if (p.climbing) return "run";
             if (p.crouching) return "idle";
             if (!p.grounded) return p.vy > 0 ? "jump" : "fall";
@@ -221,7 +223,16 @@ namespace AshenVale
                         .5f + .5f * (elapsed - windup) / Mathf.Max(.01f, p.attackDuration - windup);
                     index = Mathf.Min(frames.Length - 1, Mathf.FloorToInt(phase * frames.Length));
                 }
-                bool once = clip == "death" || clip == "hurt" || clip == h.basicAnimA || clip == h.basicAnimB || clip == h.skillAnim;
+                if (h.dragonKnight && clip == "leap")
+                {
+                    // Six poses: ascent 0..2, descent 3..5. Hold the final descent on long falls.
+                    float upSpeed = Mathf.Max(.01f, h.leapJumpSpeed);
+                    index = p.vy > 0 ? Mathf.Clamp(Mathf.FloorToInt((1f - p.vy / upSpeed) * 3f), 0, 2)
+                        : 3 + Mathf.Clamp(Mathf.FloorToInt(-p.vy / upSpeed * 3f), 0, 2);
+                }
+                if (h.dragonKnight && clip == "land")
+                    index = Mathf.FloorToInt(Mathf.Clamp01(1f - p.landVisual / .24f) * frames.Length);
+                bool once = clip == "leap" || clip == "land" || clip == "death" || clip == "hurt" || clip == h.basicAnimA || clip == h.basicAnimB || clip == h.skillAnim;
                 index = once ? Mathf.Min(index, frames.Length - 1) : index % frames.Length;
                 v.sr.sprite = frames[index];
             }

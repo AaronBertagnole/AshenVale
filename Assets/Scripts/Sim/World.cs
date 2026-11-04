@@ -173,6 +173,7 @@ namespace AshenVale
                 { EnterTown(p); return; }
             }
 
+            p.landVisual = Mathf.Max(0, p.landVisual - dt);
             p.hurtVisual = Mathf.Max(0, p.hurtVisual - dt);
             p.attackCooldown = Mathf.Max(0, p.attackCooldown - dt);
             p.attackVisual = Mathf.Max(0, p.attackVisual - dt);
@@ -181,7 +182,7 @@ namespace AshenVale
 
             // Cancel a committed attack/leap when interrupted; no delayed hits after death/teleport.
             if (p.Hero.dragonKnight && (p.knockTime > 0 || p.climbing))
-            { p.attackPending = false; p.attackVisual = 0; p.leapActive = false; }
+            { p.attackPending = false; p.attackVisual = 0; p.leapActive = false; p.landVisual = 0; }
             Move(p, def, input, dt, !town);
             if (p.attackPending)
             {
@@ -256,7 +257,7 @@ namespace AshenVale
                         p.dashCooldown = p.Hero.leapCooldown;
                         p.leapActive = true; p.leapDirection = p.facing;
                         p.grounded = false; p.crouching = false;
-                        p.dropTimer = 0; p.vy = p.Hero.leapJumpSpeed;
+                        p.dropTimer = 0; p.landVisual = 0; p.vy = p.Hero.leapJumpSpeed;
                     }
                 }
                 else
@@ -303,7 +304,7 @@ namespace AshenVale
         void Teleport(PlayerState p, int mapId, float x, float y)
         {
             p.attackPending = p.leapActive = false;
-            p.attackWindup = p.attackVisual = p.attackDuration = 0;
+            p.attackWindup = p.attackVisual = p.attackDuration = p.landVisual = 0;
             bool arriving = p.map != mapId;
             p.map = mapId;
             p.ch.SeeMap(mapId);     // the world map shows every map you have been to
@@ -374,6 +375,7 @@ namespace AshenVale
             var hero = p.Hero;
             if (skill && p.mp < hero.skillManaCost) return;
             if (skill) p.mp -= hero.skillManaCost;
+            p.landVisual = 0;
             p.lastWasSkill = skill;
             if (!skill) p.comboStep++;
             p.attackCooldown = skill ? hero.skillCooldown : hero.attackCooldown;
@@ -438,6 +440,7 @@ namespace AshenVale
 
         void LandDragonLeap(PlayerState p, MapRuntime map)
         {
+            p.landVisual = .24f;
             events.Add(new SimEvent { kind = SimEventKind.DragonFissure, map = p.map,
                 playerId = p.id, x = p.x, y = p.y, facing = p.facing });
             int damage = p.Hero.baseDamage + p.ch.level * Tuning.DamagePerLevel + p.ch.BonusAttack + p.Hero.leapBonus;
@@ -746,7 +749,7 @@ namespace AshenVale
                 if (p.grounded) { p.vy = Tuning.KnockbackHop; p.grounded = false; }
             }
             if (p.hp > 0) return;
-            p.attackPending = p.leapActive = false; p.attackVisual = 0;
+            p.attackPending = p.leapActive = false; p.attackVisual = p.landVisual = 0;
             p.hp = 0; p.dead = true; p.deathClock = 0; p.portalCast = 0; p.knockTime = 0;
             events.Add(new SimEvent { kind = SimEventKind.PlayerDied, map = map.def.id, playerId = p.id, x = p.x, y = p.y });
         }

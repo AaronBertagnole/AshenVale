@@ -56,6 +56,7 @@ namespace AshenVale
         public bool attackPending, leapActive;
         public int attackFacing, attackDamage, attackSerial;
         public float leapDirection;
+        public float landVisual; // brief landing clip, canceled by an attack
         public int comboStep;
         public bool lastWasSkill;
 
