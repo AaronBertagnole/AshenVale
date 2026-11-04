@@ -152,8 +152,8 @@ Body sizes (width x height, in px at 100 px per unit) from `Assets/Scripts/Data/
 | Key | Monster | Lv | Body |
 |---|---|---|---|
 | `hedge_shrew` | Hedge Shrew | 1 | 96 x 58 (painted: idle 8 frames, move 8) |
-| `ash_sprout` | Ash Sprout | 2 | 76 x 92 (painted, idle) |
-| `thornback_hedgehog` | Thornback Hedgehog | 4 | 120 x 86 (painted, idle) |
+| `ash_sprout` | Ash Sprout | 2 | 80 x 92 (painted: idle 8 frames, move 8) |
+| `thornback_hedgehog` | Thornback Hedgehog | 4 | 120 x 97 (painted: idle 8 frames, move 8) |
 | `old_chest` | Old Chest | 4 | 100 x 80 |
 | `moss_crawler` | Moss Crawler | 6 | 100 x 70 |
 | `bramble_boar` | Bramble Boar | 8 | 140 x 100 |

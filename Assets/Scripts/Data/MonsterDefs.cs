@@ -81,7 +81,7 @@ namespace AshenVale
                 width = .96f, height = .58f, hp = 40, speed = 1.8f, damage = 7, xp = 7, goldMin = 4, goldRange = 5,
                 part = Parts.ShrewTuft },          // scurries through the leaf litter of Emberfields; art 96 x 58
             new MonsterDef { key = "thornback_hedgehog", name = "Thornback Hedgehog", level = 4, color = new Color(.45f, .32f, .22f),
-                width = 1.2f, height = .86f, hp = 130, speed = 1.5f, damage = 14, xp = 22, goldMin = 14, goldRange = 9,
+                width = 1.2f, height = .97f, hp = 130, speed = 1.5f, damage = 14, xp = 22, goldMin = 14, goldRange = 9,
                 aggressive = true, respawn = 15f,
                 part = Parts.HedgehogQuill, partChance = .5f },
             new MonsterDef { key = "moss_crawler", name = "Moss Crawler", level = 6, color = new Color(.31f, .71f, .45f),
@@ -92,7 +92,7 @@ namespace AshenVale
                 aggressive = true,
                 part = Parts.WraithSilk },
             new MonsterDef { key = "ash_sprout", name = "Ash Sprout", level = 2, color = new Color(.62f, .7f, .38f),
-                width = .76f, height = .92f, hp = 55, speed = 1f, damage = 6, xp = 10, goldMin = 6, goldRange = 6,
+                width = .8f, height = .92f, hp = 55, speed = 1f, damage = 6, xp = 10, goldMin = 6, goldRange = 6,
                 part = Parts.SproutLeaf },
             new MonsterDef { key = "old_chest", name = "Old Chest", level = 4, color = new Color(.62f, .43f, .22f),
                 width = 1f, height = .8f, hp = 100, speed = 0f, damage = 0, xp = 20, goldMin = 35, goldRange = 25,
