@@ -562,7 +562,9 @@ namespace AshenVale
             string stat = health ? "HP" : "MP";
             Rect card = new Rect(x, r.y + 106, 290, 214);
             GUI.Box(card, (health ? "HEALTH POTION" : "MANA POTION") + "  x" + count);
-            GUI.Label(new Rect(card.x + 16, card.y + 42, card.width - 32, 84),
+            var icon = Sprites.Art(health ? "Art/Items/hp_potion" : "Art/Items/mp_potion");
+            if (icon != null) GUI.DrawTexture(new Rect(card.xMax - 92, card.y + 36, 76, 76), icon.texture, ScaleMode.ScaleToFit, true);
+            GUI.Label(new Rect(card.x + 16, card.y + 42, card.width - (icon != null ? 116 : 32), 84),
                       "Restore " + amount + " " + stat + ".\nCurrent " + stat + ": " + current + " / " + maximum + "\nHotkey: " + Keys.Name(health ? GameAction.HpPotion : GameAction.MpPotion), smallStyle);
             bool previous = GUI.enabled;
             GUI.enabled = previous && onUseItem != null && !me.dead && count > 0 && current < maximum;

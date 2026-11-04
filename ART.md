@@ -194,8 +194,13 @@ unless one of these files exists (a merchant or smith character standing in fron
 ### Monster parts: `Art/Parts/<part>.png`
 
 A painted icon per part, 64 x 64 with a transparent background, named after the part in lower case with underscores
-(`shrew_tuft.png`, `sprout_leaf.png`, `moss_tuft.png` so far). A part with an icon shows it when it drops (half a unit
+(`shrew_tuft.png`, `sprout_leaf.png`, `moss_tuft.png`, `ember_core.png` so far). A part with an icon shows it when it drops (half a unit
 tall) and in the bag's materials tab and the merchant's sell list; parts without one stay coloured blobs.
+
+### Potions: `Art/Items/hp_potion.png`, `mp_potion.png`
+
+Painted potion icons (256 x 256, transparent). Shown on the ground when a potion drops and on the potion cards in the
+bag's useables tab.
 
 ### World map: `Art/UI/world_map.png`
 

@@ -93,7 +93,14 @@ namespace AshenVale
             {
                 GameAction action = actionsList[i];
                 var button = ButtonAt(action.ToString(), actions, new Vector2(0, 1), new Vector2(0, 1), new Vector2(i * 49, -2), new Vector2(42, 42), () => Request(action));
-                var icon = Graphic<HudGlyph>("Icon", button.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(6, -3), new Vector2(30, 30)); icon.symbol = glyphs[i]; icon.color = colors[i];
+                // Potions show their painted icons (Art/Items); the other slots keep their glyphs.
+                var painted = action == GameAction.HpPotion ? Sprites.Art("Art/Items/hp_potion") : action == GameAction.MpPotion ? Sprites.Art("Art/Items/mp_potion") : null;
+                if (painted != null)
+                {
+                    var image = Graphic<Image>("Icon", button.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(5, -2), new Vector2(32, 32));
+                    image.sprite = painted; image.preserveAspect = true;
+                }
+                else { var icon = Graphic<HudGlyph>("Icon", button.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(6, -3), new Vector2(30, 30)); icon.symbol = glyphs[i]; icon.color = colors[i]; }
                 var mask = Graphic<Image>("Cooldown", button.transform, new Vector2(0, 1), new Vector2(0, 1), Vector2.zero, new Vector2(42, 42)); mask.sprite = theme.white; mask.type = Image.Type.Filled; mask.fillMethod = Image.FillMethod.Radial360; mask.color = new Color(.015f,.05f,.07f,.82f); mask.fillAmount = 0;
                 var timer = Label("Cooldown seconds", button.transform, 1, 10, 40, 20, 12, HudTheme.Ivory, FontStyle.Bold); timer.alignment = TextAnchor.MiddleCenter;
                 var keyFrame = Panel("Key", button.transform, new Vector2(.5f, 0), new Vector2(.5f, 0), new Vector2(0, -5), new Vector2(42, 16));

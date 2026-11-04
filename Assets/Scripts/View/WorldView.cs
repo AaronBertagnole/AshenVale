@@ -414,7 +414,9 @@ namespace AshenVale
                                 : d.kind == DropKind.Item ? Loot.RarityColor(d.item.rarity) : part ? Parts.All[d.value].color : new Color(1, .81f, .18f);
                     // Parts with a painted icon show it (half a unit tall); other parts are small round blobs and
                     // everything else a little block, until they get icons too.
-                    var icon = part ? Sprites.PartIcon(d.value) : null;
+                    var icon = part ? Sprites.PartIcon(d.value)
+                             : d.kind == DropKind.HpPotion ? Sprites.Art("Art/Items/hp_potion")
+                             : d.kind == DropKind.MpPotion ? Sprites.Art("Art/Items/mp_potion") : null;
                     if (icon != null)
                     {
                         go = Sprites.Picture(name, icon, DropOrder, null, 0, 0);
