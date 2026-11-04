@@ -51,6 +51,11 @@ namespace AshenVale
         readonly Dictionary<int, MonsterView> monsterViews = new Dictionary<int, MonsterView>();
         readonly List<MonsterView> dying = new List<MonsterView>();
         readonly Dictionary<int, GameObject> dropViews = new Dictionary<int, GameObject>();
+        // Drops pop out of the monster when they appear: each remembers when it was first seen and where it burst from.
+        sealed class DropPop { public float start, fromX; public Vector3 rest; }
+        readonly Dictionary<int, DropPop> dropPops = new Dictionary<int, DropPop>();
+        bool dropsSynced;                   // false right after a map change, so what is already lying there doesn't pop
+        const float PopTime = .5f, PopHeight = .9f;
         readonly Dictionary<int, GameObject> shotViews = new Dictionary<int, GameObject>();
         readonly Dictionary<int, GameObject> portalViews = new Dictionary<int, GameObject>();
         readonly List<SlashFx> slashes = new List<SlashFx>();
@@ -124,6 +129,8 @@ namespace AshenVale
 
         void ShowMap(int map)
         {
+            dropsSynced = false;
+            dropPops.Clear();
             for (int i = 0; i < visuals.Length; i++) visuals[i].root.SetActive(i == map);
             shownMap = map;
             ClearMonsters();
@@ -388,12 +395,18 @@ namespace AshenVale
         void SyncDrops(int localId)
         {
             seen.Clear();
+            // New drops this frame burst from their shared centre (a monster's loot lands around where it fell).
+            float burstX = 0; int fresh = 0;
+            foreach (var d in world.maps[shownMap].drops)
+                if (!dropViews.ContainsKey(d.id)) { burstX += d.x; fresh++; }
+            if (fresh > 0) burstX /= fresh;
             foreach (var d in world.maps[shownMap].drops)
             {
                 seen.Add(d.id);
                 GameObject go;
                 if (!dropViews.TryGetValue(d.id, out go))
                 {
+                    bool pop = dropsSynced;
                     bool part = d.kind == DropKind.Part && d.value >= 0 && d.value < Parts.All.Length;
                     string name = d.kind == DropKind.HpPotion ? "HP Potion" : d.kind == DropKind.MpPotion ? "MP Potion" : d.kind == DropKind.Item ? d.item.name
                                 : part ? Parts.All[d.value].name : "Gold drop";
@@ -410,8 +423,25 @@ namespace AshenVale
                     }
                     else go = part ? Sprites.Blob(name, color, .3f, .3f, DropOrder, null, 0, 0) : Sprites.Block(name, color, .28f, .34f, DropOrder);
                     dropViews[d.id] = go;
+                    if (pop) dropPops[d.id] = new DropPop { start = Time.time, fromX = burstX, rest = go.transform.localScale };
                 }
-                go.transform.position = new Vector3(d.x, d.y + Mathf.Sin(Time.time * 4 + d.x) * .1f, 0);
+                float x = d.x, y = d.y + Mathf.Sin(Time.time * 4 + d.x) * .1f;
+                DropPop pop;
+                if (dropPops.TryGetValue(d.id, out pop))
+                {
+                    float t = (Time.time - pop.start) / PopTime;
+                    if (t >= 1f) { dropPops.Remove(d.id); go.transform.localScale = pop.rest; }
+                    else
+                    {
+                        // An arc from the burst point to its resting spot, landing with a little squash-and-settle.
+                        float ease = 1f - (1f - t) * (1f - t);
+                        x = Mathf.Lerp(pop.fromX, d.x, ease);
+                        y = d.y + Mathf.Sin(t * Mathf.PI) * PopHeight * (.6f + .4f * Mathf.Abs(d.x - pop.fromX));
+                        float grow = t < .25f ? .3f + .7f * (t / .25f) : 1f + .15f * Mathf.Sin((t - .25f) / .75f * Mathf.PI);
+                        go.transform.localScale = new Vector3(pop.rest.x * grow, pop.rest.y * grow, 1f);
+                    }
+                }
+                go.transform.position = new Vector3(x, y, 0);
                 // Someone else's for now: drawn faint (the host decides; a client is told in the snapshot).
                 int keeper = world.ReservedFor(d);
                 bool reserved = d.reservedForOther || (keeper != 0 && keeper != localId);
@@ -419,6 +449,7 @@ namespace AshenVale
                 var c = sr.color; c.a = reserved ? .35f : 1f; sr.color = c;
             }
             RemoveUnseen(dropViews);
+            dropsSynced = true;
         }
 
         void SyncShots(float alpha)
