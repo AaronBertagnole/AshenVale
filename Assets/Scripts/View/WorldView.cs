@@ -144,9 +144,8 @@ namespace AshenVale
             foreach (var e in world.events)
             {
                 if (e.map != shownMap) continue;
-                if (e.kind == SimEventKind.EmbermarksPickedUp && e.playerId == localId)
-                    Number(e.x, e.y, "+" + e.amount.ToString("N0", System.Globalization.CultureInfo.InvariantCulture) + " Embermarks", new Color(1f, .85f, .38f), false);
-                else if (e.kind == SimEventKind.Slash) SpawnSlash(e);
+                if (e.kind == SimEventKind.EmbermarksPickedUp) continue;   // the bottom-left pickup note covers it (owner: no floating text)
+                if (e.kind == SimEventKind.Slash) SpawnSlash(e);
                 else if (e.kind == SimEventKind.DragonThrust || e.kind == SimEventKind.DragonFang || e.kind == SimEventKind.DragonFissure || e.kind == SimEventKind.DragonSweep) SpawnDragonFx(e);
                 else if (e.kind == SimEventKind.BossSlam) SpawnSlamRing(e);
             }
