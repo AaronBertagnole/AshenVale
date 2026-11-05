@@ -173,6 +173,7 @@ namespace AshenVale
                 { EnterTown(p); return; }
             }
 
+            p.rangerFlipTime = Mathf.Max(0, p.rangerFlipTime - dt);
             p.landVisual = Mathf.Max(0, p.landVisual - dt);
             p.hurtVisual = Mathf.Max(0, p.hurtVisual - dt);
             p.attackCooldown = Mathf.Max(0, p.attackCooldown - dt);
@@ -184,6 +185,8 @@ namespace AshenVale
             if (p.Hero.dragonKnight && (p.knockTime > 0 || p.climbing))
             { p.attackPending = false; p.attackVisual = 0; p.leapActive = false; p.landVisual = p.fangLungeTime = 0; }
             Move(p, def, input, dt, !town);
+            if (p.grounded || p.climbing || p.knockTime > 0 || p.hurtVisual > 0)
+                p.rangerFlipTime = 0;
             if (p.attackPending)
             {
                 p.attackWindup -= dt;
@@ -238,7 +241,11 @@ namespace AshenVale
                 bool climbDown = vertical < -.1f && p.y > nearby.bottom + .05f;
                 if (climbUp || climbDown) { p.climbing = true; p.grounded = false; p.vy = 0; p.x = nearby.x; p.dashTime = 0; }
             }
-            if (p.climbing && (!atLadder || jump)) { p.climbing = false; if (jump) { p.vy = Tuning.JumpSpeed; p.grounded = false; } }
+            if (p.climbing && (!atLadder || jump))
+            {
+                p.climbing = false;
+                if (jump) { p.vy = Tuning.JumpSpeed; p.grounded = false; BeginRangerFlip(p); }
+            }
             p.crouching = p.grounded && !p.climbing && !knocked && vertical < -.1f;
             if (!p.climbing && p.grounded && jump)
             {
@@ -248,7 +255,12 @@ namespace AshenVale
                     if (p.currentFloor > Tuning.Ground + .05f)
                     { p.dropTimer = Tuning.DropThroughTime; p.dropFloor = p.currentFloor; p.grounded = false; p.crouching = false; p.vy = 0; }
                 }
-                else { p.vy = Tuning.JumpSpeed; p.grounded = false; }
+                else
+                {
+                    bool raisedPlatform = p.currentFloor > Tuning.Ground + .05f;
+                    p.vy = Tuning.JumpSpeed; p.grounded = false;
+                    if (raisedPlatform) BeginRangerFlip(p);
+                }
             }
             if (allowDash && input.dash && p.dashCooldown <= 0 && !knocked && !p.climbing)
             {
@@ -312,11 +324,19 @@ namespace AshenVale
             }
         }
 
+        static void BeginRangerFlip(PlayerState p)
+        {
+            if (p.Hero.folder != "ElvenRanger" || p.hurtVisual > 0 || p.attackVisual > 0) return;
+            p.rangerFlipTime = PlayerState.RangerFlipDuration;
+            p.rangerFlipFacing = p.facing;
+        }
+
         // Puts a player somewhere instantly (map change, town, respawn), standing still.
         void Teleport(PlayerState p, int mapId, float x, float y)
         {
             p.attackPending = p.leapActive = false;
             p.attackWindup = p.attackVisual = p.attackDuration = p.landVisual = p.fangLungeTime = 0;
+            p.rangerFlipTime = 0;
             bool arriving = p.map != mapId;
             p.map = mapId;
             p.ch.SeeMap(mapId);     // the world map shows every map you have been to
@@ -388,6 +408,7 @@ namespace AshenVale
             if (skill && p.mp < hero.skillManaCost) return;
             if (skill) p.mp -= hero.skillManaCost;
             p.landVisual = 0;
+            p.rangerFlipTime = 0;
             p.lastWasSkill = skill;
             if (!skill) p.comboStep++;
             p.attackCooldown = skill ? hero.skillCooldown : hero.attackCooldown;
@@ -757,6 +778,7 @@ namespace AshenVale
         void Hurt(MapRuntime map, PlayerState p, MonsterState m, int damage)
         {
             p.fangLungeTime = 0;
+            p.rangerFlipTime = 0;
             p.hp -= DamageTaken(damage, p);
             p.immunity = Tuning.HitImmunity;
             p.hurtVisual = Tuning.HurtFlash;

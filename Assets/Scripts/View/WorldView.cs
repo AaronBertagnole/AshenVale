@@ -178,11 +178,28 @@ namespace AshenVale
                 Animate(p, v, frameDt);
                 float x = Mathf.Lerp(p.px, p.x, alpha), y = Mathf.Lerp(p.py, p.y, alpha);
                 v.go.transform.localScale = new Vector3(HeroScale, p.crouching ? 1.10f : HeroScale, 1f);
-                v.go.transform.position = new Vector3(x, y + (p.crouching ? .33f : .48f), 0);
+                Vector3 basePosition = new Vector3(x, y + (p.crouching ? .33f : .48f), 0);
+                Quaternion rotation = Quaternion.identity;
+                if (RangerIsFlipping(p))
+                {
+                    float progress = Mathf.Clamp01(1f - p.rangerFlipTime / PlayerState.RangerFlipDuration);
+                    rotation = Quaternion.Euler(0, 0, -360f * p.rangerFlipFacing * progress);
+                }
+                v.go.transform.rotation = rotation; // reset every frame, including interruptions/map changes
+                // Rotate about the sprite's visual center, even if its imported pivot is at its feet.
+                Vector3 center = v.sr.sprite != null ? v.sr.sprite.bounds.center : Vector3.zero;
+                center = Vector3.Scale(center, v.go.transform.localScale);
+                v.go.transform.position = basePosition + center - rotation * center;
             }
             stale.Clear();
             foreach (var kv in heroViews) if (!seen.Contains(kv.Key)) stale.Add(kv.Key);
             foreach (var id in stale) { Object.Destroy(heroViews[id].go); heroViews.Remove(id); }
+        }
+
+        static bool RangerIsFlipping(PlayerState p)
+        {
+            return p.Hero.folder == "ElvenRanger" && p.rangerFlipTime > 0 &&
+                !p.grounded && !p.climbing && !p.dead && p.hurtVisual <= 0 && p.attackVisual <= 0;
         }
 
         static string ChooseAnimation(PlayerState p)
@@ -191,6 +208,7 @@ namespace AshenVale
             if (p.dead) return "death";
             if (p.hurtVisual > 0) return "hurt";
             if (p.climbing) return "climb";
+            if (RangerIsFlipping(p)) return "jump";
             if (p.attackVisual > 0)
             {
                 // comboStep is bumped before the swing, so the knight's first basic attack (step 1) is the thrust.
@@ -249,6 +267,8 @@ namespace AshenVale
                     (clip == h.basicAnimA || clip == h.basicAnimB || clip == h.skillAnim))
                     index = Mathf.Min(frames.Length - 1, Mathf.FloorToInt(
                         Mathf.Clamp01(1f - p.attackVisual / p.attackDuration) * frames.Length));
+                // Hold the tucked airborne pose while the renderer performs the somersault.
+                if (RangerIsFlipping(p)) index = frames.Length - 1;
                 bool once = clip == "leap" || clip == "land" || clip == "death" || clip == "hurt" || clip == h.basicAnimA || clip == h.basicAnimB || clip == h.skillAnim;
                 index = once ? Mathf.Min(index, frames.Length - 1) : (index % frames.Length + frames.Length) % frames.Length;
                 v.sr.sprite = frames[index];

@@ -57,6 +57,9 @@ namespace AshenVale
         public int attackFacing, attackDamage, attackSerial;
         public float leapDirection;
         public float fangLungeTime; // grounded Dragon Fang movement after contact
+        public float rangerFlipTime; // visual only: one somersault after ladder/platform jump
+        public int rangerFlipFacing = 1;
+        public const float RangerFlipDuration = .36f;
         public float landVisual; // brief landing clip, canceled by an attack
         public int comboStep;
         public bool lastWasSkill;
