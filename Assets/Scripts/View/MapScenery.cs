@@ -449,13 +449,16 @@ namespace AshenVale
             bool painted = BuildScene(visual, def, look, out front, out back);
             if (!painted)
             {
-                if (!BuildBackdrop(visual, def, look, out front, out back))
+                bool hasBackdrop = BuildBackdrop(visual, def, look, out front, out back);
+                if (!hasBackdrop)
                 {
                     Sky(visual, def, theme, art);
                     Far(visual, def, theme, art, rng);
                     Mid(visual, def, theme, art, rng);
                 }
-                Ground(root, def, theme, art, rng);
+                // New complete panoramas already contain their street and retaining wall.
+                // A second theme strip can create a competing visible floor above the actual feet.
+                if (!hasBackdrop || !PaintedMapFraming.UsesOwnGround(def)) Ground(root, def, theme, art, rng);
             }
             BuildEffects(look, front, back, painted);
             BuildAmbient(visual, look, front);
@@ -518,6 +521,7 @@ namespace AshenVale
             if (sprite != null && def.backdrop != own) { floor = DefaultBackdropFloor; width = DefaultBackdropWidth; flip = false; }
             if (sprite == null && !string.IsNullOrEmpty(def.backdrop)) { path = def.backdrop; sprite = Sprites.Art(path); }
             if (sprite == null || width <= 0f) return false;
+            PaintedMapFraming.Apply(def, sprite, ref width, ref floor);
             var far = Sprites.Art(path + "_back");
             if (far != null) back = Panorama(visual, "Distance", far, width, floor, flip, look.backTravel, SkyOrder);
             front = Panorama(visual, "Backdrop", sprite, width, floor, flip, 1f, far != null ? FarOrder : SkyOrder);

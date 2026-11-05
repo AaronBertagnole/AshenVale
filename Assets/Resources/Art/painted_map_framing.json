@@ -1,0 +1,12 @@
+{
+  "newBackdropWidthMultiplier": 0.8,
+  "maps": [
+    {
+      "key": "lastlight",
+      "completeGround": true,
+      "widthMultiplier": 0.8,
+      "overrideFloor": true,
+      "floorFromBottom": 0.1380042463
+    }
+  ]
+}
