@@ -8,7 +8,7 @@ namespace AshenVale
     // It only reads the World (plus its event list, which it clears); it never changes game state.
     public sealed class WorldView
     {
-        sealed class HeroView { public GameObject go; public SpriteRenderer sr; public string anim = ""; public float clock, lastHp = -1; public int attackSerial = -1; public float climbOffset; }
+        sealed class HeroView { public GameObject go; public SpriteRenderer sr; public string anim = ""; public float clock, lastHp = -1; public int attackSerial = -1; public float climbOffset, climbXOffset; public Vector3 climbScale; public bool fittedClimb; }
         sealed class SlashFx { public GameObject obj; public SpriteRenderer sr; public float life, duration, x, y; public int direction; public bool ring; public int dragon; }
 
         // A number that pops up where something was hurt or healed and drifts upward (GameHud draws them).
@@ -37,9 +37,6 @@ namespace AshenVale
 
         public const float ViewHalfHeight = 5.4f;   // camera orthographic size: the view is 10.8 units tall
         const float HeroScale = 1.65f;
-        const float RungSpacing = .42f;   // Art/Props/ladder.png: two rungs per 84 px tile
-        // Pixel row (from the top of the 128 px frame) of the leading hand in each climb pose, measured from the art.
-        static readonly float[] RangerHandRows = { 14f, 20f, 14f, 14f }, KnightHandRows = { 40f, 42f, 42f, 42f };
         const float DieTime = .45f;
         public const int MonsterOrder = 7, DropOrder = 9, HeroOrder = 10, SlashOrder = 12, ArrowOrder = 13;
 
@@ -178,8 +175,8 @@ namespace AshenVale
                 v.lastHp = p.hp;
                 Animate(p, v, frameDt, alpha);
                 float x = Mathf.Lerp(p.px, p.x, alpha), y = Mathf.Lerp(p.py, p.y, alpha);
-                v.go.transform.localScale = new Vector3(HeroScale, p.crouching ? 1.10f : HeroScale, 1f);
-                Vector3 basePosition = new Vector3(x, y + (p.crouching ? .33f : .48f) + v.climbOffset, 0);
+                v.go.transform.localScale = v.fittedClimb ? v.climbScale : new Vector3(HeroScale, p.crouching ? 1.10f : HeroScale, 1f);
+                Vector3 basePosition = new Vector3(x + v.climbXOffset, y + (p.crouching ? .33f : .48f) + v.climbOffset, 0);
                 Quaternion rotation = Quaternion.identity;
                 if (RangerIsFlipping(p))
                 {
@@ -195,6 +192,68 @@ namespace AshenVale
             stale.Clear();
             foreach (var kv in heroViews) if (!seen.Contains(kv.Key)) stale.Add(kv.Key);
             foreach (var id in stale) { Object.Destroy(heroViews[id].go); heroViews.Remove(id); }
+        }
+
+        readonly Dictionary<int, SpriteRenderer[]> climbLadders = new Dictionary<int, SpriteRenderer[]>();
+        // Palm centers in exported128px frames, measured from top-left: high then low hand.
+        static readonly Vector2[] KnightClimbHands = { new Vector2(38.72f, 23.93f), new Vector2(88.99f, 57.03f), new Vector2(89.23f, 23.93f), new Vector2(39.97f, 57.03f) };
+        static readonly Vector2[] RangerClimbHands = { new Vector2(38.65f, 20.52f), new Vector2(90.49f, 52.61f), new Vector2(89.21f, 20.52f), new Vector2(38.39f, 52.61f) };
+
+        int FitClimbContacts(PlayerState p, HeroView v, Sprite[] frames, float y)
+        {
+            // Locate the drawn ladder, not a guessed ground-relative phase.
+            SpriteRenderer[] renderers;
+            if (!climbLadders.TryGetValue(p.map, out renderers))
+            {
+                renderers = visuals[p.map].root.GetComponentsInChildren<SpriteRenderer>(true);
+                climbLadders[p.map] = renderers;
+            }
+            SpriteRenderer ladder = null;
+            foreach (var sr in renderers)
+                if (sr != null && sr.gameObject.name == "Ladder" && sr.sprite != null &&
+                    Mathf.Abs(sr.bounds.center.x - p.x) < .8f &&
+                    y >= sr.bounds.min.y - .6f && y <= sr.bounds.max.y + .6f)
+                { ladder = sr; break; }
+            float origin = Tuning.Ground + .24f, spacing = .38f, left = p.x - .27f, right = p.x + .27f;
+            if (ladder != null)
+            {
+                // Supplied72x84tile: rail centers at8/64px, rung centers22/64px from bottom.
+                float unitX = ladder.bounds.size.x / 72f;
+                float unitY = ladder.transform.lossyScale.y / ladder.sprite.pixelsPerUnit * ladder.sprite.rect.height / 84f;
+                left = ladder.bounds.min.x + 8f * unitX;
+                right = ladder.bounds.min.x + 64f * unitX;
+                spacing = 42f * unitY;
+                origin = ladder.bounds.min.y + 22f * unitY;
+            }
+            else
+            {
+                foreach (var l in world.maps[p.map].def.ladders)
+                    if (Mathf.Abs(l.x - p.x) < .8f)
+                    { origin = l.bottom + .24f; left = l.x - .27f; right = l.x + .27f; break; }
+            }
+            spacing = Mathf.Max(.01f, spacing);
+            int step = Mathf.FloorToInt((y - origin) / spacing);
+            int pose = (step % 2 + 2) % 2;
+            int index = Mathf.Min(pose, frames.Length - 1);
+            Sprite sprite = frames[index];
+            var hands = p.Hero.dragonKnight ? KnightClimbHands : RangerClimbHands;
+            Vector2 high = hands[pose * 2], low = hands[pose * 2 + 1];
+            // Contacts are expressed in128px exports; account for the actual Sprite rect/pivot/PPU.
+            high = new Vector2(high.x / 128f * sprite.rect.width, (1f - high.y / 128f) * sprite.rect.height);
+            low = new Vector2(low.x / 128f * sprite.rect.width, (1f - low.y / 128f) * sprite.rect.height);
+            Vector2 localHigh = (high - sprite.pivot) / sprite.pixelsPerUnit;
+            Vector2 localLow = (low - sprite.pivot) / sprite.pixelsPerUnit;
+            float sx = (right - left) / Mathf.Max(.01f, Mathf.Abs(localHigh.x - localLow.x));
+            float sy = spacing / Mathf.Max(.01f, Mathf.Abs(localHigh.y - localLow.y));
+            float targetX = pose == 0 ? left : right;
+            float naturalHandY = y + .48f + localHigh.y * sy;
+            float targetY = origin + Mathf.Round((naturalHandY - origin) / spacing) * spacing;
+            sx = sy;   // one scale both ways: a fitted width squashed the hero ~13%; the hands still close on the rails
+            v.climbScale = new Vector3(sx, sy, 1f);
+            v.climbXOffset = targetX - localHigh.x * sx - p.x;
+            v.climbOffset = targetY - localHigh.y * sy - y - .48f;
+            v.fittedClimb = true;
+            return index;
         }
 
         static bool RangerIsFlipping(PlayerState p)
@@ -224,7 +283,7 @@ namespace AshenVale
             return Mathf.Abs(p.vx) > .2f ? "run" : "idle";
         }
 
-        static void Animate(PlayerState p, HeroView v, float frameDt, float alpha)
+        void Animate(PlayerState p, HeroView v, float frameDt, float alpha)
         {
             var h = p.Hero;
             string clip = ChooseAnimation(p);
@@ -234,7 +293,7 @@ namespace AshenVale
             float climbY = Mathf.Lerp(p.py, p.y, alpha);
             if (enteredClip) { v.anim = clip; v.clock = 0; }
             v.clock += frameDt;
-            v.climbOffset = 0;
+            v.climbOffset = v.climbXOffset = 0; v.fittedClimb = false;
             Sprite[] frames = Sprites.Hero(h.folder + "/" + clip);
             if (enteredClip && clip == "climb" && frames.Length < 2)
                 Debug.LogWarning("Climb needs multiple loaded frames at Resources/Heroes/" + h.folder +
@@ -244,20 +303,7 @@ namespace AshenVale
             {
                 int index = Mathf.FloorToInt(v.clock * fps);
                 if (clip == "climb")
-                {
-                    // Hand over hand: one pose per half rung of height (ladders start on grid rows, so rung
-                    // height is a function of height above the ground line), pausing when still and running
-                    // backwards on the way down. The drawn hero is then nudged (never more than a quarter unit)
-                    // so the leading hand of that pose closes on a rung instead of hovering beside the rail.
-                    index = Mathf.FloorToInt((climbY - Tuning.Ground) / (RungSpacing * .5f));
-                    int pose = (index % frames.Length + frames.Length) % frames.Length;
-                    float[] handRows = h.dragonKnight ? KnightHandRows : RangerHandRows;
-                    float handRow = handRows[Mathf.Min(pose, handRows.Length - 1)];
-                    float hand = climbY + .48f + (64f - handRow) / 128f * HeroScale;          // world y of that hand
-                    float rel = hand - Tuning.Ground - RungSpacing * .5f;                   // rungs sit at G + .21 + n * .42
-                    float nearest = Mathf.Round(rel / RungSpacing) * RungSpacing;
-                    v.climbOffset = Mathf.Clamp(nearest - rel, -.25f, .25f);
-                }
+                    index = FitClimbContacts(p, v, frames, climbY);
                 if (h.dragonKnight && clip != "climb" && p.attackVisual > 0 && p.attackDuration > 0)
                 {
                     // Reserve the first half of the clip for windup; contact at the windup boundary.
@@ -544,10 +590,13 @@ namespace AshenVale
                 GameObject go;
                 if (!shotViews.TryGetValue(s.id, out go))
                 {
-                    go = Sprites.Block("Arrow", new Color(.72f, 1, .43f), .52f, .11f, ArrowOrder);
+                    var art = Sprites.Art("Art/Projectiles/ranger_arrow");   // painted arrow (64x16, flies to the right)
+                    go = art != null ? Sprites.Picture("Arrow", art, ArrowOrder, null, s.x, s.y)
+                                     : Sprites.Block("Arrow", new Color(.72f, 1, .43f), .52f, .11f, ArrowOrder);
                     shotViews[s.id] = go;
                 }
                 go.transform.position = new Vector3(Mathf.Lerp(s.px, s.x, alpha), Mathf.Lerp(s.py, s.y, alpha), 0);
+                go.GetComponent<SpriteRenderer>().flipX = s.direction < 0;
             }
             RemoveUnseen(shotViews);
         }
