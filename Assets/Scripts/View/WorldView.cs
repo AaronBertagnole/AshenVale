@@ -8,7 +8,7 @@ namespace AshenVale
     // It only reads the World (plus its event list, which it clears); it never changes game state.
     public sealed class WorldView
     {
-        sealed class HeroView { public GameObject go; public SpriteRenderer sr; public string anim = ""; public float clock, lastHp = -1; public int attackSerial = -1; }
+        sealed class HeroView { public GameObject go; public SpriteRenderer sr; public string anim = ""; public float clock, lastHp = -1; public int attackSerial = -1; public float climbLastY; }
         sealed class SlashFx { public GameObject obj; public SpriteRenderer sr; public float life, duration, x, y; public int direction; public bool ring; public int dragon; }
 
         // A number that pops up where something was hurt or healed and drifts upward (GameHud draws them).
@@ -188,6 +188,7 @@ namespace AshenVale
             var h = p.Hero;
             if (p.dead) return "death";
             if (p.hurtVisual > 0) return "hurt";
+            if (p.climbing) return "climb";
             if (p.attackVisual > 0)
             {
                 // comboStep is bumped before the swing, so the knight's first basic attack (step 1) is the thrust.
@@ -196,7 +197,7 @@ namespace AshenVale
             }
             if (h.dragonKnight && p.leapActive) return "leap";
             if (h.dragonKnight && p.landVisual > 0 && p.grounded && Mathf.Abs(p.vx) < .2f) return "land";
-            if (p.climbing) return "run";
+
             if (p.crouching) return "idle";
             if (!p.grounded) return p.vy > 0 ? "jump" : "fall";
             return Mathf.Abs(p.vx) > .2f ? "run" : "idle";
@@ -208,14 +209,20 @@ namespace AshenVale
             string clip = ChooseAnimation(p);
             if (p.Hero.dragonKnight && p.attackVisual > 0 && p.attackSerial != v.attackSerial)
             { v.attackSerial = p.attackSerial; v.clock = 0; }
-            if (clip != v.anim) { v.anim = clip; v.clock = 0; }
-            v.clock += frameDt;
+            if (clip != v.anim) { v.anim = clip; v.clock = 0; v.climbLastY = p.y; }
+            if (clip == "climb")
+            {
+                // Follow actual vertical travel: pauses while still, reverses when descending.
+                v.clock += p.y - v.climbLastY;
+                v.climbLastY = p.y;
+            }
+            else v.clock += frameDt;
             Sprite[] frames = Sprites.Hero(h.folder + "/" + clip);
-            float fps = clip == "idle" ? 5 : clip == "run" ? 11 : clip == "death" ? 7 : 12;
+            float fps = clip == "climb" ? 6 : clip == "idle" ? 5 : clip == "run" ? 11 : clip == "death" ? 7 : 12;
             if (frames.Length > 0)
             {
                 int index = Mathf.FloorToInt(v.clock * fps);
-                if (h.dragonKnight && p.attackVisual > 0 && p.attackDuration > 0)
+                if (h.dragonKnight && clip != "climb" && p.attackVisual > 0 && p.attackDuration > 0)
                 {
                     // Reserve the first half of the clip for windup; contact at the windup boundary.
                     float elapsed = p.attackDuration - p.attackVisual;
@@ -234,10 +241,10 @@ namespace AshenVale
                 if (h.dragonKnight && clip == "land")
                     index = Mathf.FloorToInt(Mathf.Clamp01(1f - p.landVisual / .24f) * frames.Length);
                 bool once = clip == "leap" || clip == "land" || clip == "death" || clip == "hurt" || clip == h.basicAnimA || clip == h.basicAnimB || clip == h.skillAnim;
-                index = once ? Mathf.Min(index, frames.Length - 1) : index % frames.Length;
+                index = once ? Mathf.Min(index, frames.Length - 1) : (index % frames.Length + frames.Length) % frames.Length;
                 v.sr.sprite = frames[index];
             }
-            v.sr.flipX = p.facing < 0;
+            v.sr.flipX = clip != "climb" && p.facing < 0;
             v.sr.color = p.immunity > 0 && Mathf.FloorToInt(p.immunity * 16) % 2 == 0 ? new Color(1, .55f, .55f) : Color.white;
         }
 
