@@ -438,10 +438,6 @@ namespace AshenVale
             WorldView.CameraRange(def, 0f, out minX, out maxX, out minY, out maxY);
             visual.cameraLowY = minY;
             string art = "Art/Themes/" + def.theme + "/";
-            // Tiles cut from a painted picture carry a strip of path above the ledge line (Tools/make_ground_tiles.py),
-            // so they are drawn a little high; themes that set their own offsets keep them.
-            if (theme.groundSurface == 0f && theme.platformSurface == 0f && Sprites.Art(art + "ground") != null)
-            { theme.groundSurface = PaintedGroundSurface; theme.platformSurface = PaintedPlatformSurface; }
 
             // A painted scene already shows the sky, ground, houses, waystone and shops: draw only what it lacks.
             // A painted backdrop replaces the sky and distant layers; the ground and platforms are still drawn.
@@ -503,7 +499,6 @@ namespace AshenVale
         // Painted backdrops dropped in by map name use the same framing as the first ones: the path 116 px above the
         // bottom of a 724 px tall picture, shown 42 units wide.
         public const float DefaultBackdropFloor = 116f / 724f, DefaultBackdropWidth = 42f;
-        public const float PaintedGroundSurface = .16f, PaintedPlatformSurface = .10f;
 
         // The map's painted backdrop as a panorama layer (WorldView moves it), plus the distant picture behind it if
         // there is one (<backdrop>_back), sliding less. A picture named after the map (Art/Backdrops/<key>.png) wins;

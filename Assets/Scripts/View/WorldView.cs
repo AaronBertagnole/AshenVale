@@ -37,6 +37,7 @@ namespace AshenVale
 
         public const float ViewHalfHeight = 5.4f;   // camera orthographic size: the view is 10.8 units tall
         const float HeroScale = 1.65f;
+        public const float HeroLift = .16f;
         const float DieTime = .45f;
         public const int MonsterOrder = 7, DropOrder = 9, HeroOrder = 10, SlashOrder = 12, ArrowOrder = 13;
 
@@ -176,7 +177,9 @@ namespace AshenVale
                 Animate(p, v, frameDt, alpha);
                 float x = Mathf.Lerp(p.px, p.x, alpha), y = Mathf.Lerp(p.py, p.y, alpha);
                 v.go.transform.localScale = v.fittedClimb ? v.climbScale : new Vector3(HeroScale, p.crouching ? 1.10f : HeroScale, 1f);
-                Vector3 basePosition = new Vector3(x + v.climbXOffset, y + (p.crouching ? .33f : .48f) + v.climbOffset, 0);
+                // HeroLift puts the painted feet (row ~114 of the 128 px frame, .16 u below the frame's centre at this
+                // scale) exactly on p.y, where a monster's feet are, instead of .16 u under the floor.
+                Vector3 basePosition = new Vector3(x + v.climbXOffset, y + (p.crouching ? .33f : .48f) + HeroLift + v.climbOffset, 0);
                 Quaternion rotation = Quaternion.identity;
                 if (RangerIsFlipping(p))
                 {
@@ -246,12 +249,12 @@ namespace AshenVale
             float sx = (right - left) / Mathf.Max(.01f, Mathf.Abs(localHigh.x - localLow.x));
             float sy = spacing / Mathf.Max(.01f, Mathf.Abs(localHigh.y - localLow.y));
             float targetX = pose == 0 ? left : right;
-            float naturalHandY = y + .48f + localHigh.y * sy;
+            float naturalHandY = y + .48f + HeroLift + localHigh.y * sy;
             float targetY = origin + Mathf.Round((naturalHandY - origin) / spacing) * spacing;
             sx = sy;   // one scale both ways: a fitted width squashed the hero ~13%; the hands still close on the rails
             v.climbScale = new Vector3(sx, sy, 1f);
             v.climbXOffset = targetX - localHigh.x * sx - p.x;
-            v.climbOffset = targetY - localHigh.y * sy - y - .48f;
+            v.climbOffset = targetY - localHigh.y * sy - y - .48f - HeroLift;
             v.fittedClimb = true;
             return index;
         }
