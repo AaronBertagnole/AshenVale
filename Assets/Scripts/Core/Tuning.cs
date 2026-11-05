@@ -16,7 +16,7 @@ namespace AshenVale
         public const float JumpSpeed = 11.4f;        // reaches ~2.17 units, still clears a 2-row ledge (was 10.8 / 2.43 u)
         public const float AirSpeedFactor = .7f;     // sideways speed while airborne, as a share of ground speed
         public const float FlipEdge = 1.2f;          // the Ranger somersaults off a platform only this close to its end, facing out
-        public const float ClimbSpeed = 4.2f;
+        public const float ClimbSpeed = 3.4f;        // was 4.2; a touch slower reads more natural with the stepped climb poses
         public const float CrouchSpeedFactor = .34f;
         public const float DashSpeed = 14f;
         public const float DashTime = .18f;
