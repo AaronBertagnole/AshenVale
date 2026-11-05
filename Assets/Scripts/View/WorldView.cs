@@ -243,6 +243,12 @@ namespace AshenVale
                 }
                 if (h.dragonKnight && clip == "land")
                     index = Mathf.FloorToInt(Mathf.Clamp01(1f - p.landVisual / .24f) * frames.Length);
+                // Fit every Ranger attack pose into the existing visual duration.
+                // Simulation still releases arrows immediately, as before; this changes only drawing.
+                if (h.style == AttackStyle.Arrows && p.attackVisual > 0 && p.attackDuration > 0 &&
+                    (clip == h.basicAnimA || clip == h.basicAnimB || clip == h.skillAnim))
+                    index = Mathf.Min(frames.Length - 1, Mathf.FloorToInt(
+                        Mathf.Clamp01(1f - p.attackVisual / p.attackDuration) * frames.Length));
                 bool once = clip == "leap" || clip == "land" || clip == "death" || clip == "hurt" || clip == h.basicAnimA || clip == h.basicAnimB || clip == h.skillAnim;
                 index = once ? Mathf.Min(index, frames.Length - 1) : (index % frames.Length + frames.Length) % frames.Length;
                 v.sr.sprite = frames[index];
