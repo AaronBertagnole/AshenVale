@@ -257,9 +257,9 @@ namespace AshenVale
                 }
                 else
                 {
-                    bool raisedPlatform = p.currentFloor > Tuning.Ground + .05f;
+                    bool atEdge = NearPlatformEdge(def, p);
                     p.vy = Tuning.JumpSpeed; p.grounded = false;
-                    if (raisedPlatform) BeginRangerFlip(p);
+                    if (atEdge) BeginRangerFlip(p);
                 }
             }
             if (allowDash && input.dash && p.dashCooldown <= 0 && !knocked && !p.climbing)
@@ -322,6 +322,19 @@ namespace AshenVale
                     if (Mathf.Abs(p.currentFloor - plat.top) < .05f && p.x >= plat.left + .16f && p.x <= plat.right - .16f) supported = true;
                 if (!supported) { p.grounded = false; p.vy = 0; }
             }
+        }
+
+        // Standing on a raised platform within FlipEdge of one of its ends, facing out over the drop.
+        static bool NearPlatformEdge(MapDef def, PlayerState p)
+        {
+            if (p.currentFloor <= Tuning.Ground + .05f) return false;
+            foreach (var plat in def.platforms)
+            {
+                if (Mathf.Abs(plat.top - p.currentFloor) > .05f || p.x < plat.left - .2f || p.x > plat.right + .2f) continue;
+                bool nearLeft = p.x - plat.left <= Tuning.FlipEdge, nearRight = plat.right - p.x <= Tuning.FlipEdge;
+                return (nearLeft && p.facing < 0) || (nearRight && p.facing > 0);
+            }
+            return false;
         }
 
         static void BeginRangerFlip(PlayerState p)
