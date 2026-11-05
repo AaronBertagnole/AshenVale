@@ -573,7 +573,7 @@ namespace AshenVale
         // stood on, so a player jumping still counts as reachable.
         static bool CanReach(MonsterState m, PlayerState p)
         {
-            return Mathf.Abs(p.currentFloor - m.y) < Tuning.MonsterFloorTolerance && p.x >= m.left - .6f && p.x <= m.right + .6f;
+            return Mathf.Abs(p.currentFloor - m.y) < Tuning.MonsterFloorTolerance && p.x >= m.chaseLeft - .6f && p.x <= m.chaseRight + .6f;
         }
 
         // Who a monster goes after (null = nobody, it wanders):
@@ -616,6 +616,10 @@ namespace AshenVale
                 float inset = Mathf.Min(d.width * .5f, .5f);
                 float lo = m.left + inset, hi = m.right - inset;
                 if (lo > hi) lo = hi = (m.left + m.right) * .5f;
+                // Going after someone, it may leave its calm stretch (into the strip by a portal, say); it walks
+                // back once it loses interest, rather than standing at the edge while the player hits it from beyond.
+                float chaseLo = m.chaseLeft + inset, chaseHi = m.chaseRight - inset;
+                if (chaseLo > chaseHi) chaseLo = chaseHi = (m.chaseLeft + m.chaseRight) * .5f;
 
                 if (d.boss) { UpdateBoss(map, m, target, dt); m.x = Mathf.Clamp(m.x, lo, hi); continue; }
                 if (m.knockbackTime > 0f)
@@ -634,6 +638,7 @@ namespace AshenVale
                 {
                     m.wanderTime -= dt;
                     if (m.wanderTime <= 0f) { m.wanderDir = rng.Next(3) - 1; m.wanderTime = 1.2f + (float)rng.NextDouble() * 2.3f; }
+                    if (m.x < lo) m.wanderDir = 1; else if (m.x > hi) m.wanderDir = -1;   // outside its stretch after a chase: head home
                     if (m.wanderDir != 0)
                     {
                         m.facing = m.wanderDir;
@@ -641,7 +646,7 @@ namespace AshenVale
                         if ((m.x <= lo && m.wanderDir < 0) || (m.x >= hi && m.wanderDir > 0)) m.wanderDir = -m.wanderDir;
                     }
                 }
-                m.x = Mathf.Clamp(m.x, lo, hi);
+                m.x = Mathf.Clamp(m.x, chaseLo, chaseHi);
             }
             TouchDamage(map);
         }
@@ -721,7 +726,7 @@ namespace AshenVale
                 map.monsters.Add(new MonsterState
                 {
                     id = NextId(), def = kind, map = map.def.id, level = d.level, spawn = -1,
-                    x = x, y = boss.y, px = x, py = boss.y, hp = PartyHp(map, d), maxHp = PartyHp(map, d), left = boss.left, right = boss.right, facing = side,
+                    x = x, y = boss.y, px = x, py = boss.y, hp = PartyHp(map, d), maxHp = PartyHp(map, d), left = boss.left, right = boss.right, chaseLeft = boss.chaseLeft, chaseRight = boss.chaseRight, facing = side,
                     target = boss.target, aggroTime = Tuning.MonsterAggroTime,
                 });
             }
@@ -788,7 +793,8 @@ namespace AshenVale
             {
                 id = NextId(), def = point.monster, map = map.def.id, level = def.level, spawn = spawn,
                 x = point.x, y = point.y, px = point.x, py = point.y, hp = PartyHp(map, def), maxHp = PartyHp(map, def),
-                left = point.left, right = point.right, facing = rng.Next(2) == 0 ? -1 : 1,
+                left = point.left, right = point.right, chaseLeft = point.chaseLeft, chaseRight = point.chaseRight,
+                facing = rng.Next(2) == 0 ? -1 : 1,
                 wanderTime = (float)rng.NextDouble() * 2f,
             };
             map.monsters.Add(m);

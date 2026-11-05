@@ -86,6 +86,7 @@ namespace AshenVale
         public readonly Dictionary<int, int> damageBy = new Dictionary<int, int>();   // player id -> damage dealt (loot owner, XP share)
         public readonly Dictionary<int, float> lastHitAt = new Dictionary<int, float>();  // player id -> world time of their last hit
         public float left, right;       // the stretch of floor it keeps to
+        public float chaseLeft, chaseRight;   // wider stretch it may cross while going after a player (no portal calm zone)
         public int facing = -1;
         public int wanderDir;           // -1, 0 (standing) or 1 while nobody is being chased
         public float wanderTime;

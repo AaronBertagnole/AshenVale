@@ -30,7 +30,8 @@ namespace AshenVale
     public struct SpawnPoint
     {
         public int monster;
-        public float x, y, left, right;
+        public float x, y, left, right;          // where it wanders (ground ones keep clear of portals)
+        public float chaseLeft, chaseRight;      // where it may go after a player it has noticed: the whole stretch
     }
 
     // Gameplay layout of one map, read from a text picture (see MapLayout). Its look is built by MapScenery from `theme`.
@@ -235,6 +236,8 @@ namespace AshenVale
             for (int i = 0; i < spawns.Count; i++)
             {
                 var point = spawns[i];
+                point.chaseLeft = point.left; point.chaseRight = point.right;
+                spawns[i] = point;
                 if (point.y > G + .01f || Monsters.All[point.monster].boss) continue;
                 foreach (var portal in portals)
                 {
