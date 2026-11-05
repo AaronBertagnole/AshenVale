@@ -315,7 +315,7 @@ namespace AshenVale
             MapLayout.WithChests(MapLayout.WithBackdrop(MapLayout.Build(HollowDen, "Hollow Den", "cave", MapKind.Field, HollowDenLayout,
                     new[] { MapLayout.S('d', Monsters.DenShade), MapLayout.S('k', Monsters.MossyChest) },
                     new[] { MapLayout.L('S', Mosswood, 'S') }),
-                "Art/Backdrops/hollow_den", 42f / 724f, 42f),
+                "Art/Backdrops/hollow_den", 129f / 1000f, 28f),
                 2),                                         // the secret den: two chests out at once
             MapLayout.WithBackdrop(MapLayout.Build(Kingsroad, "Kingsroad", "road", MapKind.Field, KingsroadLayout,
                     new[] { MapLayout.S('b', Monsters.BrambleBoar), MapLayout.S('v', Monsters.VioletWraith), MapLayout.S('k', Monsters.MossyChest) },
@@ -329,12 +329,12 @@ namespace AshenVale
                 new[] { MapLayout.S('t', Monsters.MarshToad), MapLayout.S('l', Monsters.BogLurker),
                         MapLayout.S('w', Monsters.AshWisp), MapLayout.S('k', Monsters.SunkenChest) },
                 new[] { MapLayout.L('E', Cinderford, 'E'), MapLayout.L('P', BrackwaterShore, 'P') }),
-                "Art/Backdrops/ashen_marsh", 120f / 724f, 42f),
+                "Art/Backdrops/ashen_marsh", 161f / 1000f, 28f),
             // The path from Emberfields down toward Mosswood.
             MapLayout.WithBackdrop(MapLayout.Build(AmberleafTrail, "Amberleaf Trail", "autumn", MapKind.Field, AmberleafTrailLayout,
                     new[] { MapLayout.S('a', Monsters.AshSprout), MapLayout.S('b', Monsters.LeafBeetle),
                             MapLayout.S('f', Monsters.EmberFox), MapLayout.S('k', Monsters.OldChest) },
-                    new[] { MapLayout.L('B', Emberfields, 'B'), MapLayout.L('F', MossgateHollow, 'F') }), "Art/Backdrops/amberleaf_trail", 130f / 724f, 42f),
+                    new[] { MapLayout.L('B', Emberfields, 'B'), MapLayout.L('F', MossgateHollow, 'F') }), "Art/Backdrops/amberleaf_trail", 175f / 1000f, 28f),
             MapLayout.Build(MossgateHollow, "Mossgate Hollow", "mossgate", MapKind.Field, MossgateHollowLayout,
                 new[] { MapLayout.S('m', Monsters.Mossling), MapLayout.S('f', Monsters.EmberFox),
                         MapLayout.S('c', Monsters.MossCrawler), MapLayout.S('k', Monsters.MossyChest) },
@@ -344,12 +344,12 @@ namespace AshenVale
             MapLayout.WithBackdrop(MapLayout.Build(ShaleCliffs, "Shale Cliffs", "cliffs", MapKind.Field, ShaleCliffsLayout,
                 new[] { MapLayout.S('g', Monsters.CragGoat), MapLayout.S('r', Monsters.RockMite), MapLayout.S('k', Monsters.MossyChest) },
                 new[] { MapLayout.L('G', MossgateHollow, 'G'), MapLayout.L('H', FrostpinePass, 'H') }),
-                "Art/Backdrops/shale_cliffs", 140f / 724f, 42f),
+                "Art/Backdrops/shale_cliffs", 186f / 1000f, 28f),
             // Region 1's boss glade, off the east end of Mosswood: a bramble-walled clearing with two ledges to
             // shoot from. Thornmother waits in the middle and comes back a few minutes after she falls.
             MapLayout.WithBackdrop(MapLayout.Build(ThornGlade, "Thornmother's Glade", "forest", MapKind.Field, ThornGladeLayout,
                     new[] { MapLayout.S('z', Monsters.Thornmother) },
-                    new[] { MapLayout.L('T', Mosswood, 'T') }), "Art/Backdrops/thorn_glade", 130f / 724f, 42f),
+                    new[] { MapLayout.L('T', Mosswood, 'T') }), "Art/Backdrops/thorn_glade", 175f / 1000f, 28f),
         };
 
         public static bool IsTown(int map) { return map >= 0 && map < All.Length && All[map].kind == MapKind.Town; }
