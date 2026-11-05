@@ -644,8 +644,8 @@ namespace AshenVale
                 var icon = Sprites.PartIcon(i);
                 if (icon != null) GUI.DrawTexture(new Rect(r.x + 320, y + 1, 24, 24), icon.texture, ScaleMode.ScaleToFit, true);
                 GUI.Label(new Rect(r.x + (icon != null ? 348 : 320), y, icon != null ? 100 : 125, 26), part.name + " x" + ch.parts[i], partNameText);
-                if (GUI.Button(new Rect(r.x + 452, y, 66, 26), "1  +" + part.price + " marks")) { commands.SellPart(i, 1); break; }
-                if (GUI.Button(new Rect(r.x + 522, y, 70, 26), "All +" + part.price * ch.parts[i] + " marks")) { commands.SellPart(i, 0); break; }
+                if (GUI.Button(new Rect(r.x + 452, y, 66, 26), "1  +" + part.price)) { commands.SellPart(i, 1); break; }
+                if (GUI.Button(new Rect(r.x + 522, y, 70, 26), "All +" + part.price * ch.parts[i])) { commands.SellPart(i, 0); break; }
                 shown++;
             }
             if (shown == 0) GUI.Label(new Rect(r.x + 320, r.y + 283, 280, 22), "No parts to sell yet.", smallStyle);
