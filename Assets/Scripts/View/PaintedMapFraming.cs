@@ -10,6 +10,7 @@ namespace AshenVale
         {
             public string key;
             public bool completeGround = true;
+            public bool extendSky;
             public float widthMultiplier = 0.8f;
             public bool overrideFloor;
             public float floorFromBottom;
@@ -50,6 +51,26 @@ namespace AshenVale
             return def.key != "emberfields" && def.key != "mosswood" && def.key != "kingsroad";
         }
 
+        public static bool LocksFloor(MapDef def)
+        {
+            var entry = Find(def);
+            return UsesOwnGround(def) && entry != null && entry.extendSky;
+        }
+
+        public static bool ShowPlaceholderProps(MapDef def, bool paintedScene, bool hasPicture)
+        {
+            return !paintedScene && !(hasPicture && def.kind == MapKind.Town && UsesOwnGround(def));
+        }
+
+        public static void AddSkyFill(MapDef def, Transform root)
+        {
+            if (!LocksFloor(def)) return;
+            var sprite = Sprites.Art("Art/Backdrops/" + def.key);
+            if (sprite == null && !string.IsNullOrEmpty(def.backdrop)) sprite = Sprites.Art(def.backdrop);
+            Sprites.Block("Painted sky extension", PaintedSpriteContact.Sky(sprite), def.columns + 100f,
+                def.rows + 100f, MapScenery.SkyOrder - 1, root, def.columns * .5f, Tuning.Ground + def.rows * .5f);
+        }
+
         public static void Apply(MapDef def, Sprite sprite, ref float width, ref float floor)
         {
             if (!UsesOwnGround(def)) return;
@@ -64,7 +85,8 @@ namespace AshenVale
             float above = Mathf.Max(0f, minY + WorldView.ViewHalfHeight - Tuning.Ground);
             float below = Mathf.Max(0f, Tuning.Ground - (minY - WorldView.ViewHalfHeight));
             float aspect = sprite.rect.width / Mathf.Max(1f, sprite.rect.height);
-            float requiredHeight = Mathf.Max(above / Mathf.Max(0.01f, 1f - floor), below / Mathf.Max(0.01f, floor));
+            float requiredHeight = LocksFloor(def) ? below / Mathf.Max(0.01f, floor)
+                : Mathf.Max(above / Mathf.Max(0.01f, 1f - floor), below / Mathf.Max(0.01f, floor));
             width = Mathf.Max(width, (requiredHeight + 0.1f) * aspect);
             // Preserve coverage at the current Game-view aspect ratio; no horizontal stretching.
             var camera = Camera.main;

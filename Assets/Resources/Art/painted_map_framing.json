@@ -4,9 +4,10 @@
     {
       "key": "lastlight",
       "completeGround": true,
-      "widthMultiplier": 0.8,
+      "widthMultiplier": 0.7,
       "overrideFloor": true,
-      "floorFromBottom": 0.1380042463
+      "floorFromBottom": 0.1380042463,
+      "extendSky": true
     }
   ]
 }

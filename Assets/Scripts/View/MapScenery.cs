@@ -13,6 +13,7 @@ namespace AshenVale
         public Transform transform;
         public float fx, fy;
         public bool panorama;
+        public bool floorAnchored;
         public float width, height, floor;
         public float travel = 1f;
     }
@@ -460,6 +461,7 @@ namespace AshenVale
                 // A second theme strip can create a competing visible floor above the actual feet.
                 if (!hasBackdrop || !PaintedMapFraming.UsesOwnGround(def)) Ground(root, def, theme, art, rng);
             }
+            PaintedMapFraming.AddSkyFill(def, root);
             BuildEffects(look, front, back, painted);
             BuildAmbient(visual, look, front);
             foreach (var plat in def.platforms) BuildPlatform(root, plat, theme, art, rng);
@@ -468,10 +470,10 @@ namespace AshenVale
             if (def.kind == MapKind.Town)
             {
                 BuildPortal(root, def.returnX, def.returnY, true);
-                BuildWaystone(root, def.waystoneX, def.waystoneY, !painted);
-                foreach (var stand in def.merchants) BuildMerchant(root, stand.x, stand.y, !painted);
+                BuildWaystone(root, def.waystoneX, def.waystoneY, PaintedMapFraming.ShowPlaceholderProps(def, painted, front.Valid));
+                foreach (var stand in def.merchants) BuildMerchant(root, stand.x, stand.y, PaintedMapFraming.ShowPlaceholderProps(def, painted, front.Valid));
             }
-            if (def.hasSmithy) BuildSmithy(root, def.smithyX, def.smithyY, !painted);
+            if (def.hasSmithy) BuildSmithy(root, def.smithyX, def.smithyY, PaintedMapFraming.ShowPlaceholderProps(def, painted, front.Valid));
             return visual;
         }
 
@@ -523,14 +525,14 @@ namespace AshenVale
             if (sprite == null || width <= 0f) return false;
             PaintedMapFraming.Apply(def, sprite, ref width, ref floor);
             var far = Sprites.Art(path + "_back");
-            if (far != null) back = Panorama(visual, "Distance", far, width, floor, flip, look.backTravel, SkyOrder);
-            front = Panorama(visual, "Backdrop", sprite, width, floor, flip, 1f, far != null ? FarOrder : SkyOrder);
+            if (far != null) back = Panorama(visual, "Distance", far, width, floor, flip, look.backTravel, SkyOrder, PaintedMapFraming.LocksFloor(def));
+            front = Panorama(visual, "Backdrop", sprite, width, floor, flip, 1f, far != null ? FarOrder : SkyOrder, PaintedMapFraming.LocksFloor(def));
             return true;
         }
 
         // A picture as a panorama layer `width` units wide (see ParallaxLayer); its origin is its bottom-left corner
         // (mirrored pictures are flipped about their middle). Returns where its pixels are.
-        static PictureFrame Panorama(MapVisual visual, string name, Sprite sprite, float width, float floor, bool flip, float travel, int order)
+        static PictureFrame Panorama(MapVisual visual, string name, Sprite sprite, float width, float floor, bool flip, float travel, int order, bool floorAnchored = false)
         {
             var t = new GameObject(name).transform;
             t.SetParent(visual.root.transform, false);
@@ -539,7 +541,7 @@ namespace AshenVale
             var o = Sprites.Picture(name + " art", sprite, order, t, 0, 0);
             o.transform.localScale = new Vector3(flip ? -scale : scale, scale, 1);
             o.transform.localPosition = new Vector3(flip ? sprite.bounds.max.x * scale : -sprite.bounds.min.x * scale, -sprite.bounds.min.y * scale, 0);
-            visual.layers.Add(new ParallaxLayer { transform = t, panorama = true, width = width, height = size.y * scale, floor = floor, travel = travel });
+            visual.layers.Add(new ParallaxLayer { transform = t, panorama = true, width = width, height = size.y * scale, floor = floor, travel = travel, floorAnchored = floorAnchored });
             return new PictureFrame { parent = t, left = 0f, bottom = 0f, perPixel = width / sprite.rect.width,
                                       width = sprite.rect.width, height = sprite.rect.height, flip = flip };
         }

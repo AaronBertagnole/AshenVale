@@ -176,7 +176,10 @@ namespace AshenVale
                 Animate(p, v, frameDt, alpha);
                 float x = Mathf.Lerp(p.px, p.x, alpha), y = Mathf.Lerp(p.py, p.y, alpha);
                 v.go.transform.localScale = v.fittedClimb ? v.climbScale : new Vector3(HeroScale, p.crouching ? 1.10f : HeroScale, 1f);
-                Vector3 basePosition = new Vector3(x + v.climbXOffset, y + (p.crouching ? .33f : .48f) + v.climbOffset, 0);
+                float heroOffset = p.crouching ? .33f : .48f;
+                if (!p.climbing && !p.dead && PaintedMapFraming.UsesOwnGround(Maps.All[p.map]))
+                    heroOffset = PaintedSpriteContact.HeroOffset(p.Hero.folder, v.sr.sprite, v.go.transform.localScale.y, heroOffset);
+                Vector3 basePosition = new Vector3(x + v.climbXOffset, y + heroOffset + v.climbOffset, 0);
                 Quaternion rotation = Quaternion.identity;
                 if (RangerIsFlipping(p))
                 {
@@ -789,7 +792,7 @@ namespace AshenVale
                 float spare = layer.width - 2f * halfWidth;
                 float left = spare > 0f ? c.x - halfWidth - (.5f + (tx - .5f) * layer.travel) * spare : c.x - layer.width * .5f;
                 float low = Tuning.Ground - layer.floor * layer.height;
-                float high = Mathf.Max(low, maxY + ViewHalfHeight - layer.height);
+                float high = layer.floorAnchored ? low : Mathf.Max(low, maxY + ViewHalfHeight - layer.height);
                 layer.transform.position = new Vector3(left, Mathf.Lerp(low, high, ty), 0);
             }
             visual.Animate(Time.time, c, halfWidth, ViewHalfHeight);     // motes, leaves, sparks, smoke
