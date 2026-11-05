@@ -107,8 +107,10 @@ namespace AshenVale
         // Sorting orders, back to front (ladders stand behind platforms). Monsters 7, drops 9, heroes 10-11,
         // slashes 12, arrows 13 (WorldView).
         // A distant picture draws at SkyOrder and the front picture in front of it at FarOrder; effects on them at +5.
-        public const int SkyOrder = -40, FarOrder = -30, MidOrder = -20, BackDecorOrder = -10, GroundOrder = 0,
-                         PlatformOrder = 2, LadderOrder = 0, GlowOrder = 4, PropOrder = 5, PortalOrder = 6;
+        public const int SkyOrder = -40, FarOrder = -30, MidOrder = -20, BackDecorOrder = -10, GroundOrder = -2,
+                         LadderOrder = 1, PlatformOrder = 2, GlowOrder = 4, PropOrder = 5, PortalOrder = 6;
+        // Ground fill -2, its painted top strip -1 (painted tiles carry picture above the path line, which used to
+        // hide the foot of every ladder), ladders 1 so they stand on the path, platforms 2 in front of ladders.
         const string EffectShader = "Shaders/MapEffect";
 
         sealed class Theme
