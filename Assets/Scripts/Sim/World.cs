@@ -5,7 +5,8 @@ namespace AshenVale
 {
     // Monsters, drops and arrows of one map. Every map exists all the time; a map only moves
     // while a living player is on it (so in a party, players can split up across maps).
-    // Each spawn point holds one monster; when it dies the point refills after the monster's respawn time.
+    // Each spawn point holds a small pack of monsters (Tuning.SpawnPackSize; bosses one); when one dies the point
+    // refills one after the monster's respawn time, scaled by Tuning.RespawnScale.
     // Chest spawn points are different: they are the spots where a chest may turn up (see World.UpdateChests).
     public sealed class MapRuntime
     {
@@ -13,14 +14,14 @@ namespace AshenVale
         public readonly List<MonsterState> monsters = new List<MonsterState>();
         public readonly List<DropState> drops = new List<DropState>();
         public readonly List<ProjectileState> shots = new List<ProjectileState>();
-        public readonly bool[] spawnFilled;
+        public readonly int[] spawnCount;        // monsters alive from each spawn point
         public readonly float[] spawnTimers;
         public float chestTimer;            // seconds until the next chest turns up (counts while below maxChests)
         public int lastChestSpot = -1;      // spawn point of the last chest, so the next one is somewhere else
         public MapRuntime(MapDef def)
         {
             this.def = def;
-            spawnFilled = new bool[def.spawns.Length];
+            spawnCount = new int[def.spawns.Length];
             spawnTimers = new float[def.spawns.Length];
         }
     }
@@ -94,7 +95,7 @@ namespace AshenVale
                 map.monsters.Clear();
                 map.drops.Clear();
                 map.shots.Clear();
-                for (int i = 0; i < map.spawnFilled.Length; i++) { map.spawnFilled[i] = false; map.spawnTimers[i] = 0; }
+                for (int i = 0; i < map.spawnCount.Length; i++) { map.spawnCount[i] = 0; map.spawnTimers[i] = 0; }
             }
             ResetChests();
         }
@@ -540,7 +541,11 @@ namespace AshenVale
             map.monsters.Remove(m);
             var def = m.Def;
             if (def.IsChest) map.chestTimer = Tuning.ChestCooldown;   // no new chest for a while, and only when someone arrives
-            else if (m.spawn >= 0 && m.spawn < map.spawnFilled.Length) { map.spawnFilled[m.spawn] = false; map.spawnTimers[m.spawn] = def.respawn; }
+            else if (m.spawn >= 0 && m.spawn < map.spawnCount.Length)
+            {
+                map.spawnCount[m.spawn] = Mathf.Max(0, map.spawnCount[m.spawn] - 1);
+                map.spawnTimers[m.spawn] = Mathf.Max(map.spawnTimers[m.spawn], def.respawn * (def.boss ? 1f : Tuning.RespawnScale));
+            }
             if (attacker == null) return;
 
             attacker.ch.kills++;
@@ -808,17 +813,21 @@ namespace AshenVale
             events.Add(new SimEvent { kind = SimEventKind.PlayerDied, map = map.def.id, playerId = p.id, x = p.x, y = p.y });
         }
 
-        // Empty spawn points count down and refill. A map that nobody is on doesn't count down.
+        // Spawn points below their pack size count down and refill one at a time. A map nobody is on doesn't count down.
         void UpdateSpawning(MapRuntime map, float dt)
         {
             var points = map.def.spawns;
             for (int i = 0; i < points.Length; i++)
             {
-                if (map.spawnFilled[i] || Monsters.All[points[i].monster].IsChest) continue;
+                var def = Monsters.All[points[i].monster];
+                if (def.IsChest) continue;
+                int capacity = def.boss ? 1 : Tuning.SpawnPackSize;
+                if (map.spawnCount[i] >= capacity) continue;
                 map.spawnTimers[i] -= dt;
                 if (map.spawnTimers[i] > 0f) continue;
-                map.spawnFilled[i] = true;
+                map.spawnCount[i]++;
                 SpawnAt(map, i);
+                if (map.spawnCount[i] < capacity) map.spawnTimers[i] = Tuning.PackStagger;   // the rest of the pack trickles in
             }
         }
 
@@ -826,10 +835,14 @@ namespace AshenVale
         {
             var point = map.def.spawns[spawn];
             var def = Monsters.All[point.monster];
+            // Pack members spread out along the point's stretch instead of stacking on one spot.
+            float inset = Mathf.Min(def.width * .5f, .5f) + .2f;
+            float x = def.boss || def.IsChest ? point.x : Mathf.Clamp(point.x + ((float)rng.NextDouble() * 2f - 1f) * Tuning.PackSpread, point.left + inset, point.right - inset);
+            if (point.right - point.left < inset * 2f) x = point.x;
             var m = new MonsterState
             {
                 id = NextId(), def = point.monster, map = map.def.id, level = def.level, spawn = spawn,
-                x = point.x, y = point.y, px = point.x, py = point.y, hp = PartyHp(map, def), maxHp = PartyHp(map, def),
+                x = x, y = point.y, px = x, py = point.y, hp = PartyHp(map, def), maxHp = PartyHp(map, def),
                 left = point.left, right = point.right, chaseLeft = point.chaseLeft, chaseRight = point.chaseRight,
                 facing = rng.Next(2) == 0 ? -1 : 1,
                 wanderTime = (float)rng.NextDouble() * 2f,
