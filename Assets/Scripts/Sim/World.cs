@@ -192,7 +192,8 @@ namespace AshenVale
                     p.attackPending = false;
                     if (p.Hero.dragonKnight && p.lastWasSkill && p.grounded)
                         p.fangLungeTime = Mathf.Max(0f, p.Hero.fangLungeDuration);
-                    ResolveMelee(p, map, p.lastWasSkill, p.attackDamage, p.attackFacing);
+                    if (p.Hero.style == AttackStyle.Arrows) ReleaseArrows(p, map, p.lastWasSkill, p.attackDamage, p.attackFacing);
+                    else ResolveMelee(p, map, p.lastWasSkill, p.attackDamage, p.attackFacing);
                 }
             }
             if (p.leapActive && p.grounded)
@@ -390,34 +391,35 @@ namespace AshenVale
             p.lastWasSkill = skill;
             if (!skill) p.comboStep++;
             p.attackCooldown = skill ? hero.skillCooldown : hero.attackCooldown;
-            p.attackVisual = hero.dragonKnight ? p.attackCooldown : (skill ? Tuning.SkillAttackVisual : Tuning.BasicAttackVisual);
+            p.attackVisual = hero.dragonKnight ? p.attackCooldown : (skill ? Tuning.SkillAttackVisual : hero.style == AttackStyle.Arrows ? p.attackCooldown : Tuning.BasicAttackVisual);
             p.attackDuration = p.attackVisual;
             p.attackSerial++;
             int damage = hero.baseDamage + p.ch.level * Tuning.DamagePerLevel + p.ch.BonusAttack + (skill ? hero.skillBonus : 0);
 
-            if (hero.dragonKnight)
+            if (hero.dragonKnight || hero.style == AttackStyle.Arrows)
             {
+                // Melee lands, or the arrow leaves the bow, when the windup runs out (the draw of the clip).
                 p.attackPending = true;
                 p.attackWindup = skill ? hero.skillWindup : hero.basicWindup;
                 p.attackFacing = p.facing; p.attackDamage = damage;
                 return;
             }
 
-            if (hero.style == AttackStyle.Arrows)
-            {
-                int count = skill ? hero.arrowsPerSkill : 1;
-                var volley = new HashSet<int>();
-                for (int i = 0; i < count; i++)
-                    map.shots.Add(new ProjectileState
-                    {
-                        id = NextId(), map = map.def.id, owner = p.id, damage = damage, pierce = skill ? hero.skillPierce : 1,
-                        x = p.x + p.facing * .7f, y = p.y + 1.1f + (i - 1) * .17f, direction = p.facing, life = Tuning.ArrowLife, hitSet = volley,
-                    });
-                for (int i = map.shots.Count - count; i < map.shots.Count; i++) { map.shots[i].px = map.shots[i].x; map.shots[i].py = map.shots[i].y; }
-                return;
-            }
-
             ResolveMelee(p, map, skill, damage, p.facing);
+        }
+
+        void ReleaseArrows(PlayerState p, MapRuntime map, bool skill, int damage, int facing)
+        {
+            var hero = p.Hero;
+            int count = skill ? hero.arrowsPerSkill : 1;
+            var volley = new HashSet<int>();
+            for (int i = 0; i < count; i++)
+                map.shots.Add(new ProjectileState
+                {
+                    id = NextId(), map = map.def.id, owner = p.id, damage = damage, pierce = skill ? hero.skillPierce : 1,
+                    x = p.x + facing * .7f, y = p.y + 1.1f + (i - 1) * .17f, direction = facing, life = Tuning.ArrowLife, hitSet = volley,
+                });
+            for (int i = map.shots.Count - count; i < map.shots.Count; i++) { map.shots[i].px = map.shots[i].x; map.shots[i].py = map.shots[i].y; }
         }
 
         void ResolveMelee(PlayerState p, MapRuntime map, bool skill, int damage, int facing)

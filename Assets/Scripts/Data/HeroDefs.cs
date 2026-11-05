@@ -45,8 +45,10 @@ namespace AshenVale
                 name = "Elven Ranger", folder = "ElvenRanger", weaponName = "Bow",
                 roleLabel = "BOW / RANGED", tagline = "Agile attacks  •  Long range",
                 style = AttackStyle.Arrows, baseHp = 95, baseMp = 100, moveSpeed = 6.1f,
-                baseDamage = 17, skillBonus = 24, skillManaCost = 30,
-                attackCooldown = .3f, skillCooldown = .9f,
+                skillBonus = 24, skillManaCost = 30,
+                attackCooldown = .4f, skillCooldown = .9f,   // Quick Shot's six frames play across the cooldown (15 fps)
+                basicWindup = .2f, skillWindup = .23f,      // the arrow leaves on the release frame, not the first tick
+                baseDamage = 20,                           // a little more per shot since shots come 25% slower (was 17)
                 arrowsPerSkill = 3, skillPierce = 2,       // Multi Shot: each monster takes one arrow per volley
                 basicAnimA = "quick_shot", basicAnimB = "quick_shot", skillAnim = "multi_shot",
             },
