@@ -45,6 +45,11 @@ namespace AshenVale
         public const float MonsterWanderSpeed = .55f;       // share of its speed a monster ambles at when nobody is around
         public const float GroundRoam = 10f;                // ground monsters stay this close to their spawn point
         public const float PortalCalm = 6f;                 // ...and this far from portals on the ground
+        // Spawning (owner, 2026-11-05: more monsters, faster refills)
+        public const int SpawnPackSize = 2;                 // monsters each spawn point keeps alive (bosses 1)
+        public const float RespawnScale = .6f;              // multiplies each kind's respawn time (8 s -> 4.8 s)
+        public const float PackStagger = 1.5f;              // seconds between pack members filling in
+        public const float PackSpread = 2.5f;               // pack members land within this of the spawn point
         // Bosses
         public const float BossRespawn = 180f;         // seconds before a beaten boss returns to its glade
         public const float BossSlamWindup = .9f;       // it rears up this long before the root slam lands
