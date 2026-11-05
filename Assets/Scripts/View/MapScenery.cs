@@ -108,9 +108,10 @@ namespace AshenVale
         // slashes 12, arrows 13 (WorldView).
         // A distant picture draws at SkyOrder and the front picture in front of it at FarOrder; effects on them at +5.
         public const int SkyOrder = -40, FarOrder = -30, MidOrder = -20, BackDecorOrder = -10, GroundOrder = -2,
-                         LadderOrder = 1, PlatformOrder = 2, GlowOrder = 4, PropOrder = 5, PortalOrder = 6;
+                         PlatformOrder = 2, LadderOrder = 3, GlowOrder = 4, PropOrder = 5, PortalOrder = 6;
         // Ground fill -2, its painted top strip -1 (painted tiles carry picture above the path line, which used to
-        // hide the foot of every ladder), ladders 1 so they stand on the path, platforms 2 in front of ladders.
+        // hide the foot of every ladder), platforms 2, ladders 3 so a ladder leans against the front of the ledge it
+        // reaches (owner's call) and its foot stands on the path.
         const string EffectShader = "Shaders/MapEffect";
 
         sealed class Theme
