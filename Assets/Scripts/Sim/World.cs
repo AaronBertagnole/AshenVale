@@ -860,7 +860,11 @@ namespace AshenVale
                         if (d.value < 0 || d.value >= p.ch.parts.Length || p.ch.parts[d.value] >= Tuning.MaxParts) continue;
                         p.ch.parts[d.value]++;
                         break;
-                    default: p.ch.gold += d.value; break;
+                    case DropKind.Gold:
+                        p.ch.gold += d.value;
+                        events.Add(new SimEvent { kind = SimEventKind.EmbermarksPickedUp,
+                            map = p.map, playerId = p.id, amount = d.value, x = p.x, y = p.y + 1.8f });
+                        break;
                 }
                 map.drops.RemoveAt(i);
             }

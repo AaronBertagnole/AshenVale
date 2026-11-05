@@ -117,7 +117,7 @@ namespace AshenVale
             int map = local != null ? local.map : Maps.Emberfields;
             if (map != shownMap) ShowMap(map);
 
-            ReadEvents();
+            ReadEvents(localId);
             SyncHeroes(localId, frameDt, alpha);
             SyncMonsters(frameDt, alpha);
             SyncDrops(localId);
@@ -139,12 +139,14 @@ namespace AshenVale
             snapCamera = true;
         }
 
-        void ReadEvents()
+        void ReadEvents(int localId)
         {
             foreach (var e in world.events)
             {
                 if (e.map != shownMap) continue;
-                if (e.kind == SimEventKind.Slash) SpawnSlash(e);
+                if (e.kind == SimEventKind.EmbermarksPickedUp && e.playerId == localId)
+                    Number(e.x, e.y, "+" + e.amount.ToString("N0", System.Globalization.CultureInfo.InvariantCulture) + " Embermarks", new Color(1f, .85f, .38f), false);
+                else if (e.kind == SimEventKind.Slash) SpawnSlash(e);
                 else if (e.kind == SimEventKind.DragonThrust || e.kind == SimEventKind.DragonFang || e.kind == SimEventKind.DragonFissure || e.kind == SimEventKind.DragonSweep) SpawnDragonFx(e);
                 else if (e.kind == SimEventKind.BossSlam) SpawnSlamRing(e);
             }
@@ -437,14 +439,15 @@ namespace AshenVale
                     bool burst = dropsSynced;
                     bool part = d.kind == DropKind.Part && d.value >= 0 && d.value < Parts.All.Length;
                     string name = d.kind == DropKind.HpPotion ? "HP Potion" : d.kind == DropKind.MpPotion ? "MP Potion" : d.kind == DropKind.Item ? d.item.name
-                                : part ? Parts.All[d.value].name : "Gold drop";
+                                : part ? Parts.All[d.value].name : "Embermarks";
                     Color color = d.kind == DropKind.HpPotion ? new Color(1, .22f, .32f) : d.kind == DropKind.MpPotion ? new Color(.22f, .48f, 1)
                                 : d.kind == DropKind.Item ? Loot.RarityColor(d.item.rarity) : part ? Parts.All[d.value].color : new Color(1, .81f, .18f);
                     // Parts with a painted icon show it (half a unit tall); other parts are small round blobs and
                     // everything else a little block, until they get icons too.
                     var icon = part ? Sprites.PartIcon(d.value)
                              : d.kind == DropKind.HpPotion ? Sprites.Art("Art/Items/hp_potion")
-                             : d.kind == DropKind.MpPotion ? Sprites.Art("Art/Items/mp_potion") : null;
+                             : d.kind == DropKind.MpPotion ? Sprites.Art("Art/Items/mp_potion")
+                             : d.kind == DropKind.Gold ? Sprites.Art("Art/Currency/embermark") : null;
                     if (icon != null)
                     {
                         go = Sprites.Picture(name, icon, DropOrder, null, 0, 0);
@@ -452,6 +455,23 @@ namespace AshenVale
                         go.transform.localScale = new Vector3(k, k, 1f);
                     }
                     else go = part ? Sprites.Blob(name, color, .3f, .3f, DropOrder, null, 0, 0) : Sprites.Block(name, color, .28f, .34f, DropOrder);
+                    if (d.kind == DropKind.Gold)
+                    {
+                        var labelObject = new GameObject("Embermark amount");
+                        labelObject.transform.SetParent(go.transform, false);
+                        var label = labelObject.AddComponent<TextMesh>();
+                        label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                        label.fontSize = 48; label.characterSize = .14f;
+                        label.anchor = TextAnchor.MiddleCenter; label.alignment = TextAlignment.Center;
+                        label.text = "×" + d.value.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
+                        label.color = new Color(1f, .94f, .7f);
+                        var labelRenderer = labelObject.GetComponent<MeshRenderer>();
+                        labelRenderer.sharedMaterial = label.font.material;
+                        labelRenderer.sortingOrder = DropOrder + 1;
+                        float parentScale = Mathf.Max(.001f, go.transform.localScale.x);
+                        labelObject.transform.localScale = Vector3.one / parentScale;
+                        labelObject.transform.localPosition = new Vector3(0, .43f / parentScale, 0);
+                    }
                     dropViews[d.id] = go;
                     if (burst) dropPops[d.id] = new DropPop { start = Time.time, fromX = burstX, rest = go.transform.localScale };
                 }
@@ -477,6 +497,15 @@ namespace AshenVale
                 bool reserved = d.reservedForOther || (keeper != 0 && keeper != localId);
                 var sr = go.GetComponent<SpriteRenderer>();
                 var c = sr.color; c.a = reserved ? .35f : 1f; sr.color = c;
+                if (d.kind == DropKind.Gold)
+                {
+                    var label = go.GetComponentInChildren<TextMesh>();
+                    if (label != null)
+                    {
+                        label.text = "×" + d.value.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
+                        label.color = new Color(1f, .94f, .7f, reserved ? .35f : 1f);
+                    }
+                }
             }
             RemoveUnseen(dropViews);
             dropsSynced = true;

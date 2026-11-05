@@ -332,7 +332,7 @@ namespace AshenVale
         public void HostAfterTicks(float dt)
         {
             if (CurrentRole != Role.Host || !handlersRegistered) return;
-            foreach (var e in world.events) if (e.kind == SimEventKind.Slash || e.kind == SimEventKind.BossSlam || e.kind == SimEventKind.DragonThrust || e.kind == SimEventKind.DragonFang || e.kind == SimEventKind.DragonFissure || e.kind == SimEventKind.DragonSweep) pendingEvents.Add(e);
+            foreach (var e in world.events) if (e.kind == SimEventKind.Slash || e.kind == SimEventKind.BossSlam || e.kind == SimEventKind.DragonThrust || e.kind == SimEventKind.DragonFang || e.kind == SimEventKind.DragonFissure || e.kind == SimEventKind.DragonSweep || e.kind == SimEventKind.EmbermarksPickedUp) pendingEvents.Add(e);
             snapshotTimer += dt;
             characterTimer += dt;
             if (snapshotTimer >= SnapshotInterval)
@@ -421,7 +421,8 @@ namespace AshenVale
                 {
                     if (e.map != viewer.map) continue;
                     w.WriteValueSafe(e.x); w.WriteValueSafe(e.y); w.WriteValueSafe((sbyte)e.facing); w.WriteValueSafe(e.heavy);
-                    w.WriteValueSafe((byte)e.kind);        // Slash, BossSlam or one of the Dragon Knight's effects
+                    w.WriteValueSafe((byte)e.kind);        // Slash, BossSlam, a Dragon Knight effect or a coin pickup
+                    w.WriteValueSafe(e.playerId); w.WriteValueSafe(e.amount);
                 }
                 nm.CustomMessagingManager.SendNamedMessage(MsgSnapshot, client, w, NetworkDelivery.ReliableFragmentedSequenced);
             }
@@ -619,8 +620,8 @@ namespace AshenVale
             for (int i = 0; i < slashCount; i++)
             {
                 r.ReadValueSafe(out float x); r.ReadValueSafe(out float y); r.ReadValueSafe(out sbyte facing); r.ReadValueSafe(out bool heavy);
-                r.ReadValueSafe(out byte kind);
-                world.events.Add(new SimEvent { kind = (SimEventKind)kind, map = shown, x = x, y = y, facing = facing < 0 ? -1 : 1, heavy = heavy });
+                r.ReadValueSafe(out byte kind); r.ReadValueSafe(out int playerId); r.ReadValueSafe(out int amount);
+                world.events.Add(new SimEvent { kind = (SimEventKind)kind, map = shown, x = x, y = y, facing = facing < 0 ? -1 : 1, heavy = heavy, playerId = playerId, amount = amount });
             }
         }
     }
