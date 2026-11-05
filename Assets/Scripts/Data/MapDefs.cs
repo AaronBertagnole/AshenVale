@@ -245,6 +245,9 @@ namespace AshenVale
                     if (portal.x < point.x) point.left = Mathf.Min(point.x, Mathf.Max(point.left, portal.x + Tuning.PortalCalm));
                     else point.right = Mathf.Max(point.x, Mathf.Min(point.right, portal.x - Tuning.PortalCalm));
                 }
+                // Boxed in between two portals (Mosswood's east boar): a stretch that narrow pins the monster to one
+                // spot forever, so it gets its whole stretch back instead.
+                if (point.right - point.left < 3f) { point.left = point.chaseLeft; point.right = point.chaseRight; }
                 spawns[i] = point;
             }
             def.portals = portals.ToArray();
