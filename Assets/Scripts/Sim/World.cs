@@ -276,7 +276,7 @@ namespace AshenVale
             }
             else if (p.leapActive) p.vx = p.leapDirection * p.Hero.leapSpeed;
             else if (p.dashTime > 0) { p.dashTime -= dt; p.vx = p.facing * Tuning.DashSpeed; }
-            else p.vx = axis * p.Hero.moveSpeed * (p.crouching ? Tuning.CrouchSpeedFactor : 1f);
+            else p.vx = axis * p.Hero.moveSpeed * (p.crouching ? Tuning.CrouchSpeedFactor : p.grounded || p.climbing ? 1f : Tuning.AirSpeedFactor);
             if (!p.grounded) p.fangLungeTime = 0;
             p.x = Mathf.Clamp(p.x + (p.climbing ? 0 : p.vx * dt), def.minX, def.maxX);
 

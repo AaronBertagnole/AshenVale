@@ -13,7 +13,7 @@ namespace AshenVale
         public float fangLungeDistance = .55f, fangLungeDuration = .10f;
         public float basicWindup = .12f, skillWindup = .23f;
         public int leapManaCost = 15, leapBonus = 12;
-        public float leapCooldown = 1.1f, leapSpeed = 7f, leapJumpSpeed = 10f;
+        public float leapCooldown = 1.1f, leapSpeed = 7f, leapJumpSpeed = 11.2f;   // same arc as before now that gravity is -30
         public float fissureRange = 1.65f;
         public float moveSpeed;
         public int baseDamage;          // basic attack damage at level 0 (plus DamagePerLevel per level and gear)

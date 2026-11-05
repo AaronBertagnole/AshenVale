@@ -13,8 +13,9 @@ If you change jump, gravity or climb numbers in Tuning.cs, change them here too.
 import os, re, sys
 
 G = -3.15            # Tuning.Ground
-JUMP = 10.8          # Tuning.JumpSpeed
-GRAVITY = -24.0      # Tuning.Gravity
+JUMP = 11.4          # Tuning.JumpSpeed
+GRAVITY = -30.0      # Tuning.Gravity
+AIR = .7             # Tuning.AirSpeedFactor
 CLIMB = 4.2          # Tuning.ClimbSpeed
 SPEED = 5.3          # slowest hero
 DT = 1 / 60.0
@@ -104,7 +105,7 @@ def move(p, d, axis, vert, jump):
         if vert < -.1:
             if p['floor'] > G + .05: p.update(drop=.25, dropFloor=p['floor'], grounded=False, vy=0.0)
         else: p.update(vy=JUMP, grounded=False)
-    p['x'] = min(max(p['x'] + (0 if p['climbing'] else axis * SPEED * DT), d['minX']), d['maxX'])
+    p['x'] = min(max(p['x'] + (0 if p['climbing'] else axis * SPEED * (1 if p['grounded'] else AIR) * DT), d['minX']), d['maxX'])
     if p['climbing']:
         p['y'] = min(max(p['y'] + vert * CLIMB * DT, near[1]), near[2])
         if p['y'] >= near[2] - .04 and vert > 0: p.update(climbing=False, grounded=True, floor=near[2], y=near[2])
