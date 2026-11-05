@@ -16,46 +16,46 @@ namespace AshenVale
                     new[] { MapLayout.S('w', Monsters.FrostWolf), MapLayout.S('h', Monsters.SnowHare),
                             MapLayout.S('b', Monsters.IcicleBat), MapLayout.S('k', Monsters.FrostChest) },
                     new[] { MapLayout.L('H', ShaleCliffs, 'H'), MapLayout.L('I', Highspire, 'I') }),
-                "Art/Backdrops/frostpine_pass", 153f / 1000f, 28f),
+                "Art/Backdrops/frostpine_pass", 114f / 724f, 42f),
 
                 MapLayout.WithBackdrop(MapLayout.Build(Highspire, "Highspire", "hold", MapKind.Town, HighspireLayout,
                     new MapLayout.Spawn[0],
                     new[] { MapLayout.L('I', FrostpinePass, 'I'), MapLayout.L('J', GlacierSteps, 'J') }),
-                "Art/Backdrops/highspire", 105f / 1000f, 28f),
+                "Art/Backdrops/highspire", 38f / 724f, 42f),
 
                 MapLayout.WithBackdrop(MapLayout.Build(GlacierSteps, "Glacier Steps", "snow", MapKind.Field, GlacierStepsLayout,
                     new[] { MapLayout.S('r', Monsters.RimeWisp), MapLayout.S('h', Monsters.SnowHare),
                             MapLayout.S('t', Monsters.FrostTroll), MapLayout.S('k', Monsters.FrostChest) },
                     new[] { MapLayout.L('J', Highspire, 'J'), MapLayout.L('K', WindwardRidge, 'K') }),
-                "Art/Backdrops/glacier_steps", 154f / 1000f, 28f),
+                "Art/Backdrops/glacier_steps", 105f / 724f, 42f),
 
                 MapLayout.WithBackdrop(MapLayout.Build(WindwardRidge, "Windward Ridge", "snow", MapKind.Field, WindwardRidgeLayout,
                     new[] { MapLayout.S('b', Monsters.IcicleBat), MapLayout.S('w', Monsters.FrostWolf),
                             MapLayout.S('t', Monsters.FrostTroll), MapLayout.S('k', Monsters.FrostChest) },
                     new[] { MapLayout.L('K', GlacierSteps, 'K'), MapLayout.L('L', IronveinMines, 'L') }),
-                "Art/Backdrops/windward_ridge", 173f / 1000f, 28f),
+                "Art/Backdrops/windward_ridge", 129f / 724f, 42f),
 
                 MapLayout.WithBackdrop(MapLayout.Build(IronveinMines, "Ironvein Mines", "mine", MapKind.Field, IronveinMinesLayout,
                     new[] { MapLayout.S('s', Monsters.SlagBeetle), MapLayout.S('c', Monsters.CaveTroll),
                             MapLayout.S('u', Monsters.RuneSentinel), MapLayout.S('k', Monsters.FrostChest) },
                     new[] { MapLayout.L('L', WindwardRidge, 'L'), MapLayout.L('M', DeepForge, 'M'), MapLayout.L('X', CrystalHollow, 'X') }),
-                "Art/Backdrops/ironvein_mines", 173f / 1000f, 28f),
+                "Art/Backdrops/ironvein_mines", 128f / 724f, 42f),
 
                 MapLayout.WithBackdrop(MapLayout.Build(DeepForge, "The Deep Forge", "forge", MapKind.Field, DeepForgeLayout,
                     new[] { MapLayout.S('i', Monsters.ForgeImp), MapLayout.S('s', Monsters.SlagBeetle),
                             MapLayout.S('u', Monsters.RuneSentinel), MapLayout.S('k', Monsters.FrostChest) },
                     new[] { MapLayout.L('M', IronveinMines, 'M'), MapLayout.L('N', ColossusVault, 'N') }),
-                "Art/Backdrops/deep_forge", 176f / 1000f, 28f),
+                "Art/Backdrops/deep_forge", 130f / 724f, 42f),
 
                 MapLayout.WithChests(MapLayout.WithBackdrop(MapLayout.Build(CrystalHollow, "Crystal Hollow", "crystal", MapKind.Field, CrystalHollowLayout,
                         new[] { MapLayout.S('r', Monsters.RimeWisp), MapLayout.S('u', Monsters.RuneSentinel), MapLayout.S('k', Monsters.FrostChest) },
                         new[] { MapLayout.L('X', IronveinMines, 'X') }),
-                "Art/Backdrops/crystal_hollow", 130f / 1000f, 28f), 2),
+                "Art/Backdrops/crystal_hollow", 62f / 724f, 42f), 2),
 
                 MapLayout.WithBackdrop(MapLayout.Build(ColossusVault, "The Colossus' Vault", "forge", MapKind.Field, ColossusVaultLayout,
                     new[] { MapLayout.S('z', Monsters.RustedColossus) },
                     new[] { MapLayout.L('N', DeepForge, 'N') }),
-                "Art/Backdrops/colossus_vault", 166f / 1000f, 28f),
+                "Art/Backdrops/colossus_vault", 124f / 724f, 42f),
             };
         }
 

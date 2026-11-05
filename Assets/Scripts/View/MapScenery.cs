@@ -438,16 +438,18 @@ namespace AshenVale
             WorldView.CameraRange(def, 0f, out minX, out maxX, out minY, out maxY);
             visual.cameraLowY = minY;
             string art = "Art/Themes/" + def.theme + "/";
+            // Tiles cut from a painted picture carry a strip of path above the ledge line (Tools/make_ground_tiles.py),
+            // so they are drawn a little high; themes that set their own offsets keep them.
+            if (theme.groundSurface == 0f && theme.platformSurface == 0f && Sprites.Art(art + "ground") != null)
+            { theme.groundSurface = PaintedGroundSurface; theme.platformSurface = PaintedPlatformSurface; }
 
             // A painted scene already shows the sky, ground, houses, waystone and shops: draw only what it lacks.
             // A painted backdrop replaces the sky and distant layers; the ground and platforms are still drawn.
             PictureFrame front, back;
             bool painted = BuildScene(visual, def, look, out front, out back);
-            bool placeholders = !painted;      // placeholder shop / waystone / smithy shapes only on unpainted maps
             if (!painted)
             {
-                if (BuildBackdrop(visual, def, look, out front, out back)) placeholders = false;
-                else
+                if (!BuildBackdrop(visual, def, look, out front, out back))
                 {
                     Sky(visual, def, theme, art);
                     Far(visual, def, theme, art, rng);
@@ -463,10 +465,10 @@ namespace AshenVale
             if (def.kind == MapKind.Town)
             {
                 BuildPortal(root, def.returnX, def.returnY, true);
-                BuildWaystone(root, def.waystoneX, def.waystoneY, placeholders);
-                foreach (var stand in def.merchants) BuildMerchant(root, stand.x, stand.y, placeholders);
+                BuildWaystone(root, def.waystoneX, def.waystoneY, !painted);
+                foreach (var stand in def.merchants) BuildMerchant(root, stand.x, stand.y, !painted);
             }
-            if (def.hasSmithy) BuildSmithy(root, def.smithyX, def.smithyY, placeholders);
+            if (def.hasSmithy) BuildSmithy(root, def.smithyX, def.smithyY, !painted);
             return visual;
         }
 
@@ -501,6 +503,7 @@ namespace AshenVale
         // Painted backdrops dropped in by map name use the same framing as the first ones: the path 116 px above the
         // bottom of a 724 px tall picture, shown 42 units wide.
         public const float DefaultBackdropFloor = 116f / 724f, DefaultBackdropWidth = 42f;
+        public const float PaintedGroundSurface = .16f, PaintedPlatformSurface = .10f;
 
         // The map's painted backdrop as a panorama layer (WorldView moves it), plus the distant picture behind it if
         // there is one (<backdrop>_back), sliding less. A picture named after the map (Art/Backdrops/<key>.png) wins;

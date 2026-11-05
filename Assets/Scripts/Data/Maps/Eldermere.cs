@@ -16,46 +16,46 @@ namespace AshenVale
                     new[] { MapLayout.S('s', Monsters.SylvanStag), MapLayout.S('p', Monsters.SporePuff),
                             MapLayout.S('t', Monsters.HexToad), MapLayout.S('k', Monsters.ArcaneChest) },
                     new[] { MapLayout.L('W', Saltmarrow, 'W'), MapLayout.L('Y', Eldermere, 'Y') }),
-                "Art/Backdrops/thistledown_trail", 177f / 1000f, 28f),
+                "Art/Backdrops/thistledown_trail", 132f / 724f, 42f),
 
                 MapLayout.WithBackdrop(MapLayout.Build(Eldermere, "Eldermere", "wizardtown", MapKind.Town, EldermereLayout,
                     new MapLayout.Spawn[0],
                     new[] { MapLayout.L('Y', ThistledownTrail, 'Y'), MapLayout.L('Z', Glimmerwood, 'Z') }),
-                "Art/Backdrops/eldermere", 179f / 1000f, 28f),
+                "Art/Backdrops/eldermere", 121f / 724f, 42f),
 
                 MapLayout.WithBackdrop(MapLayout.Build(Glimmerwood, "Glimmerwood", "deepwood", MapKind.Field, GlimmerwoodLayout,
                     new[] { MapLayout.S('m', Monsters.GlimmerMoth), MapLayout.S('t', Monsters.HexToad),
                             MapLayout.S('v', Monsters.VineStalker), MapLayout.S('k', Monsters.ArcaneChest) },
                     new[] { MapLayout.L('Z', Eldermere, 'Z'), MapLayout.L('A', HollowLibrary, 'A'), MapLayout.L('X', Moonwell, 'X') }),
-                "Art/Backdrops/glimmerwood", 159f / 1000f, 28f),
+                "Art/Backdrops/glimmerwood", 123f / 724f, 42f),
 
                 MapLayout.WithBackdrop(MapLayout.Build(HollowLibrary, "The Hollow Library", "library", MapKind.Field, HollowLibraryLayout,
                     new[] { MapLayout.S('b', Monsters.LivingTome), MapLayout.S('i', Monsters.InkWraith),
                             MapLayout.S('v', Monsters.VineStalker), MapLayout.S('k', Monsters.ArcaneChest) },
                     new[] { MapLayout.L('A', Glimmerwood, 'A'), MapLayout.L('B', Owlkeep, 'B') }),
-                "Art/Backdrops/hollow_library", 113f / 1000f, 28f),
+                "Art/Backdrops/hollow_library", 56f / 724f, 42f),
 
                 MapLayout.WithBackdrop(MapLayout.Build(Owlkeep, "Owlkeep", "deepwood", MapKind.Field, OwlkeepLayout,
                     new[] { MapLayout.S('o', Monsters.OwlSentry), MapLayout.S('g', Monsters.RunedGolem),
                             MapLayout.S('i', Monsters.InkWraith), MapLayout.S('k', Monsters.ArcaneChest) },
                     new[] { MapLayout.L('B', HollowLibrary, 'B'), MapLayout.L('C', SpellbrokenGlade, 'C') }),
-                "Art/Backdrops/owlkeep", 171f / 1000f, 28f),
+                "Art/Backdrops/owlkeep", 131f / 724f, 42f),
 
                 MapLayout.WithBackdrop(MapLayout.Build(SpellbrokenGlade, "Spellbroken Glade", "deepwood", MapKind.Field, SpellbrokenGladeLayout,
                     new[] { MapLayout.S('w', Monsters.WildMote), MapLayout.S('g', Monsters.RunedGolem),
                             MapLayout.S('a', Monsters.ArchShade), MapLayout.S('k', Monsters.ArcaneChest) },
                     new[] { MapLayout.L('C', Owlkeep, 'C'), MapLayout.L('D', ArchmageSanctum, 'D'), MapLayout.L('E', ForgottenStair, 'E') }),
-                "Art/Backdrops/spellbroken_glade", 175f / 1000f, 28f),
+                "Art/Backdrops/spellbroken_glade", 130f / 724f, 42f),
 
                 MapLayout.WithChests(MapLayout.WithBackdrop(MapLayout.Build(Moonwell, "Moonwell", "moonwell", MapKind.Field, MoonwellLayout,
                         new[] { MapLayout.S('m', Monsters.GlimmerMoth), MapLayout.S('b', Monsters.LivingTome), MapLayout.S('k', Monsters.ArcaneChest) },
                         new[] { MapLayout.L('X', Glimmerwood, 'X') }),
-                "Art/Backdrops/moonwell", 174f / 1000f, 28f), 2),
+                "Art/Backdrops/moonwell", 134f / 724f, 42f), 2),
 
                 MapLayout.WithBackdrop(MapLayout.Build(ArchmageSanctum, "The Archmage's Sanctum", "library", MapKind.Field, ArchmageSanctumLayout,
                     new[] { MapLayout.S('z', Monsters.HollowArchmage) },
                     new[] { MapLayout.L('D', SpellbrokenGlade, 'D') }),
-                "Art/Backdrops/archmage_sanctum", 175f / 1000f, 28f),
+                "Art/Backdrops/archmage_sanctum", 131f / 724f, 42f),
             };
         }
 
