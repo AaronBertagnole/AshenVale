@@ -455,23 +455,6 @@ namespace AshenVale
                         go.transform.localScale = new Vector3(k, k, 1f);
                     }
                     else go = part ? Sprites.Blob(name, color, .3f, .3f, DropOrder, null, 0, 0) : Sprites.Block(name, color, .28f, .34f, DropOrder);
-                    if (d.kind == DropKind.Gold)
-                    {
-                        var labelObject = new GameObject("Embermark amount");
-                        labelObject.transform.SetParent(go.transform, false);
-                        var label = labelObject.AddComponent<TextMesh>();
-                        label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-                        label.fontSize = 48; label.characterSize = .14f;
-                        label.anchor = TextAnchor.MiddleCenter; label.alignment = TextAlignment.Center;
-                        label.text = "×" + d.value.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
-                        label.color = new Color(1f, .94f, .7f);
-                        var labelRenderer = labelObject.GetComponent<MeshRenderer>();
-                        labelRenderer.sharedMaterial = label.font.material;
-                        labelRenderer.sortingOrder = DropOrder + 1;
-                        float parentScale = Mathf.Max(.001f, go.transform.localScale.x);
-                        labelObject.transform.localScale = Vector3.one / parentScale;
-                        labelObject.transform.localPosition = new Vector3(0, .43f / parentScale, 0);
-                    }
                     dropViews[d.id] = go;
                     if (burst) dropPops[d.id] = new DropPop { start = Time.time, fromX = burstX, rest = go.transform.localScale };
                 }
@@ -497,15 +480,6 @@ namespace AshenVale
                 bool reserved = d.reservedForOther || (keeper != 0 && keeper != localId);
                 var sr = go.GetComponent<SpriteRenderer>();
                 var c = sr.color; c.a = reserved ? .35f : 1f; sr.color = c;
-                if (d.kind == DropKind.Gold)
-                {
-                    var label = go.GetComponentInChildren<TextMesh>();
-                    if (label != null)
-                    {
-                        label.text = "×" + d.value.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
-                        label.color = new Color(1f, .94f, .7f, reserved ? .35f : 1f);
-                    }
-                }
             }
             RemoveUnseen(dropViews);
             dropsSynced = true;
