@@ -13,42 +13,50 @@ namespace AshenVale
         {
             return new[]
             {
-                MapLayout.Build(ForgottenStair, "The Forgotten Stair", "ruins", MapKind.Field, ForgottenStairLayout,
+                MapLayout.WithBackdrop(MapLayout.Build(ForgottenStair, "The Forgotten Stair", "ruins", MapKind.Field, ForgottenStairLayout,
                     new[] { MapLayout.S('p', Monsters.HollowPilgrim), MapLayout.S('c', Monsters.BoneCrawler),
                             MapLayout.S('g', Monsters.Gravewisp), MapLayout.S('k', Monsters.SealedChest) },
                     new[] { MapLayout.L('E', SpellbrokenGlade, 'E'), MapLayout.L('F', Lastlight, 'F') }),
+                "Art/Backdrops/forgotten_stair", 122f / 724f, 42f),
 
-                MapLayout.Build(Lastlight, "Lastlight", "ruintown", MapKind.Town, LastlightLayout,
+                MapLayout.WithBackdrop(MapLayout.Build(Lastlight, "Lastlight", "ruintown", MapKind.Town, LastlightLayout,
                     new MapLayout.Spawn[0],
                     new[] { MapLayout.L('F', ForgottenStair, 'F'), MapLayout.L('G', SunkenAvenue, 'G') }),
+                "Art/Backdrops/lastlight", 122f / 724f, 42f),
 
-                MapLayout.Build(SunkenAvenue, "The Sunken Avenue", "ruins", MapKind.Field, SunkenAvenueLayout,
+                MapLayout.WithBackdrop(MapLayout.Build(SunkenAvenue, "The Sunken Avenue", "ruins", MapKind.Field, SunkenAvenueLayout,
                     new[] { MapLayout.S('c', Monsters.BoneCrawler), MapLayout.S('g', Monsters.Gravewisp),
                             MapLayout.S('h', Monsters.HollowKnight), MapLayout.S('k', Monsters.SealedChest) },
                     new[] { MapLayout.L('G', Lastlight, 'G'), MapLayout.L('H', HallOfIdols, 'H') }),
+                "Art/Backdrops/sunken_avenue", 133f / 724f, 42f),
 
-                MapLayout.Build(HallOfIdols, "Hall of Idols", "catacomb", MapKind.Field, HallOfIdolsLayout,
+                MapLayout.WithBackdrop(MapLayout.Build(HallOfIdols, "Hall of Idols", "catacomb", MapKind.Field, HallOfIdolsLayout,
                     new[] { MapLayout.S('w', Monsters.IdolWarden), MapLayout.S('g', Monsters.Gravewisp),
                             MapLayout.S('d', Monsters.FlayedHound), MapLayout.S('s', Monsters.CultShade), MapLayout.S('k', Monsters.SealedChest) },
                     new[] { MapLayout.L('H', SunkenAvenue, 'H'), MapLayout.L('I', WeepingCatacombs, 'I'), MapLayout.L('X', Oubliette, 'X') }),
+                "Art/Backdrops/hall_of_idols", 60f / 724f, 42f),
 
-                MapLayout.Build(WeepingCatacombs, "The Weeping Catacombs", "catacomb", MapKind.Field, WeepingCatacombsLayout,
+                MapLayout.WithBackdrop(MapLayout.Build(WeepingCatacombs, "The Weeping Catacombs", "catacomb", MapKind.Field, WeepingCatacombsLayout,
                     new[] { MapLayout.S('s', Monsters.CultShade), MapLayout.S('b', Monsters.BoneColossus),
                             MapLayout.S('r', Monsters.CarrionHorror), MapLayout.S('k', Monsters.SealedChest) },
                     new[] { MapLayout.L('I', HallOfIdols, 'I'), MapLayout.L('J', BlackZiggurat, 'J') }),
+                "Art/Backdrops/weeping_catacombs", 130f / 724f, 42f),
 
-                MapLayout.Build(BlackZiggurat, "The Black Ziggurat", "ziggurat", MapKind.Field, BlackZigguratLayout,
+                MapLayout.WithBackdrop(MapLayout.Build(BlackZiggurat, "The Black Ziggurat", "ziggurat", MapKind.Field, BlackZigguratLayout,
                     new[] { MapLayout.S('e', Monsters.HeraldOfTheDeep), MapLayout.S('r', Monsters.CarrionHorror),
                             MapLayout.S('v', Monsters.VoidSpawn), MapLayout.S('k', Monsters.SealedChest) },
                     new[] { MapLayout.L('J', WeepingCatacombs, 'J'), MapLayout.L('K', SleepersThrone, 'K') }),
+                "Art/Backdrops/black_ziggurat", 103f / 724f, 42f),
 
-                MapLayout.WithChests(MapLayout.Build(Oubliette, "The Oubliette", "catacomb", MapKind.Field, OublietteLayout,
+                MapLayout.WithChests(MapLayout.WithBackdrop(MapLayout.Build(Oubliette, "The Oubliette", "catacomb", MapKind.Field, OublietteLayout,
                         new[] { MapLayout.S('w', Monsters.IdolWarden), MapLayout.S('g', Monsters.Gravewisp), MapLayout.S('k', Monsters.SealedChest) },
-                        new[] { MapLayout.L('X', HallOfIdols, 'X') }), 2),
+                        new[] { MapLayout.L('X', HallOfIdols, 'X') }),
+                "Art/Backdrops/oubliette", 46f / 724f, 42f), 2),
 
-                MapLayout.Build(SleepersThrone, "The Sleeper's Throne", "ziggurat", MapKind.Field, SleepersThroneLayout,
+                MapLayout.WithBackdrop(MapLayout.Build(SleepersThrone, "The Sleeper's Throne", "ziggurat", MapKind.Field, SleepersThroneLayout,
                     new[] { MapLayout.S('z', Monsters.TheSleeper) },
                     new[] { MapLayout.L('K', BlackZiggurat, 'K') }),
+                "Art/Backdrops/sleepers_throne", 29f / 724f, 42f),
             };
         }
 

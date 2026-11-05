@@ -94,6 +94,51 @@ It replaces the theme's sky / far / mid; ground and platforms are still drawn in
 
 Each also has its distant `_back.png` (see "Two layers" above).
 
+**All 43 maps now have a picture (2026-11-04, the owner's "43 Backgrounds" set, all 2172 x 724, shown 42 units
+wide; single layer, no `_back`).** The walking line (the top of the painted wall under the path) differs per picture
+and is given in each map's `WithBackdrop` call; Emberhaven and Cinderford keep their earlier two-layer scenes,
+Emberfields, Mossgate Hollow, Mosswood and Kingsroad their earlier two-layer backdrops.
+
+| File | Map | Walking line |
+|---|---|---|
+| `amberleaf_trail.png` | AmberleafTrail | path 130 px above the bottom |
+| `archmage_sanctum.png` | ArchmageSanctum | path 131 px above the bottom |
+| `ashen_marsh.png` | AshenMarsh | path 120 px above the bottom |
+| `black_galleon.png` | BlackGalleon | path 50 px above the bottom |
+| `black_ziggurat.png` | BlackZiggurat | path 103 px above the bottom |
+| `brackwater_shore.png` | BrackwaterShore | path 106 px above the bottom |
+| `captains_hold.png` | CaptainsHold | path 102 px above the bottom |
+| `colossus_vault.png` | ColossusVault | path 124 px above the bottom |
+| `crystal_hollow.png` | CrystalHollow | path 62 px above the bottom |
+| `deep_forge.png` | DeepForge | path 130 px above the bottom |
+| `eldermere.png` | Eldermere | path 121 px above the bottom |
+| `forgotten_stair.png` | ForgottenStair | path 122 px above the bottom |
+| `frostpine_pass.png` | FrostpinePass | path 114 px above the bottom |
+| `gallows_point.png` | GallowsPoint | path 117 px above the bottom |
+| `glacier_steps.png` | GlacierSteps | path 105 px above the bottom |
+| `glimmerwood.png` | Glimmerwood | path 123 px above the bottom |
+| `hall_of_idols.png` | HallOfIdols | path 60 px above the bottom |
+| `highspire.png` | Highspire | path 38 px above the bottom |
+| `hollow_den.png` | HollowDen | path 42 px above the bottom |
+| `hollow_library.png` | HollowLibrary | path 56 px above the bottom |
+| `ironvein_mines.png` | IronveinMines | path 128 px above the bottom |
+| `lastlight.png` | Lastlight | path 122 px above the bottom |
+| `moonwell.png` | Moonwell | path 134 px above the bottom |
+| `oubliette.png` | Oubliette | path 46 px above the bottom |
+| `owlkeep.png` | Owlkeep | path 131 px above the bottom |
+| `saltmarrow.png` | Saltmarrow | path 111 px above the bottom |
+| `shale_cliffs.png` | ShaleCliffs | path 140 px above the bottom |
+| `sirens_grotto.png` | SirensGrotto | path 134 px above the bottom |
+| `sleepers_throne.png` | SleepersThrone | path 29 px above the bottom |
+| `smugglers_cove.png` | SmugglersCove | path 42 px above the bottom |
+| `spellbroken_glade.png` | SpellbrokenGlade | path 130 px above the bottom |
+| `sunken_avenue.png` | SunkenAvenue | path 133 px above the bottom |
+| `thistledown_trail.png` | ThistledownTrail | path 132 px above the bottom |
+| `thorn_glade.png` | ThornGlade | path 130 px above the bottom |
+| `weeping_catacombs.png` | WeepingCatacombs | path 130 px above the bottom |
+| `windward_ridge.png` | WindwardRidge | path 129 px above the bottom |
+| `wreckers_reef.png` | WreckersReef | path 141 px above the bottom |
+
 **Adding one is just a file:** a picture named after the map (`amberleaf_trail.png`, `mossgate_hollow.png`,
 `mosswood.png`, `shale_cliffs.png`, ... the map's name in lower case with `_` for spaces) is picked up automatically, assuming the
 same framing as the Emberfields picture (2172 x 724, path 116 px above the bottom) and shown 42 units wide.
@@ -117,7 +162,14 @@ Each map with a painted picture has its ground and platforms cut from that pictu
     python Tools/make_ground_tiles.py Assets/Resources/Art/Backdrops/mosswood.png 594 42 forest
     python Tools/make_ground_tiles.py Assets/Resources/Art/Backdrops/kingsroad.png 584 42 road
 
-`Tools/recolor_theme.py` can make a theme from another by recolouring its leaves, for maps without a picture yet.
+Every other theme (cave, marsh, cliffs, snow, hold, mine, forge, crystal, beach, port, reef, cove, galleon, gallows,
+deepwood, wizardtown, library, moonwell, ruins, ruintown, catacomb, ziggurat) was cut the same way from one of its
+maps' pictures (the row is that map's walking line in the table above). Where the line sits low in the picture the
+tool now extends `ground.png` downward with mirrored copies so the wall is at least 2 units tall. A theme with a
+`ground.png` is drawn .16 units high (platforms .10) automatically, since the tiles carry a strip of path above the
+ledge line; a theme can still set its own `groundSurface` / `platformSurface`.
+
+`Tools/recolor_theme.py` can make a theme from another by recolouring its leaves.
 If a picture's path is not 116 px above the bottom, give the map its own `MapLayout.WithBackdrop(...)` line in MapDefs.
 
 | File | What it is | Suggested size | Lines up by |

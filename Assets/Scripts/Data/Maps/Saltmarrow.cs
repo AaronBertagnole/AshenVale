@@ -12,42 +12,50 @@ namespace AshenVale
         {
             return new[]
             {
-                MapLayout.Build(BrackwaterShore, "Brackwater Shore", "beach", MapKind.Field, BrackwaterShoreLayout,
+                MapLayout.WithBackdrop(MapLayout.Build(BrackwaterShore, "Brackwater Shore", "beach", MapKind.Field, BrackwaterShoreLayout,
                     new[] { MapLayout.S('c', Monsters.SandCrab), MapLayout.S('g', Monsters.GullHarpy),
                             MapLayout.S('l', Monsters.TideLurcher), MapLayout.S('k', Monsters.BarnacleChest) },
                     new[] { MapLayout.L('P', AshenMarsh, 'P'), MapLayout.L('Q', Saltmarrow, 'Q') }),
+                "Art/Backdrops/brackwater_shore", 106f / 724f, 42f),
 
-                MapLayout.Build(Saltmarrow, "Saltmarrow", "port", MapKind.Town, SaltmarrowLayout,
+                MapLayout.WithBackdrop(MapLayout.Build(Saltmarrow, "Saltmarrow", "port", MapKind.Town, SaltmarrowLayout,
                     new MapLayout.Spawn[0],
                     new[] { MapLayout.L('Q', BrackwaterShore, 'Q'), MapLayout.L('R', WreckersReef, 'R'), MapLayout.L('W', ThistledownTrail, 'W') }),
+                "Art/Backdrops/saltmarrow", 111f / 724f, 42f),
 
-                MapLayout.Build(WreckersReef, "Wreckers' Reef", "reef", MapKind.Field, WreckersReefLayout,
+                MapLayout.WithBackdrop(MapLayout.Build(WreckersReef, "Wreckers' Reef", "reef", MapKind.Field, WreckersReefLayout,
                     new[] { MapLayout.S('c', Monsters.SandCrab), MapLayout.S('e', Monsters.ReefEel),
                             MapLayout.S('r', Monsters.CutlassRat), MapLayout.S('k', Monsters.BarnacleChest) },
                     new[] { MapLayout.L('R', Saltmarrow, 'R'), MapLayout.L('S', SmugglersCove, 'S'), MapLayout.L('X', SirensGrotto, 'X') }),
+                "Art/Backdrops/wreckers_reef", 141f / 724f, 42f),
 
-                MapLayout.Build(SmugglersCove, "Smugglers' Cove", "cove", MapKind.Field, SmugglersCoveLayout,
+                MapLayout.WithBackdrop(MapLayout.Build(SmugglersCove, "Smugglers' Cove", "cove", MapKind.Field, SmugglersCoveLayout,
                     new[] { MapLayout.S('r', Monsters.CutlassRat), MapLayout.S('p', Monsters.PowderMonkey),
                             MapLayout.S('m', Monsters.BarrelMimic), MapLayout.S('k', Monsters.BarnacleChest) },
                     new[] { MapLayout.L('S', WreckersReef, 'S'), MapLayout.L('T', BlackGalleon, 'T') }),
+                "Art/Backdrops/smugglers_cove", 42f / 724f, 42f),
 
-                MapLayout.Build(BlackGalleon, "The Black Galleon", "galleon", MapKind.Field, BlackGalleonLayout,
+                MapLayout.WithBackdrop(MapLayout.Build(BlackGalleon, "The Black Galleon", "galleon", MapKind.Field, BlackGalleonLayout,
                     new[] { MapLayout.S('g', Monsters.DeckGhoul), MapLayout.S('p', Monsters.PowderMonkey),
                             MapLayout.S('b', Monsters.BosunWraith), MapLayout.S('k', Monsters.BarnacleChest) },
                     new[] { MapLayout.L('T', SmugglersCove, 'T'), MapLayout.L('U', GallowsPoint, 'U') }),
+                "Art/Backdrops/black_galleon", 50f / 724f, 42f),
 
-                MapLayout.Build(GallowsPoint, "Gallows Point", "gallows", MapKind.Field, GallowsPointLayout,
+                MapLayout.WithBackdrop(MapLayout.Build(GallowsPoint, "Gallows Point", "gallows", MapKind.Field, GallowsPointLayout,
                     new[] { MapLayout.S('h', Monsters.HangedCorsair), MapLayout.S('w', Monsters.BosunWraith),
                             MapLayout.S('g', Monsters.GullHarpy), MapLayout.S('k', Monsters.BarnacleChest) },
                     new[] { MapLayout.L('U', BlackGalleon, 'U'), MapLayout.L('V', CaptainsHold, 'V') }),
+                "Art/Backdrops/gallows_point", 117f / 724f, 42f),
 
-                MapLayout.WithChests(MapLayout.Build(SirensGrotto, "Siren's Grotto", "cove", MapKind.Field, SirensGrottoLayout,
+                MapLayout.WithChests(MapLayout.WithBackdrop(MapLayout.Build(SirensGrotto, "Siren's Grotto", "cove", MapKind.Field, SirensGrottoLayout,
                         new[] { MapLayout.S('e', Monsters.ReefEel), MapLayout.S('m', Monsters.BarrelMimic), MapLayout.S('k', Monsters.BarnacleChest) },
-                        new[] { MapLayout.L('X', WreckersReef, 'X') }), 2),
+                        new[] { MapLayout.L('X', WreckersReef, 'X') }),
+                "Art/Backdrops/sirens_grotto", 134f / 724f, 42f), 2),
 
-                MapLayout.Build(CaptainsHold, "Captain's Hold", "galleon", MapKind.Field, CaptainsHoldLayout,
+                MapLayout.WithBackdrop(MapLayout.Build(CaptainsHold, "Captain's Hold", "galleon", MapKind.Field, CaptainsHoldLayout,
                     new[] { MapLayout.S('z', Monsters.CaptainMarrow) },
                     new[] { MapLayout.L('V', GallowsPoint, 'V') }),
+                "Art/Backdrops/captains_hold", 102f / 724f, 42f),
             };
         }
 

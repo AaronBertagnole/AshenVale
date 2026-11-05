@@ -312,9 +312,10 @@ namespace AshenVale
                     new MapLayout.Spawn[0],
                     new[] { MapLayout.L('A', Emberfields, 'A') }),
                 "Art/Scenes/emberhaven", 116f / 724f),     // the painted street is 116 px above the bottom of the 724 px picture
-            MapLayout.WithChests(MapLayout.Build(HollowDen, "Hollow Den", "cave", MapKind.Field, HollowDenLayout,
+            MapLayout.WithChests(MapLayout.WithBackdrop(MapLayout.Build(HollowDen, "Hollow Den", "cave", MapKind.Field, HollowDenLayout,
                     new[] { MapLayout.S('d', Monsters.DenShade), MapLayout.S('k', Monsters.MossyChest) },
                     new[] { MapLayout.L('S', Mosswood, 'S') }),
+                "Art/Backdrops/hollow_den", 42f / 724f, 42f),
                 2),                                         // the secret den: two chests out at once
             MapLayout.WithBackdrop(MapLayout.Build(Kingsroad, "Kingsroad", "road", MapKind.Field, KingsroadLayout,
                     new[] { MapLayout.S('b', Monsters.BrambleBoar), MapLayout.S('v', Monsters.VioletWraith), MapLayout.S('k', Monsters.MossyChest) },
@@ -324,32 +325,31 @@ namespace AshenVale
                     new MapLayout.Spawn[0],
                     new[] { MapLayout.L('D', Kingsroad, 'D'), MapLayout.L('E', AshenMarsh, 'E') }),
                 "Art/Scenes/cinderford", 144f / 724f),     // two pictures joined into one long street, 144 px above the bottom
-            MapLayout.Build(AshenMarsh, "Ashen Marsh", "marsh", MapKind.Field, AshenMarshLayout,
+            MapLayout.WithBackdrop(MapLayout.Build(AshenMarsh, "Ashen Marsh", "marsh", MapKind.Field, AshenMarshLayout,
                 new[] { MapLayout.S('t', Monsters.MarshToad), MapLayout.S('l', Monsters.BogLurker),
                         MapLayout.S('w', Monsters.AshWisp), MapLayout.S('k', Monsters.SunkenChest) },
                 new[] { MapLayout.L('E', Cinderford, 'E'), MapLayout.L('P', BrackwaterShore, 'P') }),
-            // The path from Emberfields down toward Mosswood. Until Amberleaf Trail has its own picture
-            // (Art/Backdrops/amberleaf_trail.png), it shows the Emberfields forest mirrored.
+                "Art/Backdrops/ashen_marsh", 120f / 724f, 42f),
+            // The path from Emberfields down toward Mosswood.
             MapLayout.WithBackdrop(MapLayout.Build(AmberleafTrail, "Amberleaf Trail", "autumn", MapKind.Field, AmberleafTrailLayout,
                     new[] { MapLayout.S('a', Monsters.AshSprout), MapLayout.S('b', Monsters.LeafBeetle),
                             MapLayout.S('f', Monsters.EmberFox), MapLayout.S('k', Monsters.OldChest) },
-                    new[] { MapLayout.L('B', Emberfields, 'B'), MapLayout.L('F', MossgateHollow, 'F') }),
-                "Art/Backdrops/emberfields", 116f / 724f, 42f, true),
+                    new[] { MapLayout.L('B', Emberfields, 'B'), MapLayout.L('F', MossgateHollow, 'F') }), "Art/Backdrops/amberleaf_trail", 130f / 724f, 42f),
             MapLayout.Build(MossgateHollow, "Mossgate Hollow", "mossgate", MapKind.Field, MossgateHollowLayout,
                 new[] { MapLayout.S('m', Monsters.Mossling), MapLayout.S('f', Monsters.EmberFox),
                         MapLayout.S('c', Monsters.MossCrawler), MapLayout.S('k', Monsters.MossyChest) },
                 new[] { MapLayout.L('F', AmberleafTrail, 'F'), MapLayout.L('B', Mosswood, 'B'), MapLayout.L('G', ShaleCliffs, 'G') }),
             // Up the mountain from Mossgate Hollow's top ledge: a steep climb of rock shelves to a summit lookout.
             // The way on to Highspire will open from the summit later.
-            MapLayout.Build(ShaleCliffs, "Shale Cliffs", "cliffs", MapKind.Field, ShaleCliffsLayout,
+            MapLayout.WithBackdrop(MapLayout.Build(ShaleCliffs, "Shale Cliffs", "cliffs", MapKind.Field, ShaleCliffsLayout,
                 new[] { MapLayout.S('g', Monsters.CragGoat), MapLayout.S('r', Monsters.RockMite), MapLayout.S('k', Monsters.MossyChest) },
                 new[] { MapLayout.L('G', MossgateHollow, 'G'), MapLayout.L('H', FrostpinePass, 'H') }),
+                "Art/Backdrops/shale_cliffs", 140f / 724f, 42f),
             // Region 1's boss glade, off the east end of Mosswood: a bramble-walled clearing with two ledges to
             // shoot from. Thornmother waits in the middle and comes back a few minutes after she falls.
             MapLayout.WithBackdrop(MapLayout.Build(ThornGlade, "Thornmother's Glade", "forest", MapKind.Field, ThornGladeLayout,
                     new[] { MapLayout.S('z', Monsters.Thornmother) },
-                    new[] { MapLayout.L('T', Mosswood, 'T') }),
-                "Art/Backdrops/mosswood", 130f / 724f, 42f),       // Mosswood's pictures until the glade has its own
+                    new[] { MapLayout.L('T', Mosswood, 'T') }), "Art/Backdrops/thorn_glade", 130f / 724f, 42f),
         };
 
         public static bool IsTown(int map) { return map >= 0 && map < All.Length && All[map].kind == MapKind.Town; }

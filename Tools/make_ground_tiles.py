@@ -43,6 +43,7 @@ def main():
     below = im.crop((x0, floor_row, x0 + width + overlap, im.height))
     ground = seamless(below, width, overlap)
     ground = ground.resize(size4(ground.width, ground.height, scale), Image.LANCZOS)
+    ground = tall_enough(ground)
     ground.save(os.path.join(out_dir, 'ground.png'))
 
     lip = max(8, int(36 * im.height / 724))     # about the back half of the path
@@ -73,6 +74,21 @@ def rounded_end(piece, left, top_radius, bottom_radius):
             mask.putpixel((x, y), int(255 * a * (piece.getpixel((x, y))[3] / 255.0)))
     out = piece.copy()
     out.putalpha(mask)
+    return out
+
+def tall_enough(ground, minimum=200):
+    """A picture whose walking line sits low leaves only a sliver of wall under it; the camera can look ~1.3 units
+    below the ground line, so the tile is extended downward with mirrored copies of itself until it is tall enough."""
+    if ground.height >= minimum: return ground
+    pieces, h = [ground], ground.height
+    flip = False
+    while h < minimum:
+        flip = not flip
+        piece = ground.transpose(Image.FLIP_TOP_BOTTOM) if flip else ground
+        pieces.append(piece); h += piece.height
+    out = Image.new('RGBA', (ground.width, h))
+    y = 0
+    for piece in pieces: out.paste(piece, (0, y)); y += piece.height
     return out
 
 def make_platforms(ground, out_dir, depth_px=135, height=72, cap=48):
