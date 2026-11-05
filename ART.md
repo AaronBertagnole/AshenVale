@@ -158,7 +158,10 @@ Every other theme (cave, marsh, cliffs, snow, hold, mine, forge, crystal, beach,
 deepwood, wizardtown, library, moonwell, ruins, ruintown, catacomb, ziggurat) was cut the same way from one of its
 maps' pictures at 28 units (`make_ground_tiles.py <padded picture> <lane top row> 28 <theme>`; the row is that
 map's walking line in the table above). Where the line sits low in the picture the tool extends `ground.png`
-downward with mirrored copies so the wall is at least 2 units tall. A theme with a
+downward with mirrored copies so the wall is at least 2 units tall. These themes have no `ground_back.png`: with the
+walking line at the lane top the strip the tool cuts above it is just the base of the scenery, which showed as a
+blurred band in front of the backdrop, so it was deleted. Painted maps (scene or backdrop) draw no placeholder shop,
+waystone or smithy shapes; the labels over them still show. A theme with a
 `ground.png` is drawn .16 units high (platforms .10) automatically, since the tiles carry a strip of path above the
 ledge line; a theme can still set its own `groundSurface` / `platformSurface`.
 

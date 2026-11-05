@@ -443,9 +443,11 @@ namespace AshenVale
             // A painted backdrop replaces the sky and distant layers; the ground and platforms are still drawn.
             PictureFrame front, back;
             bool painted = BuildScene(visual, def, look, out front, out back);
+            bool placeholders = !painted;      // placeholder shop / waystone / smithy shapes only on unpainted maps
             if (!painted)
             {
-                if (!BuildBackdrop(visual, def, look, out front, out back))
+                if (BuildBackdrop(visual, def, look, out front, out back)) placeholders = false;
+                else
                 {
                     Sky(visual, def, theme, art);
                     Far(visual, def, theme, art, rng);
@@ -461,10 +463,10 @@ namespace AshenVale
             if (def.kind == MapKind.Town)
             {
                 BuildPortal(root, def.returnX, def.returnY, true);
-                BuildWaystone(root, def.waystoneX, def.waystoneY, !painted);
-                foreach (var stand in def.merchants) BuildMerchant(root, stand.x, stand.y, !painted);
+                BuildWaystone(root, def.waystoneX, def.waystoneY, placeholders);
+                foreach (var stand in def.merchants) BuildMerchant(root, stand.x, stand.y, placeholders);
             }
-            if (def.hasSmithy) BuildSmithy(root, def.smithyX, def.smithyY, !painted);
+            if (def.hasSmithy) BuildSmithy(root, def.smithyX, def.smithyY, placeholders);
             return visual;
         }
 
