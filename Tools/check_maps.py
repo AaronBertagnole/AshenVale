@@ -16,7 +16,7 @@ G = -3.15            # Tuning.Ground
 JUMP = 11.4          # Tuning.JumpSpeed
 GRAVITY = -30.0      # Tuning.Gravity
 AIR = .7             # Tuning.AirSpeedFactor
-CLIMB = 4.2          # Tuning.ClimbSpeed
+CLIMB = 3.4          # Tuning.ClimbSpeed
 SPEED = 5.3          # slowest hero
 DT = 1 / 60.0
 
