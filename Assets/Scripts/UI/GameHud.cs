@@ -294,7 +294,7 @@ namespace AshenVale
                 seenParts = (int[])ch.parts.Clone();
                 pickups.Clear();
             }
-            if (ch.gold > seenGold) Note("+" + (ch.gold - seenGold) + " gold", new Color(1f, .85f, .35f));
+            if (ch.gold > seenGold) Note("+" + (ch.gold - seenGold) + " Embermarks", new Color(1f, .85f, .35f));
             if (ch.hpPotions > seenHp) Note("+" + (ch.hpPotions - seenHp) + " HP potion", new Color(1f, .5f, .55f));
             if (ch.mpPotions > seenMp) Note("+" + (ch.mpPotions - seenMp) + " MP potion", new Color(.55f, .7f, 1f));
             for (int i = 0; i < ch.parts.Length; i++)
@@ -326,7 +326,7 @@ namespace AshenVale
 
         void Note(string text, Color color)
         {
-            // The same thing twice in a row stacks ("+12 gold" then "+5 gold" becomes two lines; fine).
+            // The same thing twice in a row stacks ("+12 Embermarks" then "+5 Embermarks" becomes two lines; fine).
             pickups.Add(new Pickup { text = text, color = color });
             if (onPickup != null) onPickup(text, color);
             if (pickups.Count > 6) pickups.RemoveAt(0);
@@ -487,7 +487,7 @@ namespace AshenVale
             Bar(23, 80, 338, "MP", me.mp, me.MaxMp, new Color(.19f, .46f, .88f));
             Bar(23, 111, 338, "XP", ch.xp, Tuning.XpNeeded(ch.level), new Color(.88f, .68f, .24f));
             Fill(new Rect(23, 144, 338, 1), new Color(.45f, .45f, .48f, .55f));
-            GUI.Label(new Rect(23, 152, 220, 20), "GOLD  " + ch.gold + "     KILLS  " + ch.kills, detailText);
+            GUI.Label(new Rect(23, 152, 220, 20), "EMBERMARKS  " + ch.gold + "     KILLS  " + ch.kills, detailText);
             GUI.Label(new Rect(23, 175, 338, 19), "HP POTIONS [" + Keys.Name(GameAction.HpPotion) + "]  " + ch.hpPotions + "       MP POTIONS [" + Keys.Name(GameAction.MpPotion) + "]  " + ch.mpPotions, detailText);
             GUI.matrix = oldMatrix;
         }
@@ -500,7 +500,7 @@ namespace AshenVale
             Rect r = PanelRect();
             GUI.Box(r, "INVENTORY   [" + Keys.Name(GameAction.Inventory) + "] Close");
             GUI.Label(new Rect(r.x + 18, r.y + 27, r.width - 36, 20),
-                      "Gold " + ch.gold + "   |   Gear bonuses: ATK +" + ch.BonusAttack + "  DEF +" + ch.BonusDefense + "  HP +" + ch.BonusHealth, smallStyle);
+                      "Embermarks " + ch.gold + "   |   Gear bonuses: ATK +" + ch.BonusAttack + "  DEF +" + ch.BonusDefense + "  HP +" + ch.BonusHealth, smallStyle);
             int partKinds = 0;
             foreach (int count in ch.parts) if (count > 0) partKinds++;
             string[] tabs = { "EQUIPS  " + ch.inventory.Count + "/" + Tuning.InventoryCapacity,
@@ -603,7 +603,7 @@ namespace AshenVale
                 if (icon != null) GUI.DrawTexture(new Rect(4, y + 2, 32, 32), icon.texture, ScaleMode.ScaleToFit, true);
                 GUI.Label(new Rect(icon != null ? 42 : 4, y + 4, 294, 28), part.name, partNameText);
                 GUI.Label(new Rect(312, y + 4, 90, 28), "x" + count, partNameText);
-                GUI.Label(new Rect(422, y + 4, 132, 28), (part.price * count) + " gold", partNameText);
+                GUI.Label(new Rect(422, y + 4, 132, 28), (part.price * count) + " EM", partNameText);
             }
             if (shown == 0) GUI.Label(new Rect(4, 16, area.width - 20, 30), "No monster parts yet. Collect materials from defeated monsters.", smallStyle);
             GUI.EndScrollView();
@@ -615,22 +615,22 @@ namespace AshenVale
             var ch = me.ch;
             Rect r = PanelRect();
             GUI.Box(r, def.name.ToUpperInvariant() + " GENERAL STORE — [" + Keys.Name(GameAction.Interact) + "] Close");
-            GUI.Label(new Rect(r.x + 20, r.y + 32, 550, 28), "Gold: " + ch.gold + "   |   Sell unwanted gear for half its value", bodyStyle);
-            if (GUI.Button(new Rect(r.x + 20, r.y + 70, 270, 42), "Buy HP Potion — " + Tuning.HpPotionPrice + " gold")) commands.BuyPotion(true);
-            if (GUI.Button(new Rect(r.x + 320, r.y + 70, 270, 42), "Buy MP Potion — " + Tuning.MpPotionPrice + " gold")) commands.BuyPotion(false);
+            GUI.Label(new Rect(r.x + 20, r.y + 32, 550, 28), "Embermarks: " + ch.gold + "   |   Sell unwanted gear for half its value", bodyStyle);
+            if (GUI.Button(new Rect(r.x + 20, r.y + 70, 270, 42), "Buy HP Potion — " + Tuning.HpPotionPrice + " EM")) commands.BuyPotion(true);
+            if (GUI.Button(new Rect(r.x + 320, r.y + 70, 270, 42), "Buy MP Potion — " + Tuning.MpPotionPrice + " EM")) commands.BuyPotion(false);
             GUI.Label(new Rect(r.x + 20, r.y + 123, 560, 25), "Merchant equipment (reliable Common gear)", smallStyle);
             for (int i = 0; i < 4; i++)
             {
                 Slot slot = (Slot)i;
                 int cost = Loot.ShopGearCost(slot, ch.level);
-                if (GUI.Button(new Rect(r.x + 20 + (i % 2) * 300, r.y + 154 + (i / 2) * 49, 270, 40), "Buy Common " + Loot.SlotName(slot, me.Hero) + " — " + cost + "g"))
+                if (GUI.Button(new Rect(r.x + 20 + (i % 2) * 300, r.y + 154 + (i / 2) * 49, 270, 40), "Buy Common " + Loot.SlotName(slot, me.Hero) + " — " + cost + " EM"))
                     commands.BuyGear(slot);
             }
             GUI.Label(new Rect(r.x + 20, r.y + 255, 280, 25), "Sell gear", smallStyle);
             for (int i = 0; i < ch.inventory.Count && i < 7; i++)
             {
                 Item item = ch.inventory[i];
-                if (GUI.Button(new Rect(r.x + 20, r.y + 280 + i * 28, 280, 26), "Sell " + item.DisplayName + "  +" + Loot.SellPrice(item) + "g"))
+                if (GUI.Button(new Rect(r.x + 20, r.y + 280 + i * 28, 280, 26), "Sell " + item.DisplayName + "  +" + Loot.SellPrice(item) + " EM"))
                 { commands.Sell(i); break; }
             }
             if (ch.inventory.Count > 7) GUI.Label(new Rect(r.x + 20, r.y + 280 + 7 * 28, 280, 22), "...and " + (ch.inventory.Count - 7) + " more (sell these first)", smallStyle);
@@ -644,8 +644,8 @@ namespace AshenVale
                 var icon = Sprites.PartIcon(i);
                 if (icon != null) GUI.DrawTexture(new Rect(r.x + 320, y + 1, 24, 24), icon.texture, ScaleMode.ScaleToFit, true);
                 GUI.Label(new Rect(r.x + (icon != null ? 348 : 320), y, icon != null ? 100 : 125, 26), part.name + " x" + ch.parts[i], partNameText);
-                if (GUI.Button(new Rect(r.x + 452, y, 66, 26), "1  +" + part.price + "g")) { commands.SellPart(i, 1); break; }
-                if (GUI.Button(new Rect(r.x + 522, y, 70, 26), "All +" + part.price * ch.parts[i] + "g")) { commands.SellPart(i, 0); break; }
+                if (GUI.Button(new Rect(r.x + 452, y, 66, 26), "1  +" + part.price + " EM")) { commands.SellPart(i, 1); break; }
+                if (GUI.Button(new Rect(r.x + 522, y, 70, 26), "All +" + part.price * ch.parts[i] + " EM")) { commands.SellPart(i, 0); break; }
                 shown++;
             }
             if (shown == 0) GUI.Label(new Rect(r.x + 320, r.y + 283, 280, 22), "No parts to sell yet.", smallStyle);
@@ -962,7 +962,7 @@ namespace AshenVale
             float w = Mathf.Min(Screen.width - 20, 820);
             Rect r = new Rect((Screen.width - w) / 2f, Mathf.Max(120, (Screen.height - 480) / 2f), w, 480);
             GUI.Box(r, def.name.ToUpperInvariant() + " SMITHY — [" + Keys.Name(GameAction.Interact) + "] Close");
-            GUI.Label(new Rect(r.x + 18, r.y + 26, w - 36, 22), "Upgrades always succeed, up to +" + Tuning.MaxUpgrade + ". Gold: " + ch.gold, smallStyle);
+            GUI.Label(new Rect(r.x + 18, r.y + 26, w - 36, 22), "Upgrades always succeed, up to +" + Tuning.MaxUpgrade + ". Embermarks: " + ch.gold, smallStyle);
             GUI.Label(new Rect(r.x + 18, r.y + 48, w - 36, 44), PartsLine(ch), smallStyle);
 
             int rows = ch.equipped.Length + ch.inventory.Count;
@@ -994,7 +994,7 @@ namespace AshenVale
             GUI.Label(new Rect(10, y + 27, 330, 22), StatLine(item, item.upgrade) + "   ->   " + StatLine(item, item.upgrade + 1), smallStyle);
             string price = cost.partCount + " " + Parts.All[cost.part].name + " (" + ch.parts[cost.part] + ")";
             if (cost.rareCount > 0) price += "  +  " + cost.rareCount + " " + Parts.All[cost.rarePart].name + " (" + ch.parts[cost.rarePart] + ")";
-            price += "  +  " + cost.gold + "g";
+            price += "  +  " + cost.gold + " EM";
             GUI.Label(new Rect(340, y + 4, width - 350, 22), price, smallStyle);
             GUI.enabled = Smithing.CanPay(ch, cost);
             if (GUI.Button(new Rect(width - 160, y + 26, 150, 24), "UPGRADE TO +" + (item.upgrade + 1))) commands.Upgrade(target);

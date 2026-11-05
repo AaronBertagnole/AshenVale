@@ -86,7 +86,7 @@ solo). She rears up before slamming the roots (step back or jump), calls thorn s
 her health. Everyone alive in the glade gets her XP; she always drops Wraith Silk and spills parts like a chest, and
 returns three minutes after she falls. Hits show damage numbers; hers show in red over you.
 
-Monsters also drop parts (chests spill several). The smithies in every town spend parts and gold to upgrade gear
+Monsters also drop parts (chests spill several). The smithies in every town spend parts and Embermarks (the coin currency) to upgrade gear
 from +1 to +5, about 12% of the item's base stats each time. Which parts depends on the item's level band and slot.
 
 Maps are text pictures in `Assets/Scripts/Data/MapDefs.cs` and `Data/Maps/*.cs` (the legend is in the comment above `MapLayout`).

@@ -71,8 +71,8 @@ namespace AshenVale
             var compass = Label("Compass", map, 190, 6, 20, 16, 10, HudTheme.Ivory); compass.text = "N";
             minimap = Graphic<HudMinimap>("Terrain", map, new Vector2(0, 1), new Vector2(0, 1), new Vector2(10, -23), new Vector2(200, 65));
             mapHint = Label("Map keys", map, 10, 91, 200, 14, 8, HudTheme.Muted); mapHint.alignment = TextAnchor.MiddleRight;
-            var purse = Panel("Gold", safeRoot, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-20, -140), new Vector2(140, 24));
-            gold = Label("Gold value", purse, 8, 1, 124, 22, 12, HudTheme.Copper, FontStyle.Bold); gold.alignment = TextAnchor.MiddleCenter;
+            var purse = Panel("Embermarks", safeRoot, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-20, -140), new Vector2(140, 24));
+            gold = Label("Embermark value", purse, 8, 1, 124, 22, 12, HudTheme.Copper, FontStyle.Bold); gold.alignment = TextAnchor.MiddleCenter;
 
             var journey = Panel("Journey", safeRoot, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-20, -180), new Vector2(220, 120));
             Label("Journey heading", journey, 12, 8, 196, 16, 10, HudTheme.Copper, FontStyle.Bold).text = "YOUR JOURNEY";
@@ -162,7 +162,7 @@ namespace AshenVale
             SetMeter(health,me.hp,me.MaxHp,"HP");SetMeter(mana,me.mp,me.MaxMp,"MP");SetMeter(xp,ch.xp,Tuning.XpNeeded(ch.level),"");
             xpText.text="LEVEL "+ch.level+"  /  "+ch.xp+" of "+Tuning.XpNeeded(ch.level)+" XP";
             location.text=def.name.ToUpperInvariant();region.text=def.kind==MapKind.Town?"A HAVEN ON THE ROAD":def.LevelText.ToUpperInvariant();
-            gold.text=ch.gold.ToString("N0")+" GOLD";
+            gold.text=ch.gold.ToString("N0")+" EMBERMARKS";
             network.text=legacy.status??"";copyCode.gameObject.SetActive(!string.IsNullOrEmpty(legacy.joinCode));
             mapPanel.SetActive(legacy.minimapShown);if(legacy.minimapShown)minimap.Refresh(world,me);
             mapHint.text=Keys.Name(GameAction.WorldMap)+"  WORLD  /  "+Keys.Name(GameAction.Minimap)+"  HIDE";
