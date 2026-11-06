@@ -177,7 +177,7 @@ namespace AshenVale
                     accent = new Color(.95f, .92f, .55f), farStyle = "pines", midStyle = "bigtrees",
                     groundSurface = .16f, platformSurface = .10f,
                 };
-                case "cave": return new Theme
+                case "cave": case "hollowden": return new Theme
                 {
                     skyBottom = new Color(.10f, .10f, .18f), skyTop = new Color(.04f, .04f, .09f),
                     far = new Color(.17f, .17f, .27f), farDark = new Color(.13f, .13f, .21f),

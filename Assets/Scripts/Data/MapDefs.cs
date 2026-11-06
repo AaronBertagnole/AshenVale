@@ -312,7 +312,7 @@ namespace AshenVale
                     new MapLayout.Spawn[0],
                     new[] { MapLayout.L('A', Emberfields, 'A') }),
                 "Art/Scenes/emberhaven", 116f / 724f),     // the painted street is 116 px above the bottom of the 724 px picture
-            MapLayout.WithChests(MapLayout.Build(HollowDen, "Hollow Den", "cave", MapKind.Field, HollowDenLayout,
+            MapLayout.WithChests(MapLayout.Build(HollowDen, "Hollow Den", "hollowden", MapKind.Field, HollowDenLayout,
                     new[] { MapLayout.S('d', Monsters.DenShade), MapLayout.S('k', Monsters.MossyChest) },
                     new[] { MapLayout.L('S', Mosswood, 'S') }),
                 2),                                         // the secret den: two chests out at once
