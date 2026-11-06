@@ -46,6 +46,12 @@ public class AshenValeGame : MonoBehaviour
     void Awake()
     {
         Application.targetFrameRate = 60;
+        // The scene's camera has no AudioListener, and without one nothing is audible: add it where the camera is.
+        if (Object.FindFirstObjectByType<AudioListener>() == null)
+        {
+            var listenerHost = Camera.main != null ? Camera.main.gameObject : gameObject;
+            listenerHost.AddComponent<AudioListener>();
+        }
         music = new MusicPlayer(gameObject);
         music.Play();
         world = new World(System.Environment.TickCount);
