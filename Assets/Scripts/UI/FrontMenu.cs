@@ -472,9 +472,20 @@ namespace AshenVale
 
         static void DrawSprite(Rect target, Sprite sprite)
         {
-            Rect tex = sprite.textureRect;
+            if (sprite == null) return;
+            Rect tex = sprite.textureRect, canvas = sprite.rect;
+            if (canvas.width <= 0f || canvas.height <= 0f) return;
+            Vector2 offset = sprite.textureRectOffset;
+            // target fits the ORIGINAL canvas, not the changing trimmed texture region.
+            float scale = Mathf.Min(target.width / canvas.width, target.height / canvas.height);
+            float left = target.x + (target.width - canvas.width * scale) * .5f;
+            float top = target.y + (target.height - canvas.height * scale) * .5f;
+            Rect draw = new Rect(left + offset.x * scale,
+                top + (canvas.height - offset.y - tex.height) * scale,
+                tex.width * scale, tex.height * scale);
             var t = sprite.texture;
-            GUI.DrawTextureWithTexCoords(target, t, new Rect(tex.x / t.width, tex.y / t.height, tex.width / t.width, tex.height / t.height), true);
+            GUI.DrawTextureWithTexCoords(draw, t, new Rect(tex.x / t.width, tex.y / t.height,
+                tex.width / t.width, tex.height / t.height), true);
         }
     }
 }
