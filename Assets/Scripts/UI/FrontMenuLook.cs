@@ -31,6 +31,14 @@ namespace AshenVale
                 fontStyle = bold ? FontStyle.Bold : FontStyle.Normal, padding = new RectOffset(0, 0, 0, 0) };
             s.normal.textColor = color; return s;
         }
+        // A menu picture as a texture, whether Unity imported it as a texture or a sprite; says so in the Console if it is missing.
+        static Texture2D LoadPicture(string path)
+        {
+            var tex=Resources.Load<Texture2D>(path);
+            if(tex==null) { var sprite=Resources.Load<Sprite>(path); if(sprite!=null) tex=sprite.texture; }
+            if(tex==null) Debug.LogWarning("Ashen Vale menu: picture missing at Assets/Resources/"+path+".png");
+            return tex;
+        }
         public static void Init()
         {
             if (Heading != null) return;
@@ -39,8 +47,8 @@ namespace AshenVale
             if(serif!=null) Title.font=serif;
             Choice=new GUIStyle(Title){fontSize=31,fontStyle=FontStyle.Normal,alignment=TextAnchor.MiddleLeft};
             ChoiceShadow=new GUIStyle(Choice); ChoiceShadow.normal.textColor=new Color(.07f,.04f,.02f,.8f);
-            logoArt=Resources.Load<Texture2D>("Art/UI/AshenValeLogo");
-            illustratedFlame=Resources.Load<Texture2D>("Art/UI/AmberFlame");
+            logoArt=LoadPicture("Art/UI/AshenValeLogo");
+            illustratedFlame=LoadPicture("Art/UI/AmberFlame");
             Heading = Label(34, Ivory, TextAnchor.MiddleLeft, true);
             Subhead = Label(20, Gold, TextAnchor.UpperLeft, true);
             Body = Label(17, Ivory); Small = Label(14, Quiet); Tiny = Label(12, Quiet);
@@ -109,6 +117,7 @@ namespace AshenVale
         public static void Logo(Rect r)
         {
             if(logoArt!=null) GUI.DrawTexture(r,logoArt,ScaleMode.ScaleToFit);
+            else GUI.Label(r,"ASHENVALE",Title);
         }
         public static void Flame(Rect r)
         {
