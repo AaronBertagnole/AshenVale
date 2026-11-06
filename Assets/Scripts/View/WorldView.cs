@@ -179,7 +179,7 @@ namespace AshenVale
                 Animate(p, v, frameDt, alpha);
                 float x = Mathf.Lerp(p.px, p.x, alpha), y = Mathf.Lerp(p.py, p.y, alpha);
                 v.go.transform.localScale = v.fittedClimb ? v.climbScale : new Vector3(HeroScale, HeroScale, 1f);
-                float heroOffset = .48f; // Prone art shares the idle ground-contact baseline.
+                float heroOffset = HeroPolishArt.Uses(p.Hero.folder) ? (114f/128f-.5f)*HeroScale : .48f; // Prone art shares the idle ground-contact baseline.
                 if (!p.climbing && !p.dead && PaintedMapFraming.UsesOwnGround(Maps.All[p.map]))
                     heroOffset = PaintedSpriteContact.HeroOffset(p.Hero.folder, v.sr.sprite, v.go.transform.localScale.y, heroOffset);
                 Vector3 basePosition = new Vector3(x + v.climbXOffset, y + heroOffset + v.climbOffset, 0);
@@ -300,7 +300,7 @@ namespace AshenVale
                 v.climbOffset = v.climbXOffset = 0f; v.fittedClimb = false;
                 return;
             }
-            if (p.Hero.dragonKnight && p.attackVisual > 0 && p.attackSerial != v.attackSerial)
+            if ((p.Hero.dragonKnight || RimecallerRules.Is(p.Hero)) && p.attackVisual > 0 && p.attackSerial != v.attackSerial)
             { v.attackSerial = p.attackSerial; v.clock = 0; }
             bool enteredClip = clip != v.anim;
             float climbY = Mathf.Lerp(p.py, p.y, alpha);
@@ -311,12 +311,12 @@ namespace AshenVale
             if (enteredClip && clip == "climb" && frames.Length < 2)
                 Debug.LogWarning("Climb needs multiple loaded frames at Resources/Heroes/" + h.folder +
                     "/climb/00.png, 01.png, 02.png, 03.png. Loaded: " + frames.Length);
-            float fps = clip == "idle" ? 5 : clip == "run" ? (RimecallerRules.Is(h)?6:11) : clip == "death" ? 7 : 12;
+            float fps = clip == "idle" ? 1.5f : clip == "run" ? (HeroPolishArt.Uses(h.folder)?6:11) : clip == "death" ? 7 : 12;
             if (frames.Length > 0)
             {
                 int index = Mathf.FloorToInt(v.clock * fps);
-                if (clip == "climb" && !RimecallerRules.Is(h))
-                    index = FitClimbContacts(p, v, frames, climbY);
+                if (clip == "climb")
+                    index = HeroPolishArt.Uses(h.folder) ? FitPolishedClimb(p,v,frames,climbY) : FitClimbContacts(p, v, frames, climbY);
                 if (h.dragonKnight && clip != "climb" && p.attackVisual > 0 && p.attackDuration > 0)
                 {
                     // Reserve the first half of the clip for windup; contact at the windup boundary.

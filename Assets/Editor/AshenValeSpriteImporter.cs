@@ -10,8 +10,8 @@ public class AshenValeSpriteImporter : AssetPostprocessor
 {
     void OnPreprocessTexture()
     {
-        if (assetPath.StartsWith("Assets/Resources/Heroes/Rimecaller/") || assetPath.StartsWith("Assets/Resources/Art/Rimecaller/"))
-            return;     // RimecallerSpriteImporter owns these (128 PPU, uncompressed, smooth)
+        if (assetPath.StartsWith("Assets/Resources/Heroes/Rimecaller/") || assetPath.StartsWith("Assets/Resources/Art/Rimecaller/") || assetPath.StartsWith("Assets/Resources/Heroes/StyleRefresh/"))
+            return;     // RimecallerSpriteImporter / HeroPolishSpriteImporter own these (128 PPU, uncompressed, smooth)
         if (assetPath.StartsWith("Assets/Resources/Heroes/"))
         {
             var importer = (TextureImporter)assetImporter;

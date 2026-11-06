@@ -14,7 +14,7 @@ namespace AshenVale
         static Sprite square, disc, quad, glow, leaf;
 
         // Frames of Resources/Heroes/<path>, sorted by file name.
-        public static Sprite[] Hero(string path) { return Frames("Heroes/" + path); }
+        public static Sprite[] Hero(string path) { return HeroPolishArt.Resolve(path); }
 
         // Every sprite in a Resources folder, sorted by file name (Resources.LoadAll promises no order).
         // Empty if the folder doesn't exist.

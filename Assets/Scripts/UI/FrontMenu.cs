@@ -302,9 +302,9 @@ namespace AshenVale
             var hero=Heroes.All[Mathf.Clamp(index,0,Heroes.All.Length-1)];
             var frames=Sprites.Hero(hero.folder+"/idle");
             if(frames.Length==0) return;
-            Sprite sprite=frames[Mathf.FloorToInt(Time.unscaledTime*5f)%frames.Length];
+            Sprite sprite=frames[Mathf.FloorToInt(Time.unscaledTime*1f)%frames.Length];
             if(sprite==null) return;
-            float baseline=hero.folder!="ElvenRanger" ? 114f/128f : 119f/128f;
+            float baseline=HeroPolishArt.Uses(hero.folder) ? 114f/128f : hero.folder!="ElvenRanger" ? 114f/128f : 119f/128f;
             const float size=252f;
             DrawSprite(new Rect(left+643-size*.5f,top+602-size*baseline,size,size),sprite);
         }

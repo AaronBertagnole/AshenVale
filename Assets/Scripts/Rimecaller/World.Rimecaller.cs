@@ -16,6 +16,7 @@ namespace AshenVale {
     x=Mathf.Clamp(p.x+p.facing*2.6f,map.def.minX,map.def.maxX),y=p.y});
   }
   void TickRimecaller(float dt) {
+   PruneRimeOrbTargets();
    for(int i=rimeCasts.Count-1;i>=0;i--) {
     var c=rimeCasts[i];var p=GetPlayer(c.owner);
     if(p==null || p.dead || p.map!=c.map || p.climbing) {rimeCasts.RemoveAt(i);continue;}   // getting hit does not cancel a cast
@@ -28,7 +29,8 @@ namespace AshenVale {
       foreach(var m in targets) HitMonster(map,m,c.damage,p);
      } else {
       float x=p.x+c.facing*.6f,y=p.y+1.0f;
-      map.shots.Add(new ProjectileState {id=NextId(),map=p.map,owner=p.id,damage=c.damage,pierce=1,x=x,px=x,y=y,py=y,direction=c.facing,life=1.4f});
+      var orb=new ProjectileState {id=NextId(),map=p.map,owner=p.id,damage=c.damage,pierce=1,x=x,px=x,y=y,py=y,direction=c.facing,life=1.4f};
+      AimNewRimeOrb(map,orb);map.shots.Add(orb);
      }
      c.remaining--;c.wait+=.22f;
     }
@@ -36,24 +38,7 @@ namespace AshenVale {
    }
   }
   bool IsRimeShot(ProjectileState s) { var p=GetPlayer(s.owner);return p!=null && RimecallerRules.Is(p.Hero); }
-  void UpdateRimeShot(MapRuntime map,ProjectileState s,float dt) {
-   float end=s.x+s.direction*9f*dt,best=float.MaxValue;MonsterState hit=null;
-   foreach(var m in map.monsters) {
-    float bottom=m.y+m.Def.hover;
-    if(s.y<bottom-.18f || s.y>bottom+m.Def.height+.18f) continue;
-    float half=m.Def.width*.5f+.18f;
-    if(Mathf.Max(s.x,end)<m.x-half || Mathf.Min(s.x,end)>m.x+half) continue;
-    float distance=Mathf.Max(0,(m.x-s.x)*s.direction-half);
-    if(distance<best){best=distance;hit=m;}
-   }
-   s.life-=dt;
-   if(hit!=null) {
-    s.x+=s.direction*best;
-    HitMonster(map,hit,s.damage,GetPlayer(s.owner));s.pierce=0;
-    events.Add(new SimEvent {kind=SimEventKind.RimeBurst,map=s.map,playerId=s.owner,x=s.x,y=s.y});
-   } else s.x=end;
-   if(s.x<map.def.minX || s.x>map.def.maxX) s.life=0;
-  }
+  void UpdateRimeShot(MapRuntime map,ProjectileState s,float dt) { UpdateAimedRimeOrb(map,s,dt); }
   void Froststep(PlayerState p,MapDef def) {
    if(p.mp<RimecallerRules.BlinkCost || p.attackVisual>0) return;
    p.mp-=RimecallerRules.BlinkCost;p.dashCooldown=RimecallerRules.BlinkCooldown;
