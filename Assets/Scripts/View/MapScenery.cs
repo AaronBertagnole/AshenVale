@@ -516,6 +516,7 @@ namespace AshenVale
         static bool BuildBackdrop(MapVisual visual, MapDef def, MapArtDef look, out PictureFrame front, out PictureFrame back)
         {
             front = back = new PictureFrame();
+            if (HollowDenBackgroundTest.TryBuild(visual, def, out front, out back)) return true;
             string own = "Art/Backdrops/" + def.key, path = own;
             var sprite = Sprites.Art(own);
             float floor = def.backdropFloor, width = def.backdropWidth;
