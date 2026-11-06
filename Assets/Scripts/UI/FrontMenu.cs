@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace AshenVale
 {
-    // Emberhaven Overlook menu refresh v2.
+    // Emberhaven Overlook menu refresh v3.
     // Menu-only presentation; public callbacks and save data contracts are unchanged.
     public sealed class FrontMenu
     {
@@ -160,16 +160,12 @@ namespace AshenVale
 
         void DrawTitle(float left, float top)
         {
-            // Open typography over the EXISTING painting; no opaque title panel.
-            FrontMenuLook.Crest(new Rect(left+162,top+105,252,70));
-            var logo=new GUIStyle(FrontMenuLook.Title){fontSize=68,fontStyle=FontStyle.Normal};
-            var logoShadow=new GUIStyle(logo); logoShadow.normal.textColor=new Color(.08f,.04f,.015f,.85f);
-            GUI.Label(new Rect(left+59,top+184,610,94), "ASHENVALE",logoShadow);
-            GUI.Label(new Rect(left+56,top+181,610,94), "ASHENVALE",logo);
+            // One transparent illustrated asset: no OS-font logo, separate crest or shadow pass.
+            FrontMenuLook.Logo(new Rect(left+46,top+106,446,162));
             string[] labels={"Start Adventure","Settings","Quit"};
             Vector2 pointer=Event.current.mousePosition;
             bool moved=(pointer-lastPointer).sqrMagnitude>1f;
-            bool old=GUI.enabled; GUI.enabled=old && !settingsOpen && !soundOpen;
+            bool old=GUI.enabled; GUI.enabled=old && !settingsOpen;
             for(int i=0;i<labels.Length;i++)
             {
                 Rect r=new Rect(left+78,top+309+i*62,338,52);
@@ -178,14 +174,12 @@ namespace AshenVale
                 {
                     FrontMenuLook.GoldLine(new Rect(left+89,r.y,326,10));
                     FrontMenuLook.GoldLine(new Rect(left+89,r.y+r.height-8,326,10));
-                    FrontMenuLook.Flame(new Rect(left+81,r.y+9,24,35));
+                    FrontMenuLook.Flame(new Rect(left+72,r.y-3,44,62));
                 }
                 if(GUI.Button(r,GUIContent.none,GUIStyle.none)) TitleAction(i);
-                var label=new GUIStyle(FrontMenuLook.Title){fontSize=31,fontStyle=FontStyle.Normal,alignment=TextAnchor.MiddleLeft};
-                // Small shadow keeps light lettering readable over branches without a box.
-                var shadow=new GUIStyle(label); shadow.normal.textColor=new Color(.07f,.04f,.02f,.9f);
-                GUI.Label(new Rect(r.x+57,r.y+2,r.width-30,r.height),labels[i],shadow);
-                GUI.Label(new Rect(r.x+55,r.y,r.width-30,r.height),labels[i],label);
+                GUI.Label(new Rect(r.x+56,r.y+1,r.width-30,r.height),labels[i],FrontMenuLook.ChoiceShadow);
+                GUI.Label(new Rect(r.x+55,r.y,r.width-30,r.height),labels[i],FrontMenuLook.Choice);
+
             }
             GUI.enabled=old; lastPointer=pointer;
             if(settingsOpen)
@@ -210,7 +204,7 @@ namespace AshenVale
             {
                 Rect popup=new Rect(left+856,top+594,392,56);
                 if(Event.current.type==EventType.MouseDown && !popup.Contains(Event.current.mousePosition) && !r.Contains(Event.current.mousePosition))
-                { soundOpen=false; Event.current.Use(); return; }
+                { soundOpen=false; return; }
                 FrontMenuLook.Box(popup);
                 DrawVolume(left+873,top+613);
             }

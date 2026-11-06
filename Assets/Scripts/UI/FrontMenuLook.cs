@@ -8,8 +8,8 @@ namespace AshenVale
         public static readonly Color Gold = new Color(.94f, .73f, .39f);
         public static readonly Color Ivory = new Color(.98f, .93f, .81f);
         public static readonly Color Quiet = new Color(.68f, .78f, .76f);
-        public static GUIStyle Title, Heading, Subhead, Body, Small, Tiny, Button, Primary, Field, Panel, Menu, Track, Thumb;
-        static Texture2D background, glow, flame;
+        public static GUIStyle Title, Heading, Subhead, Body, Small, Tiny, Button, Primary, Field, Panel, Menu, Track, Thumb, Choice, ChoiceShadow;
+        static Texture2D background, glow, flame, logoArt, illustratedFlame;
         static bool loaded;
 
         static Texture2D Tile(Color fill, Color edge)
@@ -35,12 +35,12 @@ namespace AshenVale
         {
             if (Heading != null) return;
             Title = Label(62, Ivory, TextAnchor.MiddleLeft, true);
-            try
-            {
-                var serif = Font.CreateDynamicFontFromOSFont(new[] { "Georgia", "DejaVu Serif", "Times New Roman" }, 62);
-                if (serif != null) Title.font = serif;
-            }
-            catch { /* The current GUI font remains a valid fallback. */ }
+            var serif=Resources.Load<Font>("Fonts/AshenValeMenuSerif");
+            if(serif!=null) Title.font=serif;
+            Choice=new GUIStyle(Title){fontSize=31,fontStyle=FontStyle.Normal,alignment=TextAnchor.MiddleLeft};
+            ChoiceShadow=new GUIStyle(Choice); ChoiceShadow.normal.textColor=new Color(.07f,.04f,.02f,.8f);
+            logoArt=Resources.Load<Texture2D>("Art/UI/AshenValeLogo");
+            illustratedFlame=Resources.Load<Texture2D>("Art/UI/AmberFlame");
             Heading = Label(34, Ivory, TextAnchor.MiddleLeft, true);
             Subhead = Label(20, Gold, TextAnchor.UpperLeft, true);
             Body = Label(17, Ivory); Small = Label(14, Quiet); Tiny = Label(12, Quiet);
@@ -106,10 +106,15 @@ namespace AshenVale
         }
         public static void Fill(Rect r, Color c) { Color old=GUI.color; GUI.color=c; GUI.DrawTexture(r,Texture2D.whiteTexture); GUI.color=old; }
         public static void Box(Rect r) { GUI.Box(r,GUIContent.none,Panel); }
+        public static void Logo(Rect r)
+        {
+            if(logoArt!=null) GUI.DrawTexture(r,logoArt,ScaleMode.ScaleToFit);
+        }
         public static void Flame(Rect r)
         {
-            Color old=GUI.color; GUI.color=new Color(1f,1f,1f,.82f+Mathf.Sin(Time.unscaledTime*4f)*.15f);
-            GUI.DrawTexture(r,flame); GUI.color=old;
+            Color old=GUI.color; GUI.color=new Color(1f,1f,1f,.92f+Mathf.Sin(Time.unscaledTime*4f)*.06f);
+            GUI.DrawTexture(r,illustratedFlame!=null ? illustratedFlame : flame,ScaleMode.ScaleToFit);
+            GUI.color=old;
         }
         static Texture2D crestTexture, speakerTexture, mutedTexture, goldLine;
         static bool Inside(Vector2 p,Vector2 a,Vector2 b,Vector2 c)
@@ -172,7 +177,7 @@ namespace AshenVale
                 {
                     float end=Mathf.Clamp01(x/20f)*Mathf.Clamp01((255-x)/70f);
                     float core=Mathf.Exp(-Mathf.Abs(y-7.5f)*1.4f);
-                    goldLine.SetPixel(x,y,new Color(1f,.73f,.25f,end*core));
+                    goldLine.SetPixel(x,y,new Color(1f,.73f,.25f,end*Mathf.Clamp01(core*2.2f)));
                 }
                 goldLine.Apply();
             }
