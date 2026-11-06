@@ -1,16 +1,7 @@
 fileFormatVersion: 2
-<<<<<<< HEAD
 guid: 75d99c499c8926e4e8f02b9dc2d10fa5
 TextureImporter:
-  internalIDToNameTable:
-  - first:
-      213: -7994238321091180378
-    second: AmberFlame_0
-=======
-guid: 0efffeca67274f47bb059b19a7e51e17
-TextureImporter:
   internalIDToNameTable: []
->>>>>>> afbe8e356072197b90ffd62aedceda55429bc48b
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -40,11 +31,7 @@ TextureImporter:
   cubemapConvolution: 0
   seamlessCubemap: 0
   textureFormat: 1
-<<<<<<< HEAD
-  maxTextureSize: 2048
-=======
   maxTextureSize: 4096
->>>>>>> afbe8e356072197b90ffd62aedceda55429bc48b
   textureSettings:
     serializedVersion: 2
     filterMode: 1
@@ -55,17 +42,10 @@ TextureImporter:
     wrapW: 1
   nPOTScale: 0
   lightmap: 0
-<<<<<<< HEAD
-  compressionQuality: 50
-  spriteMode: 1
-  spriteExtrude: 1
-  spriteMeshType: 0
-=======
   compressionQuality: 100
   spriteMode: 0
   spriteExtrude: 1
   spriteMeshType: 1
->>>>>>> afbe8e356072197b90ffd62aedceda55429bc48b
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
   spritePixelsToUnits: 100
@@ -74,11 +54,7 @@ TextureImporter:
   alphaUsage: 1
   alphaIsTransparency: 1
   spriteTessellationDetail: -1
-<<<<<<< HEAD
-  textureType: 8
-=======
   textureType: 0
->>>>>>> afbe8e356072197b90ffd62aedceda55429bc48b
   textureShape: 1
   singleChannelComponent: 0
   flipbookRows: 1
@@ -93,32 +69,11 @@ TextureImporter:
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
-<<<<<<< HEAD
-    maxTextureSize: 8192
-    resizeAlgorithm: 0
-    textureFormat: -1
-    textureCompression: 2
-    compressionQuality: 50
-    crunchedCompression: 0
-    allowsAlphaSplitting: 0
-    overridden: 0
-    ignorePlatformSupport: 0
-    androidETC2FallbackOverride: 0
-    forceMaximumCompressionQuality_BC6H_BC7: 0
-  - serializedVersion: 4
-    buildTarget: Standalone
-    maxTextureSize: 2048
-    resizeAlgorithm: 0
-    textureFormat: -1
-    textureCompression: 1
-    compressionQuality: 50
-=======
     maxTextureSize: 4096
     resizeAlgorithm: 0
     textureFormat: -1
     textureCompression: 0
     compressionQuality: 100
->>>>>>> afbe8e356072197b90ffd62aedceda55429bc48b
     crunchedCompression: 0
     allowsAlphaSplitting: 0
     overridden: 0
@@ -127,42 +82,12 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-<<<<<<< HEAD
-    sprites:
-    - serializedVersion: 2
-      name: AmberFlame_0
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 0
-        width: 1086
-        height: 1448
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      customData: 
-      outline: []
-      physicsShape: []
-      tessellationDetail: -1
-      bones: []
-      spriteID: 6a88b8d2a92ce0190800000000000000
-      internalID: -7994238321091180378
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-=======
     sprites: []
->>>>>>> afbe8e356072197b90ffd62aedceda55429bc48b
     outline: []
     customData: 
     physicsShape: []
     bones: []
-<<<<<<< HEAD
-    spriteID: 5e97eb03825dee720800000000000000
-=======
     spriteID: 
->>>>>>> afbe8e356072197b90ffd62aedceda55429bc48b
     internalID: 0
     vertices: []
     indices: 
