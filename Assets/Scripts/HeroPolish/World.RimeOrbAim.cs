@@ -3,7 +3,7 @@ using UnityEngine;
 namespace AshenVale {
  public sealed partial class World {
   readonly Dictionary<int,int> rimeOrbTargets=new Dictionary<int,int>();
-  MonsterState RimeTarget(MapRuntime map,float x,float y,int facing) {
+  MonsterState RimeTarget(MapRuntime map,float x,float y,float facing) {
    MonsterState best=null;float nearest=7f;
    foreach(var m in map.monsters) {
     float forward=(m.x-x)*facing,body=m.y+m.Def.hover+m.Def.height*.5f;
