@@ -22,6 +22,8 @@ public class AshenValeSpriteImporter : AssetPostprocessor
             importer.alphaIsTransparency = true;
             return;
         }
+        if (assetPath.StartsWith("Assets/Resources/Art/UI/") && (assetPath.EndsWith("/EmberhavenOverlook.png") || assetPath.EndsWith("/AshenValeLogo.png") || assetPath.EndsWith("/AmberFlame.png")))
+            return;     // menu pictures are plain uncompressed textures (see their .meta), not sprites
         if (assetPath.StartsWith("Assets/Resources/Art/")) ImportArt((TextureImporter)assetImporter, assetPath);
     }
 

@@ -5,7 +5,7 @@ namespace AshenVale
     // Title music and its volume / mute settings (saved in PlayerPrefs).
     public sealed class MusicPlayer
     {
-        const string ClipPath = "Audio/BeneathTheWinterBough";
+        const string ClipPath = "Audio/BeneathTheWinterBough", FallbackPath = "Audio/WhereTheMapsEnd_Loop_v3";
         const string VolumeKey = "AshenVale.MusicVolume", MutedKey = "AshenVale.MusicMuted";
 
         readonly AudioSource source;
@@ -21,7 +21,13 @@ namespace AshenVale
             Muted = PlayerPrefs.GetInt(MutedKey, 0) == 1;
             Apply();
             source.clip = Resources.Load<AudioClip>(ClipPath);
-            if (source.clip == null) Debug.LogWarning("Ashen Vale: music missing at Assets/Resources/" + ClipPath + ".ogg");
+            if (source.clip == null)
+            {
+                Debug.LogWarning("Ashen Vale: music missing at Assets/Resources/" + ClipPath + ".ogg - using the old loop.");
+                source.clip = Resources.Load<AudioClip>(FallbackPath);
+            }
+            if (source.clip == null) Debug.LogWarning("Ashen Vale: no music clip could be loaded.");
+            else Debug.Log("Ashen Vale: menu music " + source.clip.name + " (" + source.clip.length.ToString("0.0") + " s, state " + source.clip.loadState + ")");
         }
 
         public void Play() { if (source.clip != null && !source.isPlaying) source.Play(); }
