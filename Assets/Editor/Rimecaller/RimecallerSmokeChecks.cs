@@ -28,7 +28,7 @@ namespace AshenVale {
    w.events.Clear();p.attackCooldown=0;p.attackVisual=0;p.mp=0;
    Call(w,"BeginRimeAttack",p,map,true);Call(w,"TickRimecaller",1f);Check(w.events.Count==0,"insufficient mana blocks storm");
    p.mp=100;p.attackCooldown=0;Call(w,"BeginRimeAttack",p,map,true);p.dead=true;Call(w,"TickRimecaller",1f);Check(w.events.Count==0,"death cancels pending cast");p.dead=false;
-   p.attackVisual=0;p.x=map.def.maxX-.1f;p.facing=1;Call(w,"Froststep",p,map.def);
+   p.attackVisual=0;p.mp=100;p.dashCooldown=0;p.x=map.def.maxX-.1f;p.facing=1;Call(w,"Froststep",p,map.def);   // mana reset: the death-cancel check above already spent 24 MP on Stormcall
    Check(p.x<=map.def.maxX && p.x==p.px && p.dashTime==0,"blink clamps and does not dash/interpolate");
    Check(p.mp==100-RimecallerRules.BlinkCost && p.dashCooldown==RimecallerRules.BlinkCooldown,"blink cost/cooldown");
    foreach(string clip in new[]{"idle","run","jump","fall","orb_cast","storm_cast","hurt","death","climb","prone"})Check(Sprites.Hero("Rimecaller/"+clip).Length>0,"missing "+clip);
