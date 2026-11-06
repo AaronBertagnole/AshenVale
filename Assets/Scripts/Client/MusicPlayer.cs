@@ -17,7 +17,7 @@ namespace AshenVale
             source = host.AddComponent<AudioSource>();
             source.playOnAwake = false;
             source.loop = true;
-            Volume = Mathf.Clamp01(PlayerPrefs.GetFloat(VolumeKey, .30f));
+            Volume = Mathf.Clamp01(PlayerPrefs.GetFloat(VolumeKey, .35f));
             Muted = PlayerPrefs.GetInt(MutedKey, 0) == 1;
             Apply();
             source.clip = Resources.Load<AudioClip>(ClipPath);
