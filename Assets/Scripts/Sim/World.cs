@@ -182,8 +182,9 @@ namespace AshenVale
             p.dashCooldown = Mathf.Max(0, p.dashCooldown - dt);
             p.immunity = Mathf.Max(0, p.immunity - dt);
 
-            // Cancel a committed attack/leap when interrupted; no delayed hits after death/teleport.
-            if (p.Hero.dragonKnight && (p.knockTime > 0 || p.climbing))
+            // A committed attack/leap is dropped when the knight grabs a ladder (a hit does not interrupt it);
+            // no delayed hits after death/teleport.
+            if (p.Hero.dragonKnight && p.climbing)
             { p.attackPending = false; p.attackVisual = 0; p.leapActive = false; p.landVisual = p.fangLungeTime = 0; }
             Move(p, def, input, dt, !town);
             if (p.grounded || p.climbing || p.knockTime > 0 || p.hurtVisual > 0)
@@ -795,7 +796,6 @@ namespace AshenVale
 
         void Hurt(MapRuntime map, PlayerState p, MonsterState m, int damage)
         {
-            p.fangLungeTime = 0;
             p.rangerFlipTime = 0;
             p.hp -= DamageTaken(damage, p);
             p.immunity = Tuning.HitImmunity;

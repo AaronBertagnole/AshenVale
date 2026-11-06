@@ -269,15 +269,16 @@ namespace AshenVale
         {
             var h = p.Hero;
             if (p.dead) return "death";
-            if (p.hurtVisual > 0) return "hurt";
-            if (p.climbing) return "climb";
-            if (RangerIsFlipping(p)) return "jump";
-            if (p.attackVisual > 0)
+            // A swing in progress keeps playing when you are hit: the hurt pose waits until it ends.
+            if (p.attackVisual > 0 && !p.climbing)
             {
                 // comboStep is bumped before the swing, so the knight's first basic attack (step 1) is the thrust.
                 bool useA = h.dragonKnight ? p.comboStep % 2 == 1 : p.comboStep % 2 == 0;
                 return p.lastWasSkill ? h.skillAnim : (useA ? h.basicAnimA : h.basicAnimB);
             }
+            if (p.hurtVisual > 0) return "hurt";
+            if (p.climbing) return "climb";
+            if (RangerIsFlipping(p)) return "jump";
             if (h.dragonKnight && p.leapActive) return "leap";
             if (h.dragonKnight && p.landVisual > 0 && p.grounded && Mathf.Abs(p.vx) < .2f) return "land";
 

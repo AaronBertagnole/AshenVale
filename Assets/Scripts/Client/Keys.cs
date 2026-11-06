@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace AshenVale
 {
-    public enum GameAction { Left, Right, Up, Down, Jump, Attack, Skill, Dash, Interact, TownPortal, HpPotion, MpPotion, Inventory, WorldMap, Minimap }
+    public enum GameAction { Left, Right, Up, Down, Jump, Attack, Skill, Dash, Interact, TownPortal, HpPotion, MpPotion, Inventory, WorldMap, Minimap, Loot }
 
     // Key bindings: two keys per action (either works), saved on this PC (PlayerPrefs) and changed from the
     // Controls window in the Esc menu. Everything that reads the keyboard or names a key goes through here.
@@ -15,12 +15,12 @@ namespace AshenVale
             { KeyCode.A, KeyCode.LeftArrow }, { KeyCode.D, KeyCode.RightArrow }, { KeyCode.W, KeyCode.UpArrow }, { KeyCode.S, KeyCode.DownArrow },
             { KeyCode.Space, KeyCode.None }, { KeyCode.J, KeyCode.None }, { KeyCode.K, KeyCode.None }, { KeyCode.L, KeyCode.LeftShift },
             { KeyCode.E, KeyCode.None }, { KeyCode.T, KeyCode.None }, { KeyCode.Q, KeyCode.None }, { KeyCode.F, KeyCode.None },
-            { KeyCode.I, KeyCode.None }, { KeyCode.M, KeyCode.None }, { KeyCode.Tab, KeyCode.None },
+            { KeyCode.I, KeyCode.None }, { KeyCode.M, KeyCode.None }, { KeyCode.Tab, KeyCode.None }, { KeyCode.E, KeyCode.None },
         };
         static readonly string[] names =
         {
             "Move left", "Move right", "Up / climb / enter portal", "Down / climb / crouch", "Jump (Down + Jump drops through)", "Attack", "Special attack",
-            "Dash", "Loot / talk / use", "Portal back to town", "HP potion", "MP potion", "Inventory", "World map", "Show / hide minimap",
+            "Dash", "Talk / use", "Portal back to town", "HP potion", "MP potion", "Inventory", "World map", "Show / hide minimap", "Loot",
         };
         static KeyCode[,] bound;
         public static int Count { get { return defaults.GetLength(0); } }
@@ -35,6 +35,8 @@ namespace AshenVale
                     string saved = PlayerPrefs.GetString(Pref(a, s), "");
                     KeyCode key;
                     bound[a, s] = saved.Length > 0 && Enum.TryParse(saved, out key) ? key : defaults[a, s];
+                    // Loot used to share the old "Loot / talk / use" key: until it is set on its own, it follows Talk / use.
+                    if (a == (int)GameAction.Loot && saved.Length == 0) bound[a, s] = bound[(int)GameAction.Interact, s];
                 }
         }
 

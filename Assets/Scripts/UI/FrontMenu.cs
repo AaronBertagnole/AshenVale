@@ -285,11 +285,11 @@ namespace AshenVale
             {
                 Keys.Name(GameAction.Left) + "  ·  " + Keys.Name(GameAction.Right), Keys.Name(GameAction.Jump) + "  ·  " + Keys.Name(GameAction.Down) + " + " + Keys.Name(GameAction.Jump),
                 Keys.Name(GameAction.Up) + "  ·  " + Keys.Name(GameAction.Down), Keys.Name(GameAction.Attack) + "  ·  " + Keys.Name(GameAction.Skill),
-                Keys.Name(GameAction.HpPotion) + "  ·  " + Keys.Name(GameAction.MpPotion), Keys.Name(GameAction.Interact) + "  ·  " + Keys.Name(GameAction.Inventory),
+                Keys.Name(GameAction.HpPotion) + "  ·  " + Keys.Name(GameAction.MpPotion), Keys.Name(GameAction.Loot) + "  ·  " + Keys.Name(GameAction.Interact) + "  ·  " + Keys.Name(GameAction.Inventory),
                 Keys.Name(GameAction.Up), Keys.Name(GameAction.TownPortal) + "  ·  " + Keys.Name(GameAction.WorldMap), Keys.Name(GameAction.Dash) + "  ·  ESC",
             };
             string[] actions = { "Move", "Jump  ·  Drop through a platform", "Climb ladders", "Attack / Special attack", "HP / MP potions",
-                                 "Loot, talk / Inventory", "Use a portal", "Portal back to town  ·  World map", "Dash / Menu (change keys there)" };
+                                 "Loot  ·  Talk / use  ·  Inventory", "Use a portal", "Portal back to town  ·  World map", "Dash / Menu (change keys there)" };
             for (int i = 0; i < keys.Length; i++)
             {
                 float y = top + 125 + i * 33;
