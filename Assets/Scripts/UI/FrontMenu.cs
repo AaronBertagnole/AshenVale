@@ -19,7 +19,8 @@ namespace AshenVale
         Vector2 scroll;
         bool nameFocused, textFocused;
         bool tutorialCreatesHero = true, showLan;
-        bool settingsOpen, soundOpen;
+        bool settingsOpen, soundOpen, controlsOpen;
+        int capAction = -1, capSlot;   // the key-binding row waiting for a key press (-1: none)
         int titleChoice;
         Vector2 lastPointer;
         Vector2 rosterScroll;
@@ -84,6 +85,22 @@ namespace AshenVale
         public void HandleKeys()
         {
             if (busy) return; // AshenValeGame still handles Escape to cancel a connection.
+            if (screen == Screen.Title && controlsOpen)
+            {
+                if (capAction >= 0)
+                {
+                    // Esc keeps the old key, Backspace clears it, any other key is bound.
+                    if (Input.GetKeyDown(KeyCode.Escape)) capAction = -1;
+                    else if (Input.GetKeyDown(KeyCode.Backspace)) { Keys.Set((GameAction)capAction, capSlot, KeyCode.None); capAction = -1; }
+                    else
+                    {
+                        var key = Keys.AnyKeyDown();
+                        if (key != KeyCode.None) { Keys.Set((GameAction)capAction, capSlot, key); capAction = -1; }
+                    }
+                }
+                else if (Input.GetKeyDown(KeyCode.Escape)) controlsOpen = false;
+                return;
+            }
             if (screen == Screen.Title && (settingsOpen || soundOpen))
             {
                 if (Input.GetKeyDown(KeyCode.Escape)) settingsOpen = soundOpen = false;
@@ -182,17 +199,51 @@ namespace AshenVale
 
             }
             GUI.enabled=old; lastPointer=pointer;
-            if(settingsOpen)
+            if(settingsOpen && controlsOpen) DrawKeyBindings(left,top);
+            else if(settingsOpen)
             {
                 FrontMenuLook.Fill(new Rect(left,top,1280,720),new Color(0f,0f,0f,.35f));
-                FrontMenuLook.Box(new Rect(left+400,top+220,480,286));
+                FrontMenuLook.Box(new Rect(left+400,top+220,480,340));
                 GUI.Label(new Rect(left+434,top+245,400,52),"SETTINGS",heading);
                 DrawVolume(left+435,top+331);
-                if(GUI.Button(new Rect(left+434,top+385,180,42),"How to play",button)) OpenHelp();
-                if(GUI.Button(new Rect(left+654,top+385,190,42),"Back  [ESC]",button)) settingsOpen=false;
+                if(GUI.Button(new Rect(left+434,top+385,180,42),"Key bindings",button)) { controlsOpen=true; capAction=-1; }
+                if(GUI.Button(new Rect(left+654,top+385,190,42),"How to play",button)) OpenHelp();
+                if(GUI.Button(new Rect(left+544,top+450,190,42),"Back  [ESC]",button)) settingsOpen=false;
             }
         }
-        void OpenHelp() { tutorialCreatesHero=false; settingsOpen=soundOpen=false; screen=Screen.Tutorial; }
+
+        // Key bindings (the same ones as the in-game Controls window): two keys per action, click one and press the new key.
+        void DrawKeyBindings(float left,float top)
+        {
+            const float rowH=26f;
+            int rows=Keys.Count;
+            float w=700f, h=118f+rows*rowH+58f;
+            Rect r=new Rect(left+(1280f-w)/2f,top+Mathf.Max(8f,(720f-h)/2f),w,h);
+            FrontMenuLook.Fill(new Rect(left,top,1280,720),new Color(0f,0f,0f,.5f));
+            FrontMenuLook.Box(r);
+            GUI.Label(new Rect(r.x+30,r.y+18,400,44),"KEY BINDINGS",heading);
+            GUI.Label(new Rect(r.x+30,r.y+64,w-60,24),capAction>=0 ? "Press the key you want  -  Esc keeps the old one, Backspace clears it."
+                                                                    : "Click a key to change it. Either key works for an action. Saved on this PC.",small);
+            for(int a=0;a<rows;a++)
+            {
+                float y=r.y+96f+a*rowH;
+                if(a%2==0) FrontMenuLook.Fill(new Rect(r.x+22,y-1,w-44,rowH-1),new Color(1,1,1,.05f));
+                GUI.Label(new Rect(r.x+34,y+3,320,22),Keys.Describe((GameAction)a),small);
+                for(int sl=0;sl<Keys.Slots;sl++)
+                {
+                    bool mine=capAction==a && capSlot==sl;
+                    string label=mine ? "..." : Keys.KeyName(Keys.Get((GameAction)a,sl));
+                    bool prev=GUI.enabled; GUI.enabled=prev && (capAction<0 || mine);
+                    if(GUI.Button(new Rect(r.x+390+sl*140,y,128,rowH-3),label,button)) { capAction=a; capSlot=sl; }
+                    GUI.enabled=prev;
+                }
+            }
+            bool was=GUI.enabled; GUI.enabled=was && capAction<0;
+            if(GUI.Button(new Rect(r.x+30,r.yMax-50,190,38),"Reset to defaults",button)) Keys.ResetAll();
+            if(GUI.Button(new Rect(r.xMax-190,r.yMax-50,160,38),"Done  [ESC]",button)) { controlsOpen=false; capAction=-1; }
+            GUI.enabled=was;
+        }
+        void OpenHelp() { tutorialCreatesHero=false; settingsOpen=soundOpen=controlsOpen=false; capAction=-1; screen=Screen.Tutorial; }
         void DrawTitleAudio(float left,float top)
         {
             bool old=GUI.enabled; GUI.enabled=old && !settingsOpen;
