@@ -30,7 +30,12 @@ namespace AshenVale
             else Debug.Log("Ashen Vale: menu music " + source.clip.name + " (" + source.clip.length.ToString("0.0") + " s, state " + source.clip.loadState + ")");
         }
 
-        public void Play() { if (source.clip != null && !source.isPlaying) source.Play(); }
+        public void Play()
+        {
+            if (source.clip == null || source.isPlaying) return;
+            if (source.clip.loadState == AudioDataLoadState.Unloaded) source.clip.LoadAudioData();
+            source.Play();
+        }
         public void Stop() { source.Stop(); }
 
         public void SetVolume(float volume)
