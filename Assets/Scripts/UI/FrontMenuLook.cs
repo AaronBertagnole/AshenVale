@@ -186,8 +186,11 @@ namespace AshenVale
         }
         public static void Speaker(Rect r,bool muted)
         {
+            if(speakerTexture!=null && speakerTexture.width>=128) { GUI.DrawTexture(r,muted ? mutedTexture : speakerTexture,ScaleMode.ScaleToFit); return; }
             if(speakerTexture==null)
             {
+                speakerTexture=Resources.Load<Texture2D>("Art/UI/speaker"); mutedTexture=Resources.Load<Texture2D>("Art/UI/speaker_muted");
+                if(speakerTexture!=null && mutedTexture!=null) { GUI.DrawTexture(r,muted ? mutedTexture : speakerTexture,ScaleMode.ScaleToFit); return; }
                 speakerTexture=ClearIcon(36,36); mutedTexture=ClearIcon(36,36);
                 foreach(var t in new[]{speakerTexture,mutedTexture})
                 {
