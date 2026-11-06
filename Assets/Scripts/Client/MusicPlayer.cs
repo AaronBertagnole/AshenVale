@@ -5,7 +5,7 @@ namespace AshenVale
     // Title music and its volume / mute settings (saved in PlayerPrefs).
     public sealed class MusicPlayer
     {
-        const string ClipPath = "Audio/WhereTheMapsEnd_Loop_v3";
+        const string ClipPath = "Audio/BeneathTheWinterBough";
         const string VolumeKey = "AshenVale.MusicVolume", MutedKey = "AshenVale.MusicMuted";
 
         readonly AudioSource source;
