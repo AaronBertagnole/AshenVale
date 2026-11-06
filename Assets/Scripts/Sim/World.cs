@@ -29,7 +29,7 @@ namespace AshenVale
     // The whole game state and every rule that changes it. Nothing here draws, plays sound or reads the keyboard:
     // players act only through PlayerInput (each tick) and the command methods (equip, buy, sell).
     // In online play this runs on the host, which owns the truth; clients send input and draw what the host reports.
-    public sealed class World
+    public sealed partial class World
     {
         public readonly MapRuntime[] maps;
         public readonly List<PlayerState> players = new List<PlayerState>();
@@ -88,6 +88,7 @@ namespace AshenVale
         // Empties the world: no players, monsters, drops or arrows.
         public void Clear()
         {
+            rimeCasts.Clear();
             players.Clear();
             events.Clear();
             foreach (var map in maps)
@@ -131,6 +132,7 @@ namespace AshenVale
                 TickPlayer(p, input, dt);
             }
 
+            TickRimecaller(dt);
             foreach (var map in maps)
             {
                 if (!HasLivingPlayer(map.def.id)) continue;   // nobody here: the map waits, as it always has
@@ -266,7 +268,8 @@ namespace AshenVale
             }
             if (allowDash && input.dash && p.dashCooldown <= 0 && !knocked && !p.climbing)
             {
-                if (p.Hero.dragonKnight)
+                if(RimecallerRules.Is(p.Hero)) { Froststep(p,def); axis=0; }
+                else if (p.Hero.dragonKnight)
                 {
                     if (p.grounded && p.attackVisual <= 0 && p.mp >= p.Hero.leapManaCost)
                     {
@@ -418,6 +421,7 @@ namespace AshenVale
 
         void Attack(PlayerState p, MapRuntime map, bool skill)
         {
+            if(RimecallerRules.Is(p.Hero)) { BeginRimeAttack(p,map,skill); return; }
             if (p.attackCooldown > 0 || (p.Hero.dragonKnight && (p.leapActive || p.climbing || p.knockTime > 0))) return;
             var hero = p.Hero;
             if (skill && p.mp < hero.skillManaCost) return;
@@ -507,6 +511,7 @@ namespace AshenVale
             for (int i = map.shots.Count - 1; i >= 0; i--)
             {
                 var s = map.shots[i];
+                if(IsRimeShot(s)) { UpdateRimeShot(map,s,dt); if(s.life<=0 || s.pierce<=0) map.shots.RemoveAt(i); continue; }
                 s.x += s.direction * Tuning.ArrowSpeed * dt;
                 s.life -= dt;
                 for (int j = 0; j < map.monsters.Count; j++)

@@ -125,6 +125,7 @@ namespace AshenVale
                 case Screen.Select:
                     if (!nameFocused && Input.GetKeyDown(KeyCode.Alpha1)) pendingHero = 0;
                     if (!nameFocused && Input.GetKeyDown(KeyCode.Alpha2)) pendingHero = Mathf.Min(1, Heroes.All.Length - 1);
+                    if (!nameFocused && Input.GetKeyDown(KeyCode.Alpha3)) pendingHero = Mathf.Min(2, Heroes.All.Length - 1);
                     if (Input.GetKeyDown(KeyCode.Return)) { tutorialCreatesHero = true; screen = Screen.Tutorial; }
                     else if (Input.GetKeyDown(KeyCode.Escape)) screen = saved.Count > 0 ? Screen.Characters : Screen.Title;
                     break;
@@ -303,7 +304,7 @@ namespace AshenVale
             if(frames.Length==0) return;
             Sprite sprite=frames[Mathf.FloorToInt(Time.unscaledTime*5f)%frames.Length];
             if(sprite==null) return;
-            float baseline=hero.folder=="DragonKnight" ? 114f/128f : 119f/128f;
+            float baseline=hero.folder!="ElvenRanger" ? 114f/128f : 119f/128f;
             const float size=252f;
             DrawSprite(new Rect(left+643-size*.5f,top+602-size*baseline,size,size),sprite);
         }
@@ -323,7 +324,7 @@ namespace AshenVale
                 string where=savedHero.map>=0 && savedHero.map<Maps.All.Length ? Maps.All[savedHero.map].name : "Unknown region";
                 GUI.Label(new Rect(x,panel.y+346,w,74),"Level "+savedHero.level+"  /  "+where+"\n"+SaveCodec.FormatPlayTime(savedHero.playSeconds)+" played",body);
             }
-            else GUI.Label(new Rect(x,panel.y+352,w,62),h.dragonKnight ? "Hold the front line with sweeping spear strikes." : "Keep your distance and strike with precise arrows.",small);
+            else GUI.Label(new Rect(x,panel.y+352,w,62),RimecallerRules.Is(h) ? "Shatter foes with Frozen Orb. Call three storm strikes and Froststep to safety." : h.dragonKnight ? "Hold the front line with sweeping spear strikes." : "Keep your distance and strike with precise arrows.",small);
         }
 
         void DrawCharacters(float left, float top)
@@ -407,12 +408,12 @@ namespace AshenVale
             pendingHero=Mathf.Clamp(pendingHero,0,Heroes.All.Length-1);
             Header(left+54,top+41,"A NEW JOURNEY","CHOOSE YOUR CLASS");
             FrontMenuLook.Box(new Rect(left+50,top+149,306,445));
-            for(int i=0;i<Heroes.All.Length;i++) DrawHeroCard(new Rect(left+70,top+173+i*116,266,101),i);
+            for(int i=0;i<Heroes.All.Length;i++) DrawHeroCard(new Rect(left+70,top+163+i*86,266,78),i);
             GUI.Label(new Rect(left+74,top+437,250,25),"HERO NAME",subtitle);
             GUI.SetNextControlName("HeroName");
             heroName=GUI.TextField(new Rect(left+72,top+473,260,44),heroName ?? "",16,nameField);
             nameFocused=GUI.GetNameOfFocusedControl()=="HeroName";
-            GUI.Label(new Rect(left+74,top+535,250,40),"1 / 2  Choose class",small);
+            GUI.Label(new Rect(left+74,top+535,250,40),"1 / 2 / 3  Choose class",small);
             HeroStage(pendingHero,left,top); Details(pendingHero,null,left,top);
             if(GUI.Button(new Rect(left+922,top+622,306,48),"CONTINUE",FrontMenuLook.Primary)) { tutorialCreatesHero=true; screen=Screen.Tutorial; GUI.FocusControl(""); }
             if(GUI.Button(new Rect(left+50,top+622,200,44),"Back  [ESC]",button)) screen=saved.Count>0 ? Screen.Characters : Screen.Title;
@@ -464,9 +465,9 @@ namespace AshenVale
             var h=Heroes.All[index]; bool chosen=pendingHero==index;
             if(GUI.Button(r,GUIContent.none,chosen ? FrontMenuLook.Primary : button)) pendingHero=index;
             var label=new GUIStyle(subtitle){fontSize=21}; label.normal.textColor=chosen ? new Color(.1f,.09f,.065f) : FrontMenuLook.Ivory;
-            GUI.Label(new Rect(r.x+36,r.y+18,r.width-48,30),h.name,label);
+            GUI.Label(new Rect(r.x+36,r.y+8,r.width-48,30),h.name,label);
             var detail=new GUIStyle(small); detail.normal.textColor=chosen ? new Color(.16f,.17f,.12f) : FrontMenuLook.Quiet;
-            GUI.Label(new Rect(r.x+36,r.y+56,r.width-48,28),h.roleLabel,detail);
+            GUI.Label(new Rect(r.x+36,r.y+39,r.width-48,28),h.roleLabel,detail);
             if(chosen) FrontMenuLook.Flame(new Rect(r.x+11,r.y+33,15,25));
         }
 

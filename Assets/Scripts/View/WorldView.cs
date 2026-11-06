@@ -6,7 +6,7 @@ namespace AshenVale
 {
     // Draws the map the local player is on: scenery, heroes, monsters, drops, arrows, portals and effects.
     // It only reads the World (plus its event list, which it clears); it never changes game state.
-    public sealed class WorldView
+    public sealed partial class WorldView
     {
         sealed class HeroView { public GameObject go; public SpriteRenderer sr; public string anim = ""; public float clock, lastHp = -1; public int attackSerial = -1; public float climbOffset, climbXOffset; public Vector3 climbScale; public bool fittedClimb; public readonly PronePosePlayer prone = new PronePosePlayer(); }
         sealed class SlashFx { public GameObject obj; public SpriteRenderer sr; public float life, duration, x, y; public int direction; public bool ring; public int dragon; }
@@ -101,6 +101,7 @@ namespace AshenVale
         // Removes every hero, monster, drop and effect (new run, back to menu).
         public void Reset()
         {
+            ClearRimeFx();
             foreach (var v in heroViews.Values) Object.Destroy(v.go);
             heroViews.Clear();
             ClearMonsters();
@@ -129,6 +130,7 @@ namespace AshenVale
 
         void ShowMap(int map)
         {
+            ClearRimeFx();
             dropsSynced = false;
             dropPops.Clear();
             for (int i = 0; i < visuals.Length; i++) visuals[i].root.SetActive(i == map);
@@ -144,6 +146,7 @@ namespace AshenVale
             foreach (var e in world.events)
             {
                 if (e.map != shownMap) continue;
+                if(e.kind==SimEventKind.RimeBurst || e.kind==SimEventKind.RimeStorm || e.kind==SimEventKind.RimeTeleport) {SpawnRimeFx(e);continue;}
                 if (e.kind == SimEventKind.EmbermarksPickedUp) continue;   // the bottom-left pickup note covers it (owner: no floating text)
                 if (e.kind == SimEventKind.Slash) SpawnSlash(e);
                 else if (e.kind == SimEventKind.DragonThrust || e.kind == SimEventKind.DragonFang || e.kind == SimEventKind.DragonFissure || e.kind == SimEventKind.DragonSweep) SpawnDragonFx(e);
@@ -282,7 +285,7 @@ namespace AshenVale
             if (h.dragonKnight && p.leapActive) return "leap";
             if (h.dragonKnight && p.landVisual > 0 && p.grounded && Mathf.Abs(p.vx) < .2f) return "land";
 
-            if (p.crouching) return "idle";
+            if (p.crouching) return RimecallerRules.Is(p.Hero)?"prone":"idle";
             if (!p.grounded) return p.vy > 0 ? "jump" : "fall";
             return Mathf.Abs(p.vx) > .2f ? "run" : "idle";
         }
@@ -308,11 +311,11 @@ namespace AshenVale
             if (enteredClip && clip == "climb" && frames.Length < 2)
                 Debug.LogWarning("Climb needs multiple loaded frames at Resources/Heroes/" + h.folder +
                     "/climb/00.png, 01.png, 02.png, 03.png. Loaded: " + frames.Length);
-            float fps = clip == "idle" ? 5 : clip == "run" ? 11 : clip == "death" ? 7 : 12;
+            float fps = clip == "idle" ? 5 : clip == "run" ? (RimecallerRules.Is(h)?6:11) : clip == "death" ? 7 : 12;
             if (frames.Length > 0)
             {
                 int index = Mathf.FloorToInt(v.clock * fps);
-                if (clip == "climb")
+                if (clip == "climb" && !RimecallerRules.Is(h))
                     index = FitClimbContacts(p, v, frames, climbY);
                 if (h.dragonKnight && clip != "climb" && p.attackVisual > 0 && p.attackDuration > 0)
                 {
@@ -334,7 +337,7 @@ namespace AshenVale
                     index = Mathf.FloorToInt(Mathf.Clamp01(1f - p.landVisual / .24f) * frames.Length);
                 // Fit every Ranger attack pose into the existing visual duration.
                 // Simulation still releases arrows immediately, as before; this changes only drawing.
-                if (h.style == AttackStyle.Arrows && p.attackVisual > 0 && p.attackDuration > 0 &&
+                if ((h.style == AttackStyle.Arrows || h.style == AttackStyle.Magic) && p.attackVisual > 0 && p.attackDuration > 0 &&
                     (clip == h.basicAnimA || clip == h.basicAnimB || clip == h.skillAnim))
                     index = Mathf.Min(frames.Length - 1, Mathf.FloorToInt(
                         Mathf.Clamp01(1f - p.attackVisual / p.attackDuration) * frames.Length));
@@ -600,9 +603,11 @@ namespace AshenVale
                 GameObject go;
                 if (!shotViews.TryGetValue(s.id, out go))
                 {
-                    var art = Sprites.Art("Art/Projectiles/ranger_arrow");   // painted arrow (64x16, flies to the right)
+                    bool rime=world.GetPlayer(s.owner)!=null && RimecallerRules.Is(world.GetPlayer(s.owner).Hero);
+                    var art = Sprites.Art(rime?"Art/Rimecaller/orb":"Art/Projectiles/ranger_arrow");   // painted arrow (64x16, flies to the right)
                     go = art != null ? Sprites.Picture("Arrow", art, ArrowOrder, null, s.x, s.y)
                                      : Sprites.Block("Arrow", new Color(.72f, 1, .43f), .52f, .11f, ArrowOrder);
+                    if(rime && art!=null) go.transform.localScale=Vector3.one*(.65f/art.bounds.size.x);
                     shotViews[s.id] = go;
                 }
                 go.transform.position = new Vector3(Mathf.Lerp(s.px, s.x, alpha), Mathf.Lerp(s.py, s.y, alpha), 0);

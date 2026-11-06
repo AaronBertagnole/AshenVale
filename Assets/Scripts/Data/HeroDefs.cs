@@ -1,6 +1,6 @@
 namespace AshenVale
 {
-    public enum AttackStyle { Melee, Arrows }
+    public enum AttackStyle { Melee, Arrows, Magic }
 
     // One playable hero. Add a hero by adding an entry to Heroes.All and a sprite folder
     // under Assets/Resources/Heroes/<folder>/<animation>/00.png, 01.png ...
@@ -52,6 +52,7 @@ namespace AshenVale
                 arrowsPerSkill = 3, skillPierce = 2,       // Multi Shot: each monster takes one arrow per volley
                 basicAnimA = "quick_shot", basicAnimB = "quick_shot", skillAnim = "multi_shot",
             },
+            RimecallerRules.CreateHero(),
         };
     }
 }

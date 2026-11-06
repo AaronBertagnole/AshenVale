@@ -125,7 +125,7 @@ namespace AshenVale
         public HashSet<int> hitSet;   // monster ids already hit; shared by every arrow of one volley
     }
 
-    public enum SimEventKind { Slash, MonsterHit, LevelUp, PlayerDied, BossSlam, DragonThrust, DragonFang, DragonFissure, DragonSweep, EmbermarksPickedUp }
+    public enum SimEventKind { Slash, MonsterHit, LevelUp, PlayerDied, BossSlam, DragonThrust, DragonFang, DragonFissure, DragonSweep, EmbermarksPickedUp, RimeBurst, RimeStorm, RimeTeleport }
 
     // Something that happened during a tick, for the view (effects, sounds, numbers) and later for the network.
     public struct SimEvent
