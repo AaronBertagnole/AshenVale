@@ -8,7 +8,7 @@ namespace AshenVale
     // It only reads the World (plus its event list, which it clears); it never changes game state.
     public sealed class WorldView
     {
-        sealed class HeroView { public GameObject go; public SpriteRenderer sr; public string anim = ""; public float clock, lastHp = -1; public int attackSerial = -1; public float climbOffset, climbXOffset; public Vector3 climbScale; public bool fittedClimb; }
+        sealed class HeroView { public GameObject go; public SpriteRenderer sr; public string anim = ""; public float clock, lastHp = -1; public int attackSerial = -1; public float climbOffset, climbXOffset; public Vector3 climbScale; public bool fittedClimb; public readonly PronePosePlayer prone = new PronePosePlayer(); }
         sealed class SlashFx { public GameObject obj; public SpriteRenderer sr; public float life, duration, x, y; public int direction; public bool ring; public int dragon; }
 
         // A number that pops up where something was hurt or healed and drifts upward (GameHud draws them).
@@ -175,8 +175,8 @@ namespace AshenVale
                 v.lastHp = p.hp;
                 Animate(p, v, frameDt, alpha);
                 float x = Mathf.Lerp(p.px, p.x, alpha), y = Mathf.Lerp(p.py, p.y, alpha);
-                v.go.transform.localScale = v.fittedClimb ? v.climbScale : new Vector3(HeroScale, p.crouching ? 1.10f : HeroScale, 1f);
-                float heroOffset = p.crouching ? .33f : .48f;
+                v.go.transform.localScale = v.fittedClimb ? v.climbScale : new Vector3(HeroScale, HeroScale, 1f);
+                float heroOffset = .48f; // Prone art shares the idle ground-contact baseline.
                 if (!p.climbing && !p.dead && PaintedMapFraming.UsesOwnGround(Maps.All[p.map]))
                     heroOffset = PaintedSpriteContact.HeroOffset(p.Hero.folder, v.sr.sprite, v.go.transform.localScale.y, heroOffset);
                 Vector3 basePosition = new Vector3(x + v.climbXOffset, y + heroOffset + v.climbOffset, 0);
@@ -291,6 +291,12 @@ namespace AshenVale
         {
             var h = p.Hero;
             string clip = ChooseAnimation(p);
+            if (v.prone.TryDraw(p, clip, v.sr, frameDt))
+            {
+                v.anim = "prone"; v.clock = 0f;
+                v.climbOffset = v.climbXOffset = 0f; v.fittedClimb = false;
+                return;
+            }
             if (p.Hero.dragonKnight && p.attackVisual > 0 && p.attackSerial != v.attackSerial)
             { v.attackSerial = p.attackSerial; v.clock = 0; }
             bool enteredClip = clip != v.anim;
