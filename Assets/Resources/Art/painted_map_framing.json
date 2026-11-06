@@ -1,13 +1,212 @@
 {
-  "newBackdropWidthMultiplier": 0.8,
+  "referenceHeight": 724,
+  "referenceWidth": 2172,
+  "referenceWorldWidth": 38,
   "maps": [
+    {
+      "key": "amberleaf_trail",
+      "completeGround": true,
+      "floorFromBottom": 0.2265193370165746
+    },
+    {
+      "key": "archmage_sanctum",
+      "completeGround": true,
+      "floorFromBottom": 0.2154696132596685
+    },
+    {
+      "key": "ashen_marsh",
+      "completeGround": true,
+      "floorFromBottom": 0.2292817679558011
+    },
+    {
+      "key": "black_galleon",
+      "completeGround": true,
+      "floorFromBottom": 0.2265193370165746
+    },
+    {
+      "key": "black_ziggurat",
+      "completeGround": true,
+      "floorFromBottom": 0.2154696132596685
+    },
+    {
+      "key": "brackwater_shore",
+      "completeGround": true,
+      "floorFromBottom": 0.23756906077348067
+    },
+    {
+      "key": "captains_hold",
+      "completeGround": true,
+      "floorFromBottom": 0.2265193370165746
+    },
+    {
+      "key": "colossus_vault",
+      "completeGround": true,
+      "floorFromBottom": 0.2265193370165746
+    },
+    {
+      "key": "crystal_hollow",
+      "completeGround": true,
+      "floorFromBottom": 0.2430939226519337
+    },
+    {
+      "key": "deep_forge",
+      "completeGround": true,
+      "floorFromBottom": 0.23756906077348067
+    },
+    {
+      "key": "eldermere",
+      "completeGround": true,
+      "floorFromBottom": 0.21823204419889503
+    },
+    {
+      "key": "emberfields",
+      "completeGround": true,
+      "floorFromBottom": 0.1850828729281768
+    },
+    {
+      "key": "forgotten_stair",
+      "completeGround": true,
+      "floorFromBottom": 0.21823204419889503
+    },
+    {
+      "key": "frostpine_pass",
+      "completeGround": true,
+      "floorFromBottom": 0.2292817679558011
+    },
+    {
+      "key": "gallows_point",
+      "completeGround": true,
+      "floorFromBottom": 0.22099447513812154
+    },
+    {
+      "key": "glacier_steps",
+      "completeGround": true,
+      "floorFromBottom": 0.22099447513812154
+    },
+    {
+      "key": "glimmerwood",
+      "completeGround": true,
+      "floorFromBottom": 0.2292817679558011
+    },
+    {
+      "key": "hall_of_idols",
+      "completeGround": true,
+      "floorFromBottom": 0.22099447513812154
+    },
+    {
+      "key": "highspire",
+      "completeGround": true,
+      "floorFromBottom": 0.212707182320442
+    },
+    {
+      "key": "hollow_den",
+      "completeGround": true,
+      "floorFromBottom": 0.2292817679558011
+    },
+    {
+      "key": "hollow_library",
+      "completeGround": true,
+      "floorFromBottom": 0.23756906077348067
+    },
+    {
+      "key": "ironvein_mines",
+      "completeGround": true,
+      "floorFromBottom": 0.23480662983425415
+    },
+    {
+      "key": "kingsroad",
+      "completeGround": true,
+      "floorFromBottom": 0.23480662983425415
+    },
     {
       "key": "lastlight",
       "completeGround": true,
-      "widthMultiplier": 0.7,
-      "overrideFloor": true,
-      "floorFromBottom": 0.1380042463,
-      "extendSky": true
+      "floorFromBottom": 0.23480662983425415
+    },
+    {
+      "key": "moonwell",
+      "completeGround": true,
+      "floorFromBottom": 0.2265193370165746
+    },
+    {
+      "key": "mossgate_hollow",
+      "completeGround": true,
+      "floorFromBottom": 0.1850828729281768
+    },
+    {
+      "key": "mosswood",
+      "completeGround": true,
+      "floorFromBottom": 0.19060773480662985
+    },
+    {
+      "key": "oubliette",
+      "completeGround": true,
+      "floorFromBottom": 0.2265193370165746
+    },
+    {
+      "key": "owlkeep",
+      "completeGround": true,
+      "floorFromBottom": 0.23204419889502761
+    },
+    {
+      "key": "saltmarrow",
+      "completeGround": true,
+      "floorFromBottom": 0.24033149171270718
+    },
+    {
+      "key": "shale_cliffs",
+      "completeGround": true,
+      "floorFromBottom": 0.24033149171270718
+    },
+    {
+      "key": "sirens_grotto",
+      "completeGround": true,
+      "floorFromBottom": 0.24033149171270718
+    },
+    {
+      "key": "sleepers_throne",
+      "completeGround": true,
+      "floorFromBottom": 0.20718232044198895
+    },
+    {
+      "key": "smugglers_cove",
+      "completeGround": true,
+      "floorFromBottom": 0.2292817679558011
+    },
+    {
+      "key": "spellbroken_glade",
+      "completeGround": true,
+      "floorFromBottom": 0.2292817679558011
+    },
+    {
+      "key": "sunken_avenue",
+      "completeGround": true,
+      "floorFromBottom": 0.21823204419889503
+    },
+    {
+      "key": "thistledown_trail",
+      "completeGround": true,
+      "floorFromBottom": 0.23204419889502761
+    },
+    {
+      "key": "thorn_glade",
+      "completeGround": true,
+      "floorFromBottom": 0.2292817679558011
+    },
+    {
+      "key": "weeping_catacombs",
+      "completeGround": true,
+      "floorFromBottom": 0.2265193370165746
+    },
+    {
+      "key": "windward_ridge",
+      "completeGround": true,
+      "floorFromBottom": 0.2265193370165746
+    },
+    {
+      "key": "wreckers_reef",
+      "completeGround": true,
+      "floorFromBottom": 0.2265193370165746
     }
   ]
 }
