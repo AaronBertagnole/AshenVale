@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace AshenVale
 {
-    // Emberhaven Overlook menu refresh v1.
+    // Emberhaven Overlook menu refresh v2.
     // Menu-only presentation; public callbacks and save data contracts are unchanged.
     public sealed class FrontMenu
     {
@@ -19,6 +19,7 @@ namespace AshenVale
         Vector2 scroll;
         bool nameFocused, textFocused;
         bool tutorialCreatesHero = true, showLan;
+        bool settingsOpen, soundOpen;
         int titleChoice;
         Vector2 lastPointer;
         Vector2 rosterScroll;
@@ -83,12 +84,17 @@ namespace AshenVale
         public void HandleKeys()
         {
             if (busy) return; // AshenValeGame still handles Escape to cancel a connection.
+            if (screen == Screen.Title && (settingsOpen || soundOpen))
+            {
+                if (Input.GetKeyDown(KeyCode.Escape)) settingsOpen = soundOpen = false;
+                return;
+            }
             switch (screen)
             {
                 case Screen.Title:
                     if (Input.GetKeyDown(KeyCode.M)) music.ToggleMute();
-                    if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W)) titleChoice = (titleChoice + 3) % 4;
-                    if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S)) titleChoice = (titleChoice + 1) % 4;
+                    if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.W)) titleChoice = (titleChoice + 2) % 3;
+                    if (Input.GetKeyDown(KeyCode.DownArrow) || Input.GetKeyDown(KeyCode.S)) titleChoice = (titleChoice + 1) % 3;
                     if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space)) TitleAction(titleChoice);
                     break;
                 case Screen.Characters:
@@ -146,37 +152,75 @@ namespace AshenVale
                     case Screen.Mode: DrawMode(left, top); break;
                     default: DrawTutorial(left, top); break;
                 }
-                DrawVolume(left + (screen == Screen.Title ? 80f : 465f), top + 673f);
+                if (screen == Screen.Title) DrawTitleAudio(left, top);
+                else DrawVolume(left + 465f, top + 673f);
             }
             finally { GUI.matrix = oldMatrix; GUI.color = oldColor; GUI.enabled = oldEnabled; }
         }
 
         void DrawTitle(float left, float top)
         {
-            FrontMenuLook.Fill(new Rect(left+48,top+94,530,516),new Color(.025f,.065f,.065f,.76f));
-            GUI.Label(new Rect(left+80,top+123,620,100), "ASHEN VALE", FrontMenuLook.Title);
-            FrontMenuLook.Rule(left+84,top+238,332);
-            string[] labels = { saved.Count > 0 ? "Continue journey" : "Begin adventure", "New hero", "How to play", "Quit game" };
-            Vector2 pointer = Event.current.mousePosition;
-            bool moved = (pointer - lastPointer).sqrMagnitude > 1f;
-            for (int i=0;i<labels.Length;i++)
+            // Open typography over the EXISTING painting; no opaque title panel.
+            FrontMenuLook.Crest(new Rect(left+162,top+105,252,70));
+            var logo=new GUIStyle(FrontMenuLook.Title){fontSize=68,fontStyle=FontStyle.Normal};
+            var logoShadow=new GUIStyle(logo); logoShadow.normal.textColor=new Color(.08f,.04f,.015f,.85f);
+            GUI.Label(new Rect(left+59,top+184,610,94), "ASHENVALE",logoShadow);
+            GUI.Label(new Rect(left+56,top+181,610,94), "ASHENVALE",logo);
+            string[] labels={"Start Adventure","Settings","Quit"};
+            Vector2 pointer=Event.current.mousePosition;
+            bool moved=(pointer-lastPointer).sqrMagnitude>1f;
+            bool old=GUI.enabled; GUI.enabled=old && !settingsOpen && !soundOpen;
+            for(int i=0;i<labels.Length;i++)
             {
-                Rect r = new Rect(left+80,top+286+i*66,358,54);
-                if (moved && r.Contains(pointer)) titleChoice=i;
-                if (GUI.Button(r,labels[i],FrontMenuLook.Menu)) TitleAction(i);
-                if (i==titleChoice) FrontMenuLook.Flame(new Rect(r.x+16,r.y+12,18,28));
+                Rect r=new Rect(left+78,top+309+i*62,338,52);
+                if(GUI.enabled && moved && r.Contains(pointer)) titleChoice=i;
+                if(i==titleChoice)
+                {
+                    FrontMenuLook.GoldLine(new Rect(left+89,r.y,326,10));
+                    FrontMenuLook.GoldLine(new Rect(left+89,r.y+r.height-8,326,10));
+                    FrontMenuLook.Flame(new Rect(left+81,r.y+9,24,35));
+                }
+                if(GUI.Button(r,GUIContent.none,GUIStyle.none)) TitleAction(i);
+                var label=new GUIStyle(FrontMenuLook.Title){fontSize=31,fontStyle=FontStyle.Normal,alignment=TextAnchor.MiddleLeft};
+                // Small shadow keeps light lettering readable over branches without a box.
+                var shadow=new GUIStyle(label); shadow.normal.textColor=new Color(.07f,.04f,.02f,.9f);
+                GUI.Label(new Rect(r.x+57,r.y+2,r.width-30,r.height),labels[i],shadow);
+                GUI.Label(new Rect(r.x+55,r.y,r.width-30,r.height),labels[i],label);
             }
-            lastPointer=pointer;
-            GUI.Label(new Rect(left+82,top+589,360,26),"ENTER  Select     /     ↑ ↓  Navigate",small);
+            GUI.enabled=old; lastPointer=pointer;
+            if(settingsOpen)
+            {
+                FrontMenuLook.Fill(new Rect(left,top,1280,720),new Color(0f,0f,0f,.35f));
+                FrontMenuLook.Box(new Rect(left+400,top+220,480,286));
+                GUI.Label(new Rect(left+434,top+245,400,52),"SETTINGS",heading);
+                DrawVolume(left+435,top+331);
+                if(GUI.Button(new Rect(left+434,top+385,180,42),"How to play",button)) OpenHelp();
+                if(GUI.Button(new Rect(left+654,top+385,190,42),"Back  [ESC]",button)) settingsOpen=false;
+            }
         }
-
+        void OpenHelp() { tutorialCreatesHero=false; settingsOpen=soundOpen=false; screen=Screen.Tutorial; }
+        void DrawTitleAudio(float left,float top)
+        {
+            bool old=GUI.enabled; GUI.enabled=old && !settingsOpen;
+            Rect r=new Rect(left+1204,top+656,44,44);
+            if(GUI.Button(r,GUIContent.none,GUIStyle.none)) soundOpen=!soundOpen;
+            FrontMenuLook.Speaker(new Rect(r.x+4,r.y+4,36,36),music.Muted || music.Volume<=0f);
+            GUI.enabled=old;
+            if(soundOpen && !settingsOpen)
+            {
+                Rect popup=new Rect(left+856,top+594,392,56);
+                if(Event.current.type==EventType.MouseDown && !popup.Contains(Event.current.mousePosition) && !r.Contains(Event.current.mousePosition))
+                { soundOpen=false; Event.current.Use(); return; }
+                FrontMenuLook.Box(popup);
+                DrawVolume(left+873,top+613);
+            }
+        }
         void TitleAction(int choice)
         {
             switch(choice)
             {
-                case 0: OpenHeroes(); break;
-                case 1: PrepareNewHero(); break;
-                case 2: tutorialCreatesHero=false; screen=Screen.Tutorial; break;
+                case 0: settingsOpen=soundOpen=false; OpenHeroes(); break;
+                case 1: soundOpen=false; settingsOpen=true; break;
                 default:
 #if UNITY_EDITOR
                     UnityEditor.EditorApplication.isPlaying = false;

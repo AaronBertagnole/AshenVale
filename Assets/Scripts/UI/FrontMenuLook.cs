@@ -111,6 +111,95 @@ namespace AshenVale
             Color old=GUI.color; GUI.color=new Color(1f,1f,1f,.82f+Mathf.Sin(Time.unscaledTime*4f)*.15f);
             GUI.DrawTexture(r,flame); GUI.color=old;
         }
+        static Texture2D crestTexture, speakerTexture, mutedTexture, goldLine;
+        static bool Inside(Vector2 p,Vector2 a,Vector2 b,Vector2 c)
+        {
+            float s=(a.x-c.x)*(p.y-c.y)-(a.y-c.y)*(p.x-c.x);
+            float t=(b.x-a.x)*(p.y-a.y)-(b.y-a.y)*(p.x-a.x);
+            float u=(c.x-b.x)*(p.y-b.y)-(c.y-b.y)*(p.x-b.x);
+            return (s>=0f && t>=0f && u>=0f) || (s<=0f && t<=0f && u<=0f);
+        }
+        static void PaintRect(Texture2D t,int x,int y,int w,int h,Color color)
+        {
+            for(int yy=Mathf.Max(0,y);yy<Mathf.Min(t.height,y+h);yy++)
+                for(int xx=Mathf.Max(0,x);xx<Mathf.Min(t.width,x+w);xx++) t.SetPixel(xx,yy,color);
+        }
+        static void Triangle(Texture2D t,Vector2 a,Vector2 b,Vector2 c,Color color)
+        {
+            for(int y=0;y<t.height;y++) for(int x=0;x<t.width;x++)
+                if(Inside(new Vector2(x+.5f,y+.5f),a,b,c)) t.SetPixel(x,y,color);
+        }
+        static Texture2D ClearIcon(int w,int h)
+        {
+            var t=new Texture2D(w,h,TextureFormat.RGBA32,false); t.hideFlags=HideFlags.HideAndDontSave;
+            t.SetPixels(new Color[w*h]); return t;
+        }
+        public static void Crest(Rect r)
+        {
+            if(crestTexture==null)
+            {
+                crestTexture=ClearIcon(256,72); Color c=Ivory;
+                // A small vector-like settlement silhouette, not baked menu lettering.
+                for(int x=18;x<239;x++)
+                {
+                    int y=Mathf.RoundToInt(7f+8f*Mathf.Sin((x-18)/221f*Mathf.PI));
+                    PaintRect(crestTexture,x,y,1,2,c);
+                }
+                int[] trees={31,53,202,225};
+                foreach(int x in trees)
+                {
+                    PaintRect(crestTexture,x-2,12,4,20,c);
+                    Triangle(crestTexture,new Vector2(x,61),new Vector2(x-11,35),new Vector2(x+11,35),c);
+                    Triangle(crestTexture,new Vector2(x,50),new Vector2(x-15,23),new Vector2(x+15,23),c);
+                }
+                PaintRect(crestTexture,95,17,77,25,c);
+                PaintRect(crestTexture,91,17,15,32,c); PaintRect(crestTexture,158,17,15,34,c);
+                PaintRect(crestTexture,122,17,22,40,c);
+                Triangle(crestTexture,new Vector2(98,62),new Vector2(86,46),new Vector2(110,46),c);
+                Triangle(crestTexture,new Vector2(133,70),new Vector2(118,54),new Vector2(148,54),c);
+                Triangle(crestTexture,new Vector2(166,65),new Vector2(153,48),new Vector2(179,48),c);
+                PaintRect(crestTexture,76,17,12,18,c); Triangle(crestTexture,new Vector2(82,44),new Vector2(72,33),new Vector2(92,33),c);
+                PaintRect(crestTexture,128,17,10,16,Color.clear); crestTexture.Apply();
+            }
+            GUI.DrawTexture(r,crestTexture,ScaleMode.ScaleToFit);
+        }
+        public static void GoldLine(Rect r)
+        {
+            if(goldLine==null)
+            {
+                goldLine=ClearIcon(256,16);
+                for(int y=0;y<16;y++) for(int x=0;x<256;x++)
+                {
+                    float end=Mathf.Clamp01(x/20f)*Mathf.Clamp01((255-x)/70f);
+                    float core=Mathf.Exp(-Mathf.Abs(y-7.5f)*1.4f);
+                    goldLine.SetPixel(x,y,new Color(1f,.73f,.25f,end*core));
+                }
+                goldLine.Apply();
+            }
+            Color old=GUI.color; GUI.color=new Color(1f,1f,1f,.88f+.12f*Mathf.Sin(Time.unscaledTime*3f));
+            GUI.DrawTexture(r,goldLine); GUI.color=old;
+        }
+        public static void Speaker(Rect r,bool muted)
+        {
+            if(speakerTexture==null)
+            {
+                speakerTexture=ClearIcon(36,36); mutedTexture=ClearIcon(36,36);
+                foreach(var t in new[]{speakerTexture,mutedTexture})
+                {
+                    PaintRect(t,3,13,9,10,Ivory);
+                    Triangle(t,new Vector2(10,13),new Vector2(20,5),new Vector2(20,31),Ivory);
+                    Triangle(t,new Vector2(10,13),new Vector2(20,31),new Vector2(10,23),Ivory);
+                }
+                for(int y=0;y<36;y++) for(int x=22;x<36;x++)
+                {
+                    float dx=x-17f,dy=y-18f,d=Mathf.Sqrt(dx*dx+dy*dy);
+                    if(Mathf.Abs(dy)<dx*1.15f && (Mathf.Abs(d-11f)<1.2f || Mathf.Abs(d-17f)<1.2f)) speakerTexture.SetPixel(x,y,Ivory);
+                    if(x>=24 && x<=33 && (Mathf.Abs(y-(x-13))<1.5f || Mathf.Abs(y-(49-x))<1.5f)) mutedTexture.SetPixel(x,y,Ivory);
+                }
+                speakerTexture.Apply(); mutedTexture.Apply();
+            }
+            GUI.DrawTexture(r,muted ? mutedTexture : speakerTexture);
+        }
         public static void Rule(float x,float y,float width) { Fill(new Rect(x,y,width,1),new Color(.8f,.64f,.36f,.65f)); }
     }
 }

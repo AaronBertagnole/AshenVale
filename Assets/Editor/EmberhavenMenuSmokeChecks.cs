@@ -28,7 +28,9 @@ namespace AshenVale.EditorTools
                 menu.SetSaved(new List<CharacterData>());
                 Call(menu,"TitleAction",0);
                 Require(menu.screen==FrontMenu.Screen.Select,"Empty roster should open hero creation.");
-                Call(menu,"TitleAction",2);
+                Call(menu,"TitleAction",1);
+                Require((bool)typeof(FrontMenu).GetField("settingsOpen",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(menu),"Settings must open without navigation.");
+                Call(menu,"OpenHelp");
                 Require(menu.screen==FrontMenu.Screen.Tutorial,"How to play should open the tutorial.");
                 Call(menu,"FinishTutorial");
                 Require(menu.screen==FrontMenu.Screen.Title && created==0,"Help tutorial must never create a hero.");
