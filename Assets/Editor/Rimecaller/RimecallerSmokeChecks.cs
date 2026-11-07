@@ -20,14 +20,17 @@ namespace AshenVale {
    Call(w,"UpdateRimeShot",map,orb,.5f);
    Check(near.hp<10000 && far.hp==10000 && orb.pierce==0,"swept orb hits nearest only, regardless of list order");
    w.events.Clear();map.monsters.Clear();map.shots.Clear();
-   p.attackCooldown=0;p.attackVisual=0;int mana=p.mp;
+   p.attackCooldown=0;p.skillRecharge=0;p.attackVisual=0;int mana=p.mp;
    Call(w,"BeginRimeAttack",p,map,true);Check(p.mp==mana-p.Hero.skillManaCost,"Stormcall mana cost");
    Call(w,"TickRimecaller",.7f);int strikes=0;float x=0;
    foreach(var e in w.events)if(e.kind==SimEventKind.RimeStorm){if(strikes>0)Check(e.x==x,"same storm target");x=e.x;strikes++;}
    Check(strikes==3,"exactly three strikes including long tick");
-   w.events.Clear();p.attackCooldown=0;p.attackVisual=0;p.mp=0;
+   w.events.Clear();p.attackCooldown=0;p.skillRecharge=0;p.attackVisual=0;p.mp=0;
    Call(w,"BeginRimeAttack",p,map,true);Call(w,"TickRimecaller",1f);Check(w.events.Count==0,"insufficient mana blocks storm");
-   p.mp=100;p.attackCooldown=0;Call(w,"BeginRimeAttack",p,map,true);p.dead=true;Call(w,"TickRimecaller",1f);Check(w.events.Count==0,"death cancels pending cast");p.dead=false;
+   p.skillRecharge=0;p.attackCooldown=0;p.attackVisual=0;p.mp=100;Call(w,"BeginRimeAttack",p,map,true);p.attackCooldown=0;p.attackVisual=0;int manaAfter=p.mp;Call(w,"BeginRimeAttack",p,map,true);
+   Check(p.mp==manaAfter&&p.skillRecharge>0,"Stormcall has its own recharge");
+   Call(w,"BeginRimeAttack",p,map,false);Check(p.attackCooldown>0,"a basic cast is not blocked by the skill recharge");
+   p.mp=100;p.attackCooldown=0;p.skillRecharge=0;Call(w,"BeginRimeAttack",p,map,true);p.dead=true;Call(w,"TickRimecaller",1f);Check(w.events.Count==0,"death cancels pending cast");p.dead=false;
    p.attackVisual=0;p.mp=100;p.dashCooldown=0;p.x=map.def.maxX-.1f;p.facing=1;Call(w,"Froststep",p,map.def,0f);   // mana reset: the death-cancel check above already spent 24 MP on Stormcall
    Check(p.x<=map.def.maxX && p.x==p.px && p.dashTime==0,"blink clamps and does not dash/interpolate");
    Check(p.mp==100-RimecallerRules.BlinkCost && p.dashCooldown==RimecallerRules.BlinkCooldown,"blink cost/cooldown");

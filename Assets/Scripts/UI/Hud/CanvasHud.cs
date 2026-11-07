@@ -175,7 +175,7 @@ namespace AshenVale
                 switch(slot.action)
                 {
                     case GameAction.Attack: time=me.attackCooldown;duration=me.lastWasSkill?me.Hero.skillCooldown:me.Hero.attackCooldown;break;
-                    case GameAction.Skill: time=me.attackCooldown;duration=me.lastWasSkill?me.Hero.skillCooldown:me.Hero.attackCooldown;ready &= me.mp>=me.Hero.skillManaCost;slot.value.text=me.Hero.skillManaCost+" MP";break;
+                    case GameAction.Skill: { float recharge=me.skillRecharge,swing=me.attackCooldown;time=Mathf.Max(recharge,swing);duration=recharge>=swing?Mathf.Max(.01f,me.Hero.skillRecharge):(me.lastWasSkill?me.Hero.skillCooldown:me.Hero.attackCooldown); }ready &= me.mp>=me.Hero.skillManaCost;slot.value.text=me.Hero.skillManaCost+" MP";break;
                     case GameAction.Dash:time=me.dashCooldown;if(RimecallerRules.Is(me.Hero)){duration=RimecallerRules.BlinkCooldown;slot.value.text=RimecallerRules.BlinkCost+" MP";ready &= !me.climbing && me.mp>=RimecallerRules.BlinkCost && me.attackVisual<=0;break;}duration=me.Hero.dragonKnight?me.Hero.leapCooldown:Tuning.DashCooldown;ready &= !me.climbing;if(me.Hero.dragonKnight){slot.value.text=me.Hero.leapManaCost+" MP";ready &= me.mp>=me.Hero.leapManaCost&&me.grounded;}break;
                     case GameAction.TownPortal:time=me.portalCast;duration=Tuning.PortalCastTime;ready &= def.kind!=MapKind.Town&&!me.portalOpen&&me.portalCast<=0;break;
                     case GameAction.HpPotion:slot.value.text="x"+ch.hpPotions;ready &= ch.hpPotions>0&&me.hp<me.MaxHp;break;

@@ -19,7 +19,8 @@ namespace AshenVale
         public int baseDamage;          // basic attack damage at level 0 (plus DamagePerLevel per level and gear)
         public int skillBonus;          // extra damage of the skill (K)
         public int skillManaCost;
-        public float attackCooldown, skillCooldown;
+        public float attackCooldown, skillCooldown;     // swing recovery after a basic attack / after the skill
+        public float skillRecharge;                     // the skill's own cooldown, counted from the cast (separate from the swing recovery)
         public float meleeRange, skillRange;        // Melee only
         public int arrowsPerSkill = 1, skillPierce = 1; // Arrows only
         // Animation folder names
@@ -36,7 +37,7 @@ namespace AshenVale
                 roleLabel = "SPEAR / MELEE", tagline = "Heavy strikes  •  Durable",
                 dragonKnight = true, style = AttackStyle.Melee, baseHp = 125, baseMp = 80, moveSpeed = 5.3f,
                 baseDamage = 25, skillBonus = 32, skillManaCost = 25,
-                attackCooldown = .46f, skillCooldown = .78f,
+                attackCooldown = .46f, skillCooldown = .78f, skillRecharge = 2.5f,
                 meleeRange = 1.75f, skillRange = 2.8f,     // Dragon Strike hits everything in range, 20% less per target
                 basicAnimA = "attack_thrust", basicAnimB = "attack_sweep", skillAnim = "dragon_strike",
             },
@@ -46,7 +47,7 @@ namespace AshenVale
                 roleLabel = "BOW / RANGED", tagline = "Agile attacks  •  Long range",
                 style = AttackStyle.Arrows, baseHp = 95, baseMp = 100, moveSpeed = 6.1f,
                 skillBonus = 24, skillManaCost = 30,
-                attackCooldown = .4f, skillCooldown = .9f,   // Quick Shot's six frames play across the cooldown (15 fps)
+                attackCooldown = .4f, skillCooldown = .9f, skillRecharge = 3f,   // Quick Shot's six frames play across the cooldown (15 fps)
                 basicWindup = .2f, skillWindup = .23f,      // the arrow leaves on the release frame, not the first tick
                 baseDamage = 20,                           // a little more per shot since shots come 25% slower (was 17)
                 arrowsPerSkill = 3, skillPierce = 2,       // Multi Shot: each monster takes one arrow per volley

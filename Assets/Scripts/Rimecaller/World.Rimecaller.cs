@@ -5,8 +5,8 @@ namespace AshenVale {
   sealed class RimeCast { public int owner,map,facing,damage,remaining; public float wait,x,y; public bool storm; }
   readonly List<RimeCast> rimeCasts=new List<RimeCast>();
   void BeginRimeAttack(PlayerState p, MapRuntime map, bool skill) {
-   if(p.attackCooldown>0 || p.climbing || p.knockTime>0 || p.hurtVisual>0 || p.dead || (skill && p.mp<p.Hero.skillManaCost)) return;
-   if(skill) p.mp-=p.Hero.skillManaCost;
+   if(p.attackCooldown>0 || p.climbing || p.knockTime>0 || p.hurtVisual>0 || p.dead || (skill && (p.mp<p.Hero.skillManaCost || p.skillRecharge>0))) return;
+   if(skill) {p.mp-=p.Hero.skillManaCost;p.skillRecharge=p.Hero.skillRecharge;}
    p.lastWasSkill=skill;p.comboStep++;p.attackSerial++;p.attackPending=false;
    p.attackCooldown=skill?p.Hero.skillCooldown:p.Hero.attackCooldown;
    p.attackDuration=p.attackVisual=skill?.65f:.4f;

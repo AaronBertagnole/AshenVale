@@ -6,7 +6,7 @@ namespace AshenVale {
   public static HeroDef CreateHero() { return new HeroDef {
    name="Rimecaller",folder="Rimecaller",weaponName="Crystal",roleLabel="FROST / STORM",tagline="Frozen Orb  •  Stormcall",
    style=AttackStyle.Magic,baseHp=85,baseMp=135,moveSpeed=5.5f,baseDamage=22,skillBonus=5,skillManaCost=24,
-   attackCooldown=.6f,skillCooldown=1.8f,basicWindup=.18f,skillWindup=.24f,
+   attackCooldown=.6f,skillCooldown=1f,skillRecharge=3.5f,basicWindup=.18f,skillWindup=.24f,
    basicAnimA="orb_cast",basicAnimB="orb_cast",skillAnim="storm_cast"
   }; }
  }

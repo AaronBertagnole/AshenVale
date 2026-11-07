@@ -180,6 +180,7 @@ namespace AshenVale
             p.landVisual = Mathf.Max(0, p.landVisual - dt);
             p.hurtVisual = Mathf.Max(0, p.hurtVisual - dt);
             p.attackCooldown = Mathf.Max(0, p.attackCooldown - dt);
+            p.skillRecharge = Mathf.Max(0, p.skillRecharge - dt);
             p.attackVisual = Mathf.Max(0, p.attackVisual - dt);
             p.dashCooldown = Mathf.Max(0, p.dashCooldown - dt);
             p.immunity = Mathf.Max(0, p.immunity - dt);
@@ -424,8 +425,8 @@ namespace AshenVale
             if(RimecallerRules.Is(p.Hero)) { BeginRimeAttack(p,map,skill); return; }
             if (p.attackCooldown > 0 || (p.Hero.dragonKnight && (p.leapActive || p.climbing || p.knockTime > 0))) return;
             var hero = p.Hero;
-            if (skill && p.mp < hero.skillManaCost) return;
-            if (skill) p.mp -= hero.skillManaCost;
+            if (skill && (p.mp < hero.skillManaCost || p.skillRecharge > 0)) return;
+            if (skill) { p.mp -= hero.skillManaCost; p.skillRecharge = hero.skillRecharge; }
             p.landVisual = 0;
             p.rangerFlipTime = 0;
             p.lastWasSkill = skill;

@@ -50,7 +50,7 @@ namespace AshenVale
         public int MaxHp { get { return Hero.baseHp + Tuning.HpPerLevel * (ch.level - 1) + ch.BonusHealth; } }
         public int MaxMp { get { return Hero.baseMp + Tuning.MpPerLevel * (ch.level - 1); } }
 
-        public float attackCooldown, attackVisual, dashCooldown, dashTime, immunity, hurtVisual;
+        public float attackCooldown, skillRecharge, attackVisual, dashCooldown, dashTime, immunity, hurtVisual;
         // Transient combat state; do not add to CharacterData/save files.
         public float attackWindup, attackDuration;
         public bool attackPending, leapActive;
