@@ -485,9 +485,8 @@ namespace AshenVale
             {
                 var m = targets[i];
                 int dealt = skill ? Mathf.Max(1, Mathf.RoundToInt(damage * Mathf.Pow(.8f, i))) : damage;
-                HitMonster(map, m, dealt, p);
+                HitMonster(map, m, dealt, p, Tuning.PushMelee);   // survivors are knocked back (HitMonster)
                 if (skill) continue;                 // Dragon Strike carries on through the group
-                if (map.monsters.Contains(m)) { m.knockbackVelocity = facing * 5.5f; m.knockbackTime = .22f; }
                 break;                                // a basic thrust stops at the nearest monster
             }
         }
@@ -504,7 +503,7 @@ namespace AshenVale
                 if (Mathf.Abs(m.y - p.currentFloor) < .35f &&
                     Mathf.Abs(m.x - p.x) - m.Def.width * .5f <= p.Hero.fissureRange)
                     targets.Add(m);
-            foreach (var m in targets) HitMonster(map, m, damage, p);
+            foreach (var m in targets) HitMonster(map, m, damage, p, Tuning.PushFissure);
         }
 
         void UpdateShots(MapRuntime map, float dt)
@@ -522,7 +521,7 @@ namespace AshenVale
                     float middle = m.y + d.hover + d.height * .5f;
                     if (s.hitSet.Contains(m.id) || Mathf.Abs(m.x - s.x) >= d.width * .5f + .1f || Mathf.Abs(middle - s.y) >= d.height * .5f + .5f) continue;
                     s.hitSet.Add(m.id);
-                    HitMonster(map, m, s.damage, GetPlayer(s.owner));
+                    HitMonster(map, m, s.damage, GetPlayer(s.owner), Tuning.PushArrow);
                     s.pierce--;
                     break;
                 }
@@ -530,7 +529,9 @@ namespace AshenVale
             }
         }
 
-        void HitMonster(MapRuntime map, MonsterState m, int damage, PlayerState attacker)
+        // push: how hard a monster that survives the hit is shoved away from the attacker (0 = none). Bosses are too
+        // heavy and chests never move, so neither is pushed.
+        void HitMonster(MapRuntime map, MonsterState m, int damage, PlayerState attacker, float push = 0f)
         {
             if (!map.monsters.Contains(m)) return;
             m.hp -= damage;
@@ -544,7 +545,17 @@ namespace AshenVale
             }
             events.Add(new SimEvent { kind = SimEventKind.MonsterHit, map = map.def.id, targetId = m.id, amount = damage,
                                       playerId = attacker != null ? attacker.id : 0, x = m.x, y = m.y });
-            if (m.hp > 0) return;
+            if (m.hp > 0)
+            {
+                var hitDef = m.Def;
+                if (push > 0f && attacker != null && !hitDef.boss && hitDef.speed > 0f)
+                {
+                    float away = m.x - attacker.x;
+                    m.knockbackVelocity = (Mathf.Abs(away) > .05f ? Mathf.Sign(away) : attacker.facing) * push;
+                    m.knockbackTime = Tuning.PushTime;
+                }
+                return;
+            }
             map.monsters.Remove(m);
             var def = m.Def;
             if (def.IsChest) map.chestTimer = Tuning.ChestCooldown;   // no new chest for a while, and only when someone arrives

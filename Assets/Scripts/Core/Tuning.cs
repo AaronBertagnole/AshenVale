@@ -26,6 +26,8 @@ namespace AshenVale
         public const float NpcReach = 3.5f;         // merchant / waystone requests are accepted from this close (a bit generous for online lag)
         public const float PortalCastTime = 1.2f;
         public const float DropThroughTime = .25f;  // Down + Jump: how long you fall through the platform you stood on
+        // Monsters that survive a hit are shoved away from the attacker for PushTime seconds (speed in units/s, slowing down).
+        public const float PushTime = .22f, PushMelee = 5.5f, PushFissure = 6.5f, PushArrow = 3.5f, PushOrb = 4f;
         public const float KnockbackTime = .22f;    // touching a monster knocks you back a little (not while climbing)
         public const float KnockbackSpeed = 4.5f;
         public const float KnockbackHop = 4.5f;

@@ -41,7 +41,7 @@ namespace AshenVale {
    }
    s.life-=dt;
    Vector2 end=hit==null?b:Vector2.Lerp(a,b,best);s.x=end.x;s.y=end.y;
-   if(hit!=null){HitMonster(map,hit,s.damage,GetPlayer(s.owner));s.pierce=0;events.Add(new SimEvent {kind=SimEventKind.RimeBurst,map=s.map,playerId=s.owner,x=s.x,y=s.y});}
+   if(hit!=null){HitMonster(map,hit,s.damage,GetPlayer(s.owner),Tuning.PushOrb);s.pierce=0;events.Add(new SimEvent {kind=SimEventKind.RimeBurst,map=s.map,playerId=s.owner,x=s.x,y=s.y});}
    if(s.x<map.def.minX || s.x>map.def.maxX)s.life=0;
    if(s.life<=0 || s.pierce<=0)rimeOrbTargets.Remove(s.id);
   }
