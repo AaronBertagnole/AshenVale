@@ -8,7 +8,7 @@ namespace AshenVale
     // It only reads the World (plus its event list, which it clears); it never changes game state.
     public sealed partial class WorldView
     {
-        sealed class HeroView { public GameObject go; public SpriteRenderer sr; public string anim = ""; public float clock, lastHp = -1; public int attackSerial = -1; public float climbOffset, climbXOffset; public Vector3 climbScale; public bool fittedClimb; public readonly PronePosePlayer prone = new PronePosePlayer(); }
+        sealed partial class HeroView { public GameObject go; public SpriteRenderer sr; public string anim = ""; public float clock, lastHp = -1; public int attackSerial = -1; public float climbOffset, climbXOffset; public Vector3 climbScale; public bool fittedClimb; public readonly PronePosePlayer prone = new PronePosePlayer(); }
         sealed class SlashFx { public GameObject obj; public SpriteRenderer sr; public float life, duration, x, y; public int direction; public bool ring; public int dragon; }
 
         // A number that pops up where something was hurt or healed and drifts upward (GameHud draws them).
@@ -102,6 +102,7 @@ namespace AshenVale
         public void Reset()
         {
             ClearRimeFx();
+            ClearLandingLeaves();
             foreach (var v in heroViews.Values) Object.Destroy(v.go);
             heroViews.Clear();
             ClearMonsters();
@@ -125,12 +126,14 @@ namespace AshenVale
             SyncShots(alpha);
             SyncPortals();
             UpdateSlashes(frameDt);
+            UpdateLandingLeaves(frameDt);
             UpdateCamera(local, frameDt, alpha);
         }
 
         void ShowMap(int map)
         {
             ClearRimeFx();
+            ClearLandingLeaves();
             dropsSynced = false;
             dropPops.Clear();
             for (int i = 0; i < visuals.Length; i++) visuals[i].root.SetActive(i == map);
@@ -176,6 +179,7 @@ namespace AshenVale
                 if (v.lastHp >= 0 && p.hp != v.lastHp && !p.dead)
                     Number(p.x, p.y + 2.1f, p.hp < v.lastHp ? "-" + (v.lastHp - p.hp) : "+" + (p.hp - v.lastHp), p.hp < v.lastHp ? HurtColor : HealColor, false);
                 v.lastHp = p.hp;
+                TrackRimeLanding(p, v, localId, frameDt, alpha);
                 Animate(p, v, frameDt, alpha);
                 float x = Mathf.Lerp(p.px, p.x, alpha), y = Mathf.Lerp(p.py, p.y, alpha);
                 v.go.transform.localScale = v.fittedClimb ? v.climbScale : new Vector3(HeroScale, HeroScale, 1f);
@@ -294,6 +298,9 @@ namespace AshenVale
         {
             var h = p.Hero;
             string clip = ChooseAnimation(p);
+            if (v.landingTime > 0f && (clip == "idle" || clip == "run") &&
+                Sprites.Hero(h.folder + "/land").Length > 0)
+                clip = "land";
             if (v.prone.TryDraw(p, clip, v.sr, frameDt))
             {
                 v.anim = "prone"; v.clock = 0f;
@@ -335,6 +342,8 @@ namespace AshenVale
                 }
                 if (h.dragonKnight && clip == "land")
                     index = Mathf.FloorToInt(Mathf.Clamp01(1f - p.landVisual / .24f) * frames.Length);
+                if (clip == "land" && RimecallerRules.Is(h))
+                    index = Mathf.FloorToInt(Mathf.Clamp01(1f - v.landingTime / RimeLandingSeconds) * frames.Length);
                 // Fit every Ranger attack pose into the existing visual duration.
                 // Simulation still releases arrows immediately, as before; this changes only drawing.
                 if ((h.style == AttackStyle.Arrows || h.style == AttackStyle.Magic) && p.attackVisual > 0 && p.attackDuration > 0 &&
