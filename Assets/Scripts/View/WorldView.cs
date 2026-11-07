@@ -612,6 +612,7 @@ namespace AshenVale
                 }
                 go.transform.position = new Vector3(Mathf.Lerp(s.px, s.x, alpha), Mathf.Lerp(s.py, s.y, alpha), 0);
                 go.GetComponent<SpriteRenderer>().flipX = s.direction < 0;
+                { var shotOwner = world.GetPlayer(s.owner); if (shotOwner != null && RimecallerRules.Is(shotOwner.Hero)) AimRimeShot(go, s); }
             }
             RemoveUnseen(shotViews);
         }

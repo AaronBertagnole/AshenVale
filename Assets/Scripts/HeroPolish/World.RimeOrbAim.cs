@@ -14,9 +14,7 @@ namespace AshenVale {
   }
   void AimNewRimeOrb(MapRuntime map,ProjectileState s) {
    var target=RimeTarget(map,s.x,s.y,s.direction);if(target==null)return;
-   rimeOrbTargets[s.id]=target.id;
-   // Lower the release point for tiny enemies; steer the rest of the way during flight.
-   s.y=Mathf.MoveTowards(s.y,target.y+target.Def.hover+target.Def.height*.5f,.65f);s.py=s.y;
+   rimeOrbTargets[s.id]=target.id;   // the path is steered during flight; the release point is not moved
   }
   void PruneRimeOrbTargets() {
    var live=new HashSet<int>();foreach(var map in maps)foreach(var s in map.shots)live.Add(s.id);
@@ -29,7 +27,13 @@ namespace AshenVale {
    if(target!=null && ((target.x-s.x)*s.direction<-.15f || Mathf.Abs(target.y+target.Def.hover+target.Def.height*.5f-s.y)>1.35f))target=null;
    if(target==null){target=RimeTarget(map,s.x,s.y,s.direction);if(target!=null)rimeOrbTargets[s.id]=target.id;else rimeOrbTargets.Remove(s.id);}
    Vector2 a=new Vector2(s.x,s.y),b=new Vector2(s.x+s.direction*9f*dt,s.y);
-   if(target!=null)b.y=Mathf.MoveTowards(s.y,target.y+target.Def.hover+target.Def.height*.5f,4.5f*dt);
+   if(target!=null) {
+    // Aim for the body centre so the orb arrives there as it reaches the target: a straight line, not a drop-then-flat kink.
+    float ty=target.y+target.Def.hover+target.Def.height*.5f;
+    float run=Mathf.Max(0f,(target.x-s.x)*s.direction-(target.Def.width*.5f+.18f));
+    float vy=Mathf.Clamp((ty-s.y)/Mathf.Max(.1f,run/9f),-8f,8f);
+    b.y=Mathf.MoveTowards(s.y,ty,Mathf.Abs(vy)*dt);
+   }
    float best=2f;MonsterState hit=null;
    foreach(var m in map.monsters) {
     if(m.hp<=0)continue;float t;

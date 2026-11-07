@@ -268,7 +268,7 @@ namespace AshenVale
             }
             if (allowDash && input.dash && p.dashCooldown <= 0 && !knocked && !p.climbing)
             {
-                if(RimecallerRules.Is(p.Hero)) { Froststep(p,def); axis=0; }
+                if(RimecallerRules.Is(p.Hero)) { Froststep(p,def,vertical); axis=0; }
                 else if (p.Hero.dragonKnight)
                 {
                     if (p.grounded && p.attackVisual <= 0 && p.mp >= p.Hero.leapManaCost)

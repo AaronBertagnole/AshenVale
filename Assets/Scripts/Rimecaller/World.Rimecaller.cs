@@ -10,10 +10,11 @@ namespace AshenVale {
    p.lastWasSkill=skill;p.comboStep++;p.attackSerial++;p.attackPending=false;
    p.attackCooldown=skill?p.Hero.skillCooldown:p.Hero.attackCooldown;
    p.attackDuration=p.attackVisual=skill?.65f:.4f;
+   float strikeX=Mathf.Clamp(p.x+p.facing*2.6f,map.def.minX,map.def.maxX);
    rimeCasts.Add(new RimeCast {owner=p.id,map=p.map,facing=p.facing,storm=skill,remaining=skill?3:1,
     wait=skill?p.Hero.skillWindup:p.Hero.basicWindup,
     damage=p.Hero.baseDamage+p.ch.level*Tuning.DamagePerLevel+p.ch.BonusAttack+(skill?p.Hero.skillBonus:0),
-    x=Mathf.Clamp(p.x+p.facing*2.6f,map.def.minX,map.def.maxX),y=p.y});
+    x=strikeX,y=skill?FloorAt(map.def,strikeX,p.y):p.y});
   }
   void TickRimecaller(float dt) {
    PruneRimeOrbTargets();
@@ -39,11 +40,38 @@ namespace AshenVale {
   }
   bool IsRimeShot(ProjectileState s) { var p=GetPlayer(s.owner);return p!=null && RimecallerRules.Is(p.Hero); }
   void UpdateRimeShot(MapRuntime map,ProjectileState s,float dt) { UpdateAimedRimeOrb(map,s,dt); }
-  void Froststep(PlayerState p,MapDef def) {
+  // Highest floor at x that is not above yRef (platform tops, else the ground).
+  static float FloorAt(MapDef def,float x,float yRef) {
+   float best=Tuning.Ground;
+   foreach(var plat in def.platforms) if(x>=plat.left && x<=plat.right && plat.top<=yRef+.3f && plat.top>best) best=plat.top;
+   return best;
+  }
+  // Up / Down + Froststep: the nearest platform above (or below; Down also reaches the ground) that lies over the hero's x.
+  static bool BlinkVertical(PlayerState p,MapDef def,bool up,out float destX,out float destY) {
+   destX=p.x;destY=p.y;bool found=false;float bestTop=up?float.MaxValue:float.MinValue;
+   foreach(var plat in def.platforms) {
+    if(p.x<plat.left-.5f || p.x>plat.right+.5f) continue;
+    float dy=plat.top-p.y;
+    if(up) { if(dy<.35f || dy>RimecallerRules.BlinkUpRange || plat.top>=bestTop) continue; }
+    else { if(dy>-.35f || dy<-RimecallerRules.BlinkDownRange || plat.top<=bestTop) continue; }
+    bestTop=plat.top;found=true;destY=plat.top;
+    float lo=plat.left+.2f,hi=plat.right-.2f;destX=hi>lo?Mathf.Clamp(p.x,lo,hi):(plat.left+plat.right)*.5f;
+   }
+   if(!found && !up && p.y-Tuning.Ground>.35f && p.y-Tuning.Ground<=RimecallerRules.BlinkDownRange) { found=true;destY=Tuning.Ground; }
+   destX=Mathf.Clamp(destX,def.minX,def.maxX);
+   return found;
+  }
+  void Froststep(PlayerState p,MapDef def,float vertical) {
    if(p.mp<RimecallerRules.BlinkCost || p.attackVisual>0) return;
+   float destX=p.x,destY=p.y;bool vert=false;
+   if(vertical>.5f) vert=BlinkVertical(p,def,true,out destX,out destY);
+   else if(vertical<-.5f) vert=BlinkVertical(p,def,false,out destX,out destY);
+   if(!vert) { destX=Mathf.Clamp(p.x+p.facing*RimecallerRules.BlinkDistance,def.minX,def.maxX);destY=p.y; }
    p.mp-=RimecallerRules.BlinkCost;p.dashCooldown=RimecallerRules.BlinkCooldown;
    events.Add(new SimEvent {kind=SimEventKind.RimeTeleport,map=p.map,playerId=p.id,x=p.x,y=p.y});
-   p.x=Mathf.Clamp(p.x+p.facing*RimecallerRules.BlinkDistance,def.minX,def.maxX);p.px=p.x;p.py=p.y;
+   p.x=destX;p.px=p.x;
+   if(vert) { p.y=destY;p.vy=0;p.grounded=true;p.currentFloor=destY;p.dropTimer=0;p.climbing=false; }
+   p.py=p.y;
    p.dashTime=0;p.crouching=false;
    events.Add(new SimEvent {kind=SimEventKind.RimeTeleport,map=p.map,playerId=p.id,x=p.x,y=p.y});
   }

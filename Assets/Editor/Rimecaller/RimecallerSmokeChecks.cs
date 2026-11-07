@@ -28,9 +28,19 @@ namespace AshenVale {
    w.events.Clear();p.attackCooldown=0;p.attackVisual=0;p.mp=0;
    Call(w,"BeginRimeAttack",p,map,true);Call(w,"TickRimecaller",1f);Check(w.events.Count==0,"insufficient mana blocks storm");
    p.mp=100;p.attackCooldown=0;Call(w,"BeginRimeAttack",p,map,true);p.dead=true;Call(w,"TickRimecaller",1f);Check(w.events.Count==0,"death cancels pending cast");p.dead=false;
-   p.attackVisual=0;p.mp=100;p.dashCooldown=0;p.x=map.def.maxX-.1f;p.facing=1;Call(w,"Froststep",p,map.def);   // mana reset: the death-cancel check above already spent 24 MP on Stormcall
+   p.attackVisual=0;p.mp=100;p.dashCooldown=0;p.x=map.def.maxX-.1f;p.facing=1;Call(w,"Froststep",p,map.def,0f);   // mana reset: the death-cancel check above already spent 24 MP on Stormcall
    Check(p.x<=map.def.maxX && p.x==p.px && p.dashTime==0,"blink clamps and does not dash/interpolate");
    Check(p.mp==100-RimecallerRules.BlinkCost && p.dashCooldown==RimecallerRules.BlinkCooldown,"blink cost/cooldown");
+   // Up / Down + Froststep: onto the nearest platform above, then back down (skipped when this map has no suitable platform).
+   foreach(var plat in map.def.platforms){
+    float rise=plat.top-Tuning.Ground;if(rise<.5f||rise>RimecallerRules.BlinkUpRange)continue;
+    p.dead=false;p.attackVisual=0;p.mp=100;p.dashCooldown=0;p.grounded=true;p.x=(plat.left+plat.right)*.5f;p.y=p.currentFloor=Tuning.Ground;
+    Call(w,"Froststep",p,map.def,1f);
+    Check(p.y>Tuning.Ground+.3f&&p.grounded&&p.currentFloor==p.y&&p.dashTime==0,"Up + Froststep lands on a platform above");
+    p.mp=100;p.dashCooldown=0;float up=p.y;Call(w,"Froststep",p,map.def,-1f);
+    Check(p.y<up-.3f&&p.grounded&&p.currentFloor==p.y,"Down + Froststep lands on a floor below");
+    break;
+   }
    foreach(string clip in new[]{"idle","run","jump","fall","orb_cast","storm_cast","hurt","death","climb","prone"})Check(Sprites.Hero("Rimecaller/"+clip).Length>0,"missing "+clip);
    foreach(string fx in new[]{"orb","impact","teleport","storm"})Check(Sprites.Art("Art/Rimecaller/"+fx)!=null,"missing "+fx);
    UnityEngine.Debug.Log("Rimecaller smoke checks passed: class IDs, windup, cooldown, mana, three fixed strikes, death cancellation, blink boundaries, all clips/effects. Play Mode combat/animation still needs testing.");
