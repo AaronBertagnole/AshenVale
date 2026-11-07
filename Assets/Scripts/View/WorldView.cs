@@ -784,7 +784,21 @@ namespace AshenVale
             {
                 var pos = cam.position;
                 pos.x = Mathf.Lerp(pos.x, target.x, Mathf.Min(1f, frameDt * 5f));
-                pos.y = Mathf.Lerp(pos.y, target.y, Mathf.Min(1f, frameDt * 3.5f));
+
+                // Keep ordinary hops inside a stable view. Give falling less slack so the
+                // landing area comes into frame early. Ladders and landings use normal follow.
+                const float riseDeadZone = 2.3f;
+                const float fallDeadZone = .75f;
+                if (!local.grounded && !local.climbing && !local.dead)
+                {
+                    target.y = Mathf.Clamp(pos.y, y - riseDeadZone, y + fallDeadZone);
+                    target.y = Mathf.Clamp(target.y, minY, maxY);
+                }
+
+                float verticalRate = target.y < pos.y ? 6.5f : 4.5f;
+                pos.y = Mathf.Lerp(pos.y, target.y, 1f - Mathf.Exp(-verticalRate * frameDt));
+                // Keep some space below the hero during a long fall, within the map's limits.
+                pos.y = Mathf.Clamp(Mathf.Min(pos.y, y + 2.8f), minY, maxY);
                 cam.position = pos;
             }
             var visual = visuals[shownMap];
