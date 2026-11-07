@@ -47,6 +47,47 @@ namespace AshenVale
             return color;
         }
 
+        // Where the boots end in a frame, as a fraction of its height measured from the bottom: the lowest row with a
+        // few opaque pixels in the central band of the frame. A thin spear tip at the edge, or a low spear head, does not
+        // count (it is narrower than a boot, or outside the band). -1 when the frame cannot be read.
+        static readonly Dictionary<Sprite, float> bootRows = new Dictionary<Sprite, float>();
+        static float BootFraction(Sprite sprite)
+        {
+            if (sprite == null) return -1f;
+            float result;
+            if (bootRows.TryGetValue(sprite, out result)) return result;
+            result = -1f;
+            Texture2D copy = null;
+            try
+            {
+                copy = Copy(sprite.texture);
+                Rect rect = sprite.textureRect;
+                int left = Mathf.RoundToInt(rect.xMin + rect.width * .30f), right = Mathf.RoundToInt(rect.xMin + rect.width * .62f);
+                int bottom = Mathf.RoundToInt(rect.yMin), top = Mathf.RoundToInt(rect.yMax);
+                for (int y = bottom; y < top && result < 0f; y++)
+                {
+                    int run = 0;
+                    for (int x = left; x < right; x++) if (copy.GetPixel(x, y).a >= .5f) run++;
+                    if (run >= 5) result = (y - rect.yMin + .5f) / rect.height;
+                }
+            }
+            catch { result = -1f; }
+            finally { if (copy != null) Object.Destroy(copy); }
+            bootRows[sprite] = result;
+            return result;
+        }
+
+        // How many sprite pixels this frame's boots sit above the idle pose's boots. A windup frame drawn mid-leap
+        // reads as a hop when the body is placed by the idle contact row; lowering it by this much keeps the boots on the floor.
+        public static float FootLiftPixels(string folder, Sprite current)
+        {
+            var idleFrames = Sprites.Hero(folder + "/idle");
+            if (current == null || idleFrames.Length == 0) return 0f;
+            float idle = BootFraction(idleFrames[0]), now = BootFraction(current);
+            if (idle < 0f || now < 0f) return 0f;
+            return Mathf.Clamp((now - idle) * current.rect.height, 0f, 48f);
+        }
+
         public static float HeroOffset(string folder, Sprite current, float scaleY, float fallback)
         {
             if (current == null) return fallback;

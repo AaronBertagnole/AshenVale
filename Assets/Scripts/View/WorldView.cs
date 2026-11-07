@@ -186,6 +186,10 @@ namespace AshenVale
                 float heroOffset = HeroPolishArt.Uses(p.Hero.folder) ? (114f/128f-.5f)*HeroScale : .48f; // Prone art shares the idle ground-contact baseline.
                 if (!p.climbing && !p.dead && PaintedMapFraming.UsesOwnGround(Maps.All[p.map]))
                     heroOffset = PaintedSpriteContact.HeroOffset(p.Hero.folder, v.sr.sprite, v.go.transform.localScale.y, heroOffset);
+                // Grounded attacks: a frame drawn mid-leap (the Knight's thrust / Dragon Strike windup) would look like a hop.
+                if (!p.climbing && !p.dead && p.grounded && v.sr.sprite != null &&
+                    (v.anim == p.Hero.basicAnimA || v.anim == p.Hero.basicAnimB || v.anim == p.Hero.skillAnim))
+                    heroOffset -= PaintedSpriteContact.FootLiftPixels(p.Hero.folder, v.sr.sprite) / v.sr.sprite.pixelsPerUnit * v.go.transform.localScale.y;
                 Vector3 basePosition = new Vector3(x + v.climbXOffset, y + heroOffset + v.climbOffset, 0);
                 Quaternion rotation = Quaternion.identity;
                 if (RangerIsFlipping(p))
