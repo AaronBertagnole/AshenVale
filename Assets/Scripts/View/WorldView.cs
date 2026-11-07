@@ -179,7 +179,7 @@ namespace AshenVale
                 if (v.lastHp >= 0 && p.hp != v.lastHp && !p.dead)
                     Number(p.x, p.y + 2.1f, p.hp < v.lastHp ? "-" + (v.lastHp - p.hp) : "+" + (p.hp - v.lastHp), p.hp < v.lastHp ? HurtColor : HealColor, false);
                 v.lastHp = p.hp;
-                TrackRimeLanding(p, v, localId, frameDt, alpha);
+                TrackHeroLanding(p, v, localId, frameDt, alpha);
                 Animate(p, v, frameDt, alpha);
                 float x = Mathf.Lerp(p.px, p.x, alpha), y = Mathf.Lerp(p.py, p.y, alpha);
                 v.go.transform.localScale = v.fittedClimb ? v.climbScale : new Vector3(HeroScale, HeroScale, 1f);
@@ -302,9 +302,11 @@ namespace AshenVale
         {
             var h = p.Hero;
             string clip = ChooseAnimation(p);
-            if (v.landingTime > 0f && (clip == "idle" || clip == "run") &&
-                Sprites.Hero(h.folder + "/land").Length > 0)
-                clip = "land";
+            string touchdown = RimecallerRules.Is(h) ? "land" : "touchdown";
+            bool regularLanding = v.landingTime > 0f && (clip == "idle" || clip == "run") &&
+                (RimecallerRules.Is(h) || HeroPolishArt.Uses(h.folder)) &&
+                Sprites.Hero(h.folder + "/" + touchdown).Length > 0;
+            if (regularLanding) clip = touchdown;
             if (v.prone.TryDraw(p, clip, v.sr, frameDt))
             {
                 v.anim = "prone"; v.clock = 0f;
@@ -346,8 +348,8 @@ namespace AshenVale
                 }
                 if (h.dragonKnight && clip == "land")
                     index = Mathf.FloorToInt(Mathf.Clamp01(1f - p.landVisual / .24f) * frames.Length);
-                if (clip == "land" && RimecallerRules.Is(h))
-                    index = Mathf.FloorToInt(Mathf.Clamp01(1f - v.landingTime / RimeLandingSeconds) * frames.Length);
+                if (regularLanding)
+                    index = Mathf.FloorToInt(Mathf.Clamp01(1f - v.landingTime / LandingDuration(h)) * frames.Length);
                 // Fit every Ranger attack pose into the existing visual duration.
                 // Simulation still releases arrows immediately, as before; this changes only drawing.
                 if ((h.style == AttackStyle.Arrows || h.style == AttackStyle.Magic) && p.attackVisual > 0 && p.attackDuration > 0 &&
@@ -356,7 +358,7 @@ namespace AshenVale
                         Mathf.Clamp01(1f - p.attackVisual / p.attackDuration) * frames.Length));
                 // Hold the tucked airborne pose while the renderer performs the somersault.
                 if (RangerIsFlipping(p)) index = frames.Length - 1;
-                bool once = clip == "leap" || clip == "land" || clip == "death" || clip == "hurt" || clip == h.basicAnimA || clip == h.basicAnimB || clip == h.skillAnim;
+                bool once = regularLanding || clip == "leap" || clip == "land" || clip == "death" || clip == "hurt" || clip == h.basicAnimA || clip == h.basicAnimB || clip == h.skillAnim;
                 index = once ? Mathf.Min(index, frames.Length - 1) : (index % frames.Length + frames.Length) % frames.Length;
                 v.sr.sprite = frames[index];
             }

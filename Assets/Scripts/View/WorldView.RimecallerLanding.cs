@@ -5,8 +5,14 @@ namespace AshenVale
 {
     public sealed partial class WorldView
     {
-        const float RimeLandingSeconds = .1f;
         const float HeavyDropHeight = 2.8f;
+
+        static float LandingDuration(HeroDef hero)
+        {
+            if (hero.dragonKnight) return .14f;
+            if (hero.folder == "ElvenRanger") return .085f;
+            return .1f;
+        }
 
         sealed partial class HeroView
         {
@@ -26,12 +32,17 @@ namespace AshenVale
         readonly List<LandingLeaf> landingLeaves = new List<LandingLeaf>();
         AudioClip rimeFootfall;
 
-        void TrackRimeLanding(PlayerState player, HeroView view, int localId, float dt, float alpha)
+        void TrackHeroLanding(PlayerState player, HeroView view, int localId, float dt, float alpha)
         {
-            if (!RimecallerRules.Is(player.Hero)) return;
+            var hero = player.Hero;
+            bool knight = hero.dragonKnight;
+            bool ranger = hero.folder == "ElvenRanger";
+            if (!knight && !ranger && !RimecallerRules.Is(hero)) return;
 
             view.landingTime = Mathf.Max(0f, view.landingTime - dt);
-            if (view.landingMap != player.map || player.dead || player.climbing)
+            // The Knight's combat leap owns its landing pose and effects.
+            bool combatLeap = knight && (player.leapActive || player.landVisual > 0f);
+            if (view.landingMap != player.map || player.dead || player.climbing || combatLeap)
             {
                 view.landingMap = player.map;
                 view.wasAirborne = false;
@@ -54,11 +65,12 @@ namespace AshenVale
                 return;
 
             view.wasAirborne = false;
-            view.landingTime = RimeLandingSeconds;
+            view.landingTime = LandingDuration(hero);
             if (player.map != Maps.Emberfields || view.airPeak - player.y < HeavyDropHeight)
                 return;
 
-            SpawnLandingLeaves(player.x, player.y);
+            int leafCount = knight ? 8 : ranger ? 4 : 6;
+            SpawnLandingLeaves(player.x, player.y, leafCount);
             if (player.id != localId) return;
 
             if (rimeFootfall == null)
@@ -70,12 +82,13 @@ namespace AshenVale
                 view.landingAudio.playOnAwake = false;
                 view.landingAudio.spatialBlend = 0f;
             }
-            view.landingAudio.PlayOneShot(rimeFootfall, .32f);
+            view.landingAudio.pitch = knight ? .83f : ranger ? 1.18f : 1f;
+            float volume = knight ? .40f : ranger ? .24f : .32f;
+            view.landingAudio.PlayOneShot(rimeFootfall, volume);
         }
 
-        void SpawnLandingLeaves(float x, float y)
+        void SpawnLandingLeaves(float x, float y, int leafCount)
         {
-            const int leafCount = 6;
             for (int i = 0; i < leafCount; i++)
             {
                 float direction = i % 2 == 0 ? -1f : 1f;
