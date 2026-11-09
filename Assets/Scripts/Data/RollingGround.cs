@@ -30,6 +30,13 @@ namespace AshenVale
         public static MapDef Configure(MapDef def)
         {
             def.rollingGround = true;
+            // Emberfields has two permanent exits. Use the ground-level gates
+            // as the canonical entries for both rendering and interaction.
+            def.portals = new[]
+            {
+                new Portal { key = 'A', targetKey = 'A', targetMap = Maps.Emberhaven, x = 1.5f, y = HeightAt(1.5f) },
+                new Portal { key = 'B', targetKey = 'B', targetMap = Maps.AmberleafTrail, x = 72.5f, y = HeightAt(72.5f) }
+            };
             for (int i = 0; i < def.ladders.Length; i++)
             {
                 var ladder = def.ladders[i];
