@@ -227,6 +227,7 @@ namespace AshenVale
         {
             float axis = Mathf.Clamp(input.moveX, -1f, 1f);
             float vertical = Mathf.Clamp(input.moveY, -1f, 1f);
+            bool walkingTerrain = def.rollingGround && p.grounded && def.IsGroundFloor(p.currentFloor);
             bool knocked = p.knockTime > 0;
             if (knocked) { p.knockTime -= dt; axis = 0; }
             if (p.Hero.dragonKnight && (p.attackVisual > 0 || p.leapActive))
@@ -257,7 +258,7 @@ namespace AshenVale
                 if (vertical < -.1f)
                 {
                     // Down + Jump drops through the platform you stand on (the ground is solid).
-                    if (p.currentFloor > Tuning.Ground + .05f)
+                    if (!def.IsGroundFloor(p.currentFloor) && p.currentFloor > Tuning.Ground + .05f)
                     { p.dropTimer = Tuning.DropThroughTime; p.dropFloor = p.currentFloor; p.grounded = false; p.crouching = false; p.vy = 0; }
                 }
                 else
@@ -308,22 +309,25 @@ namespace AshenVale
                 return;
             }
 
+            float ground = def.GroundAt(p.x);
+            if (walkingTerrain && p.grounded && def.IsGroundFloor(p.currentFloor))
+                p.y = p.currentFloor = ground;
             float previousY = p.y;
             if (!p.grounded) { p.vy += Tuning.Gravity * dt; p.y += p.vy * dt; }
             if (p.vy <= 0)
             {
-                float landing = Tuning.Ground;
+                float landing = ground;
                 foreach (var plat in def.platforms)
                 {
                     if (p.dropTimer > 0 && Mathf.Abs(plat.top - p.dropFloor) < .05f) continue;   // the one we are dropping through
                     if (p.x >= plat.left + .16f && p.x <= plat.right - .16f && previousY >= plat.top - .03f && p.y <= plat.top && plat.top > landing)
                         landing = plat.top;
                 }
-                if (p.y <= landing && previousY >= landing - .03f) { p.y = landing; p.vy = 0; p.grounded = true; p.currentFloor = landing; }
+                if (p.y <= landing && (previousY >= landing - .03f || (def.rollingGround && landing == ground))) { p.y = landing; p.vy = 0; p.grounded = true; p.currentFloor = landing; }
             }
             if (p.grounded)
             {
-                bool supported = Mathf.Abs(p.currentFloor - Tuning.Ground) < .01f;
+                bool supported = def.IsGroundFloor(p.currentFloor);
                 foreach (var plat in def.platforms)
                     if (Mathf.Abs(p.currentFloor - plat.top) < .05f && p.x >= plat.left + .16f && p.x <= plat.right - .16f) supported = true;
                 if (!supported) { p.grounded = false; p.vy = 0; }
@@ -333,7 +337,7 @@ namespace AshenVale
         // Standing on a raised platform within FlipEdge of one of its ends, facing out over the drop.
         static bool NearPlatformEdge(MapDef def, PlayerState p)
         {
-            if (p.currentFloor <= Tuning.Ground + .05f) return false;
+            if (def.IsGroundFloor(p.currentFloor) || p.currentFloor <= Tuning.Ground + .05f) return false;
             foreach (var plat in def.platforms)
             {
                 if (Mathf.Abs(plat.top - p.currentFloor) > .05f || p.x < plat.left - .2f || p.x > plat.right + .2f) continue;
@@ -601,6 +605,8 @@ namespace AshenVale
 
         void AddDrop(MapRuntime map, PlayerState owner, DropKind kind, float x, float floor, Item item, int gold)
         {
+            if (map.def.rollingGround && map.def.IsGroundFloor(floor))
+                floor = map.def.GroundAt(x);
             map.drops.Add(new DropState { id = NextId(), map = map.def.id, owner = owner.id, born = time, kind = kind, x = x, y = floor + .25f, item = item, value = gold });
         }
 
@@ -632,7 +638,10 @@ namespace AshenVale
         // stood on, so a player jumping still counts as reachable.
         static bool CanReach(MonsterState m, PlayerState p)
         {
-            return Mathf.Abs(p.currentFloor - m.y) < Tuning.MonsterFloorTolerance && p.x >= m.chaseLeft - .6f && p.x <= m.chaseRight + .6f;
+            var def = Maps.All[m.map];
+            bool sharedTerrain = def.rollingGround && def.IsGroundFloor(p.currentFloor) && def.IsGroundFloor(m.y);
+            return (sharedTerrain || Mathf.Abs(p.currentFloor - m.y) < Tuning.MonsterFloorTolerance)
+                && p.x >= m.chaseLeft - .6f && p.x <= m.chaseRight + .6f;
         }
 
         // Who a monster goes after (null = nobody, it wanders):
@@ -706,6 +715,8 @@ namespace AshenVale
                     }
                 }
                 m.x = Mathf.Clamp(m.x, chaseLo, chaseHi);
+                if (map.def.rollingGround && map.def.IsGroundFloor(m.y))
+                    m.y = map.def.GroundAt(m.x);
             }
             TouchDamage(map);
         }
@@ -856,10 +867,11 @@ namespace AshenVale
             float inset = Mathf.Min(def.width * .5f, .5f) + .2f;
             float x = def.boss || def.IsChest ? point.x : Mathf.Clamp(point.x + ((float)rng.NextDouble() * 2f - 1f) * Tuning.PackSpread, point.left + inset, point.right - inset);
             if (point.right - point.left < inset * 2f) x = point.x;
+            float y = map.def.IsGroundFloor(point.y) ? map.def.GroundAt(x) : point.y;
             var m = new MonsterState
             {
                 id = NextId(), def = point.monster, map = map.def.id, level = def.level, spawn = spawn,
-                x = x, y = point.y, px = x, py = point.y, hp = PartyHp(map, def), maxHp = PartyHp(map, def),
+                x = x, y = y, px = x, py = y, hp = PartyHp(map, def), maxHp = PartyHp(map, def),
                 left = point.left, right = point.right, chaseLeft = point.chaseLeft, chaseRight = point.chaseRight,
                 facing = rng.Next(2) == 0 ? -1 : 1,
                 wanderTime = (float)rng.NextDouble() * 2f,

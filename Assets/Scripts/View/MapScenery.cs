@@ -55,6 +55,7 @@ namespace AshenVale
         public GameObject root;
         public readonly List<ParallaxLayer> layers = new List<ParallaxLayer>();
         public readonly List<SpeckGroup> ambient = new List<SpeckGroup>();
+        internal RollingGroundArt rollingGroundArt;
         public float cameraLowY;    // backdrop layers are laid out as seen with the camera at its lowest point
 
         // Called every frame for the map on screen, with the camera's centre and half the view's size.
@@ -62,6 +63,7 @@ namespace AshenVale
         // keeps its place in the world as you walk; spot groups stay in their own box (a chimney, a forge).
         public void Animate(float time, Vector3 camera, float halfWidth, float halfHeight)
         {
+            rollingGroundArt?.Refresh();
             foreach (var g in ambient)
             {
                 var d = g.def;
@@ -459,7 +461,12 @@ namespace AshenVale
                 }
                 // New complete panoramas already contain their street and retaining wall.
                 // A second theme strip can create a competing visible floor above the actual feet.
-                if (!hasBackdrop || !PaintedMapFraming.UsesOwnGround(def)) Ground(root, def, theme, art, rng);
+                if (def.rollingGround)
+                {
+                    if (visual.rollingGroundArt == null)
+                        RollingGroundArt.BuildFallback(root, def.columns, theme.groundBody, theme.groundTop, GroundOrder + 1);
+                }
+                else if (!hasBackdrop || !PaintedMapFraming.UsesOwnGround(def)) Ground(root, def, theme, art, rng);
             }
             PaintedMapFraming.AddSkyFill(def, root);
             BuildEffects(look, front, back, painted);
@@ -527,7 +534,15 @@ namespace AshenVale
             PaintedMapFraming.Apply(def, sprite, ref width, ref floor);
             var far = Sprites.Art(path + "_back");
             if (far != null) back = Panorama(visual, "Distance", far, width, floor, flip, look.backTravel, SkyOrder, PaintedMapFraming.LocksFloor(def));
-            front = Panorama(visual, "Backdrop", sprite, width, floor, flip, 1f, far != null ? FarOrder : SkyOrder, PaintedMapFraming.LocksFloor(def));
+            front = Panorama(visual, "Backdrop", sprite, width, floor, flip, 1f, far != null ? FarOrder : SkyOrder,
+                def.rollingGround || PaintedMapFraming.LocksFloor(def));
+            if (def.rollingGround && !flip)
+            {
+                var layer = visual.layers[visual.layers.Count - 1];
+                var renderer = layer.transform.GetComponentInChildren<SpriteRenderer>();
+                visual.rollingGroundArt = new RollingGroundArt(layer.transform, renderer,
+                    layer.width, layer.height, layer.floor * layer.height);
+            }
             return true;
         }
 

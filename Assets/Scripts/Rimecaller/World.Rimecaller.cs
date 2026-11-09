@@ -42,7 +42,7 @@ namespace AshenVale {
   void UpdateRimeShot(MapRuntime map,ProjectileState s,float dt) { UpdateAimedRimeOrb(map,s,dt); }
   // Highest floor at x that is not above yRef (platform tops, else the ground).
   static float FloorAt(MapDef def,float x,float yRef) {
-   float best=Tuning.Ground;
+   float best=def.GroundAt(x);
    foreach(var plat in def.platforms) if(x>=plat.left && x<=plat.right && plat.top<=yRef+.3f && plat.top>best) best=plat.top;
    return best;
   }
@@ -57,7 +57,8 @@ namespace AshenVale {
     bestTop=plat.top;found=true;destY=plat.top;
     float lo=plat.left+.2f,hi=plat.right-.2f;destX=hi>lo?Mathf.Clamp(p.x,lo,hi):(plat.left+plat.right)*.5f;
    }
-   if(!found && !up && p.y-Tuning.Ground>.35f && p.y-Tuning.Ground<=RimecallerRules.BlinkDownRange) { found=true;destY=Tuning.Ground; }
+   float ground = def.GroundAt(p.x);
+   if(!found && !up && p.y-ground>.35f && p.y-ground<=RimecallerRules.BlinkDownRange) { found=true;destY=ground; }
    destX=Mathf.Clamp(destX,def.minX,def.maxX);
    return found;
   }
@@ -71,6 +72,12 @@ namespace AshenVale {
    events.Add(new SimEvent {kind=SimEventKind.RimeTeleport,map=p.map,playerId=p.id,x=p.x,y=p.y});
    p.x=destX;p.px=p.x;
    if(vert) { p.y=destY;p.vy=0;p.grounded=true;p.currentFloor=destY;p.dropTimer=0;p.climbing=false; }
+   if (!vert && def.rollingGround)
+   {
+    float ground = def.GroundAt(p.x);
+    if (p.grounded && def.IsGroundFloor(p.currentFloor)) p.y = p.currentFloor = ground;
+    else if (!p.grounded) p.y = Mathf.Max(p.y, ground);
+   }
    p.py=p.y;
    p.dashTime=0;p.crouching=false;
    events.Add(new SimEvent {kind=SimEventKind.RimeTeleport,map=p.map,playerId=p.id,x=p.x,y=p.y});
