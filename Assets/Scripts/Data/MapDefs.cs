@@ -70,7 +70,14 @@ namespace AshenVale
         public int minLevel, maxLevel;          // levels of the monsters here (0 in towns; chests don't count)
         public bool hasBoss;                    // a boss lives here (its glade)
 
-        public float Bottom { get { return Tuning.Ground; } }
+        public bool rollingGround;
+        public float GroundAt(float x) => rollingGround ? RollingGround.HeightAt(x) : Tuning.Ground;
+        // All raised ledges on a rolling-ground map are above the highest crest.
+        public bool IsGroundFloor(float y) => rollingGround
+            ? y <= Tuning.Ground + RollingGround.Highest + .01f
+            : Mathf.Abs(y - Tuning.Ground) < .01f;
+
+        public float Bottom { get { return Tuning.Ground + (rollingGround ? RollingGround.Lowest : 0f); } }
         public float Top { get { return Tuning.Ground + rows; } }
         public string LevelText
         {
@@ -298,11 +305,11 @@ namespace AshenVale
 
         static readonly MapDef[] Core =
         {
-            MapLayout.WithBackdrop(MapLayout.Build(Emberfields, "Emberfields", "autumn", MapKind.Field, EmberfieldsLayout,
+            RollingGround.Configure(MapLayout.WithBackdrop(MapLayout.Build(Emberfields, "Emberfields", "autumn", MapKind.Field, EmberfieldsLayout,
                     new[] { MapLayout.S('a', Monsters.HedgeShrew), MapLayout.S('b', Monsters.AshSprout),
                             MapLayout.S('c', Monsters.ThornbackHedgehog), MapLayout.S('k', Monsters.OldChest) },
                     new[] { MapLayout.L('A', Emberhaven, 'A'), MapLayout.L('B', AmberleafTrail, 'B') }),
-                "Art/Backdrops/emberfields", 116f / 724f, 42f),   // path 116 px above the bottom of the 724 px picture
+                "Art/Backdrops/emberfields", 116f / 724f, 42f)),  // path 116 px above the bottom of the 724 px picture
             MapLayout.WithBackdrop(MapLayout.Build(Mosswood, "Mosswood", "forest", MapKind.Field, MosswoodLayout,
                     new[] { MapLayout.S('a', Monsters.MossCrawler), MapLayout.S('b', Monsters.BrambleBoar), MapLayout.S('k', Monsters.MossyChest) },
                     new[] { MapLayout.L('B', MossgateHollow, 'B'), MapLayout.L('C', Kingsroad, 'C'), MapLayout.L('S', HollowDen, 'S'),
@@ -356,6 +363,7 @@ namespace AshenVale
 
         const string EmberfieldsLayout = @"
             ..........................................................................
+<<<<<<< HEAD
             ..........................................................................
             .............................................................c...k........
             ........................................................===========.......
@@ -367,6 +375,19 @@ namespace AshenVale
             ..............|============......|...a....................============....
             ..............|b................==========................................
             .A..@.......a======.....a...........a...........a...........a....=======B.
+=======
+            .............................................................c...k........
+            ........................................................===========.......
+            .....................................c..k............c....................
+            .........c...k..................===========......============.............
+            .......===========.........a...b..............b............|..............
+            ................|.......===========......==========........|..............
+            ................|....a.b.........|.........................|..b...b.k.....
+            ...............============......|........................============....
+            ................|................|.........................|..............
+            ................|................|.........................|..............
+            .A..@.......a...|.......a........|..a...........a..........|a...........B.
+>>>>>>> dde9cad14fcaa9d4bc2d5c998cd8a66acb62e0d8
             ##########################################################################";
 
         const string MosswoodLayout = @"
