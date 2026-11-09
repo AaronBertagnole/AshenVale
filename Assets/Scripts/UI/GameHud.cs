@@ -708,8 +708,7 @@ namespace AshenVale
             if (def.hasSmithy) Square(MX(def.smithyX), MY(def.smithyY + .6f), 4, new Color(1f, .6f, .35f));
             foreach (var m in world.maps[me.map].monsters)
             {
-                if (m.Def.IsChest) Square(MX(m.x), MY(m.y + .4f), 5, new Color(1f, .8f, .25f));
-                else Marker(MX(m.x), MY(m.y + .5f), 4, new Color(1f, .3f, .28f), false);
+                Marker(MX(m.x), MY(m.y + .5f), 4, new Color(1f, .3f, .28f), false);
             }
             foreach (var p in world.players)
                 if (p != me && p.map == me.map && !p.dead) Marker(MX(p.x), MY(p.y + .6f), 6, new Color(.45f, 1f, .5f));
@@ -835,16 +834,13 @@ namespace AshenVale
             else
             {
                 var names = new List<string>();
-                bool chests = false;
                 foreach (var spawn in def.spawns)
                 {
                     var m = Monsters.All[spawn.monster];
-                    if (m.IsChest) { chests = true; continue; }
                     string entry = (m.boss ? "BOSS " : "") + m.name + " (Lv " + m.level + ")";
                     if (!names.Contains(entry)) names.Add(entry);
                 }
                 text.Append(string.Join(", ", names.ToArray()));
-                if (chests) text.Append("\nChests turn up here now and then.");
             }
             string title = seen ? def.name.ToUpperInvariant() + "   ·   " + def.LevelText.ToUpperInvariant() : "???";
             var body = new GUIContent(text.ToString());
@@ -942,7 +938,7 @@ namespace AshenVale
                 text.Append(Parts.All[i].name).Append(' ').Append(ch.parts[i]);
                 any = true;
             }
-            if (!any) text.Append("none yet: monsters drop them, chests spill several");
+            if (!any) text.Append("none yet: monsters drop them");
             return text.ToString();
         }
 

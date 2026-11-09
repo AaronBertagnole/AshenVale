@@ -34,7 +34,7 @@ namespace AshenVale
                 foreach (var p in map.merchants) Mark(vh, At(p.x, p.y + .6f), 3, HudTheme.Copper);
             }
             if (map.hasSmithy) Mark(vh, At(map.smithyX, map.smithyY + .6f), 3, new Color(1, .5f, .2f));
-            foreach (var m in world.maps[player.map].monsters) Mark(vh, At(m.x, m.y + .5f), m.Def.IsChest ? 3 : 2, m.Def.IsChest ? Color.yellow : new Color(.96f, .33f, .32f));
+            foreach (var m in world.maps[player.map].monsters) Mark(vh, At(m.x, m.y + .5f), 2, new Color(.96f, .33f, .32f));
             foreach (var p in world.players) if (p != player && p.map == player.map && !p.dead) Mark(vh, At(p.x, p.y + .6f), 3, new Color(.5f, 1, .55f));
             var cam = Camera.main;
             if (cam && cam.orthographic)

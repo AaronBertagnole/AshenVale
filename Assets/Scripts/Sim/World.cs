@@ -7,7 +7,6 @@ namespace AshenVale
     // while a living player is on it (so in a party, players can split up across maps).
     // Each spawn point holds a small pack of monsters (Tuning.SpawnPackSize; bosses one); when one dies the point
     // refills one after the monster's respawn time, scaled by Tuning.RespawnScale.
-    // Chest spawn points are different: they are the spots where a chest may turn up (see World.UpdateChests).
     public sealed class MapRuntime
     {
         public readonly MapDef def;
@@ -16,8 +15,6 @@ namespace AshenVale
         public readonly List<ProjectileState> shots = new List<ProjectileState>();
         public readonly int[] spawnCount;        // monsters alive from each spawn point
         public readonly float[] spawnTimers;
-        public float chestTimer;            // seconds until the next chest turns up (counts while below maxChests)
-        public int lastChestSpot = -1;      // spawn point of the last chest, so the next one is somewhere else
         public MapRuntime(MapDef def)
         {
             this.def = def;
@@ -45,7 +42,6 @@ namespace AshenVale
             rng = new System.Random(seed);
             maps = new MapRuntime[Maps.All.Length];
             for (int i = 0; i < maps.Length; i++) maps[i] = new MapRuntime(Maps.All[i]);
-            ResetChests();
         }
 
         int NextId() { return nextId++; }
@@ -98,12 +94,6 @@ namespace AshenVale
                 map.shots.Clear();
                 for (int i = 0; i < map.spawnCount.Length; i++) { map.spawnCount[i] = 0; map.spawnTimers[i] = 0; }
             }
-            ResetChests();
-        }
-
-        void ResetChests()
-        {
-            foreach (var map in maps) { map.chestTimer = 0f; map.lastChestSpot = -1; }
         }
 
         bool HasLivingPlayer(int mapId)
@@ -139,7 +129,6 @@ namespace AshenVale
                 UpdateMonsters(map, dt);
                 UpdateShots(map, dt);
                 UpdateSpawning(map, dt);
-                UpdateChests(map, dt);
             }
         }
 
@@ -363,7 +352,6 @@ namespace AshenVale
             bool arriving = p.map != mapId;
             p.map = mapId;
             p.ch.SeeMap(mapId);     // the world map shows every map you have been to
-            if (arriving) ChestOnArrival(maps[mapId]);
             p.x = p.px = x;
             p.y = p.py = y;
             p.vx = p.vy = 0;
@@ -562,8 +550,7 @@ namespace AshenVale
             }
             map.monsters.Remove(m);
             var def = m.Def;
-            if (def.IsChest) map.chestTimer = Tuning.ChestCooldown;   // no new chest for a while, and only when someone arrives
-            else if (m.spawn >= 0 && m.spawn < map.spawnCount.Length)
+            if (m.spawn >= 0 && m.spawn < map.spawnCount.Length)
             {
                 map.spawnCount[m.spawn] = Mathf.Max(0, map.spawnCount[m.spawn] - 1);
                 map.spawnTimers[m.spawn] = Mathf.Max(map.spawnTimers[m.spawn], def.respawn * (def.boss ? 1f : Tuning.RespawnScale));
@@ -848,7 +835,6 @@ namespace AshenVale
             for (int i = 0; i < points.Length; i++)
             {
                 var def = Monsters.All[points[i].monster];
-                if (def.IsChest) continue;
                 int capacity = def.boss ? 1 : Tuning.SpawnPackSize;
                 if (map.spawnCount[i] >= capacity) continue;
                 map.spawnTimers[i] -= dt;
@@ -865,7 +851,7 @@ namespace AshenVale
             var def = Monsters.All[point.monster];
             // Pack members spread out along the point's stretch instead of stacking on one spot.
             float inset = Mathf.Min(def.width * .5f, .5f) + .2f;
-            float x = def.boss || def.IsChest ? point.x : Mathf.Clamp(point.x + ((float)rng.NextDouble() * 2f - 1f) * Tuning.PackSpread, point.left + inset, point.right - inset);
+            float x = def.boss ? point.x : Mathf.Clamp(point.x + ((float)rng.NextDouble() * 2f - 1f) * Tuning.PackSpread, point.left + inset, point.right - inset);
             if (point.right - point.left < inset * 2f) x = point.x;
             float y = map.def.IsGroundFloor(point.y) ? map.def.GroundAt(x) : point.y;
             var m = new MonsterState
@@ -878,50 +864,6 @@ namespace AshenVale
             };
             map.monsters.Add(m);
             return m;
-        }
-
-        // Unopened chests move on after a while (the view fades them out); the cooldown counts down meanwhile.
-        void UpdateChests(MapRuntime map, float dt)
-        {
-            map.chestTimer = Mathf.Max(0f, map.chestTimer - dt);
-            for (int i = map.monsters.Count - 1; i >= 0; i--)
-            {
-                var m = map.monsters[i];
-                if (!m.Def.IsChest) continue;
-                m.life -= dt;
-                if (m.life > 0f) continue;
-                map.monsters.RemoveAt(i);
-                map.chestTimer = Tuning.ChestCooldown;
-            }
-        }
-
-        // Someone arrived on the map: with some luck a chest is waiting at one of its chest spots (never the one
-        // used last, and never within the cooldown of the last one). Staying on a map never brings another:
-        // leave and come back, or have a friend arrive. At most def.maxChests are out at once.
-        void ChestOnArrival(MapRuntime map)
-        {
-            int present = 0;
-            foreach (var m in map.monsters) if (m.Def.IsChest) present++;
-            if (present >= map.def.maxChests || map.chestTimer > 0f || rng.NextDouble() >= Tuning.ChestOnArrival) return;
-
-            var points = map.def.spawns;
-            int choices = 0, pick = -1;
-            for (int pass = 0; pass < 2 && pick < 0; pass++)
-                for (int i = 0; i < points.Length; i++)
-                {
-                    if (!Monsters.All[points[i].monster].IsChest || ChestAt(map, i)) continue;
-                    if (pass == 0 && i == map.lastChestSpot) continue;
-                    if (rng.Next(++choices) == 0) pick = i;     // each free spot equally likely
-                }
-            if (pick < 0) return;
-            SpawnAt(map, pick).life = Tuning.ChestLifetime;
-            map.lastChestSpot = pick;
-        }
-
-        static bool ChestAt(MapRuntime map, int spawn)
-        {
-            foreach (var m in map.monsters) if (m.spawn == spawn) return true;
-            return false;
         }
 
         // ---------------------------------------------------------------- loot
