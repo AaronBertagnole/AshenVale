@@ -97,14 +97,7 @@ namespace AshenVale
 
         // Loot and items
         public const float PartDropChance = .35f;   // chance a monster also drops its part (some monsters override it)
-        public const int ChestParts = 3;            // parts a chest spills
-        // Chests appear at one of a map's chest spots (k in the layouts) when someone arrives on the map, never the
-        // same spot twice in a row, and never while you simply stay there: leave and come back (or have a friend
-        // arrive) for another chance. An unopened chest moves on after a while.
-        public const int ChestsAtOnce = 1;          // per map, unless the map says otherwise (MapDef.maxChests)
-        public const float ChestOnArrival = .5f;    // chance a chest is waiting when someone arrives on a map
-        public const float ChestCooldown = 60f;     // no new chest within this long of one being opened or moving on
-        public const float ChestLifetime = 180f;    // an unopened chest moves on after this long
+        public const int ChestParts = 3;            // parts a boss spills
         public const int MaxParts = 999;            // most of one part you can carry
         public const int MaxUpgrade = 5;            // smithy upgrades per item
         public const float UpgradeStatGain = .12f;  // each upgrade adds this share of the item's base stats (at least 1)
