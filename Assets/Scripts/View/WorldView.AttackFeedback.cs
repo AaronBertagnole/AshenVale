@@ -28,7 +28,7 @@ namespace AshenVale
                     if (attacker == null) break;
                     bool knight = attacker.Hero.dragonKnight;
                     var impact = knight
-                        ? new Color(1f, .57f, .20f, .9f)
+                        ? new Color(1f, .22f, .36f, .9f)
                         : new Color(.93f, .96f, .60f, .85f);
                     Burst(e, impact, knight ? 7 : 4, .40f, knight ? 3.5f : 2.7f, false);
                     break;

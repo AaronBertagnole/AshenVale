@@ -713,29 +713,51 @@ namespace AshenVale
             }
             else
             {
-                float length = fang ? 2.8f : 1.6f;
-                DragonLine(root, sr.sharedMaterial, new [] { new Vector3(-length * .5f, 0, 0), new Vector3(length * .5f, 0, 0) }, fang ? .07f : .035f);
-                DragonLine(root, sr.sharedMaterial, new [] { new Vector3(length * .5f - .3f, .17f, 0), new Vector3(length * .5f, 0, 0), new Vector3(length * .5f - .3f, -.17f, 0) }, .045f);
+                // A straight, tapered spear streak with an inset steel highlight.
+                float half = fang ? 1.4f : .8f;
+                var streak = DragonLine(root, sr.sharedMaterial,
+                    new[] { new Vector3(-half, 0f, 0f), new Vector3(half, 0f, 0f) }, fang ? .14f : .10f);
+                streak.endWidth = .012f;
+                var tail = streak.startColor;
+                tail.a = .38f;
+                streak.startColor = tail;
+
+                var edge = DragonLine(root, sr.sharedMaterial,
+                    new[] { new Vector3(-half * .55f, .012f, 0f), new Vector3(half * .93f, .012f, 0f) },
+                    fang ? .031f : .024f, true);
+                edge.endWidth = .004f;
                 if (fang)
                 {
-                    // Angular spectral jaws opening around the piercing spear.
                     for (int side = -1; side <= 1; side += 2)
-                        DragonLine(root, sr.sharedMaterial, new [] { new Vector3(-1.1f, side * .15f, 0), new Vector3(-.5f, side * .48f, 0), new Vector3(.3f, side * .35f, 0), new Vector3(.65f, side * .12f, 0) }, .07f);
+                    {
+                        var wisp = DragonLine(root, sr.sharedMaterial, new[]
+                        {
+                            new Vector3(-1.10f, side * .19f, 0f),
+                            new Vector3(-.36f, side * .24f, 0f),
+                            new Vector3(.64f, side * .23f, 0f),
+                            new Vector3(1.05f, side * .19f, 0f)
+                        }, .042f);
+                        wisp.endWidth = .01f;
+                    }
                 }
             }
-            float duration = fissure ? .55f : fang ? .32f : sweep ? .16f : .2f;
+            float duration = fissure ? .55f : fang ? .25f : sweep ? .16f : .13f;
             slashes.Add(new SlashFx { obj = root, sr = sr, life = duration, duration = duration,
                 direction = e.facing, x = e.x, y = e.y, dragon = fissure ? 3 : fang ? 2 : sweep ? 4 : 1 });
         }
 
-        static void DragonLine(GameObject parent, Material material, Vector3[] points, float width)
+        static LineRenderer DragonLine(GameObject parent, Material material, Vector3[] points, float width, bool highlight = false)
         {
-            var child = new GameObject("Ember stroke"); child.transform.SetParent(parent.transform, false);
+            var child = new GameObject("Spear stroke"); child.transform.SetParent(parent.transform, false);
             var line = child.AddComponent<LineRenderer>();
             line.sharedMaterial = material; line.useWorldSpace = false;
             line.positionCount = points.Length; line.SetPositions(points);
-            line.startWidth = line.endWidth = width; line.sortingOrder = SlashOrder;
-            line.startColor = line.endColor = new Color(1f, .58f, .18f, .9f);
+            line.startWidth = line.endWidth = width;
+            line.sortingOrder = highlight ? SlashOrder + 1 : SlashOrder;
+            line.startColor = line.endColor = highlight
+                ? new Color(.94f, .90f, .95f, .90f)
+                : new Color(.98f, .12f, .29f, .9f);
+            return line;
         }
 
         void SpawnSlash(SimEvent e)
@@ -772,8 +794,16 @@ namespace AshenVale
                         fx.obj.transform.rotation = Quaternion.Euler(0, 0, fx.direction * Mathf.Lerp(-15f, 15f, age));
                     float grow = Mathf.Min(1f, age * 5f);
                     fx.obj.transform.localScale = new Vector3((fx.dragon == 3 ? 1 : fx.direction) * (.25f + .75f * grow), 1, 1);
+                    float fade = fx.life / (fx.life + dt);
                     foreach (var line in fx.obj.GetComponentsInChildren<LineRenderer>())
-                        line.startColor = line.endColor = new Color(1f, .58f, .18f, t * .95f);
+                    {
+                        var start = line.startColor;
+                        var end = line.endColor;
+                        start.a *= fade;
+                        end.a *= fade;
+                        line.startColor = start;
+                        line.endColor = end;
+                    }
                     continue;
                 }
                 if (fx.ring)
