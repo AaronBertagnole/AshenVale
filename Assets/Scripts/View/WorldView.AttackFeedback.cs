@@ -21,7 +21,7 @@ namespace AshenVale
             {
                 case SimEventKind.RangerRelease:
                     var green = new Color(.73f, 1f, .57f, .75f);
-                    Burst(e, green, e.heavy ? 7 : 4, .17f, 2.7f, true);
+                    Burst(e, green, e.heavy ? 7 : 4, .36f, 2.7f, true);
                     break;
                 case SimEventKind.HeroImpact:
                     var attacker = world.GetPlayer(e.playerId);
@@ -30,13 +30,13 @@ namespace AshenVale
                     var impact = knight
                         ? new Color(1f, .57f, .20f, .9f)
                         : new Color(.93f, .96f, .60f, .85f);
-                    Burst(e, impact, knight ? 7 : 4, .19f, knight ? 3.5f : 2.7f, false);
+                    Burst(e, impact, knight ? 7 : 4, .40f, knight ? 3.5f : 2.7f, false);
                     break;
                 case SimEventKind.RimeBurst:
-                    Burst(e, new Color(.65f, .94f, 1f, .86f), 8, .25f, 3.2f, false);
+                    Burst(e, new Color(.65f, .94f, 1f, .86f), 8, .50f, 3.2f, false);
                     break;
                 case SimEventKind.RimeStorm:
-                    Burst(e, new Color(.85f, .72f, 1f, .8f), 5, .16f, 2.6f, false);
+                    Burst(e, new Color(.85f, .72f, 1f, .8f), 5, .34f, 2.6f, false);
                     break;
             }
         }
@@ -44,7 +44,7 @@ namespace AshenVale
         void Burst(SimEvent e, Color color, int count, float duration, float speed, bool forward)
         {
             var origin = new Vector2(e.x, e.y);
-            AddAttackSpark(Sprites.Disc, origin, Vector2.zero, color, .30f, .26f, .075f);
+            AddAttackSpark(Sprites.Disc, origin, Vector2.zero, color, .30f, .26f, .16f);
             for (int i = 0; i < count; i++)
             {
                 float angle = forward
@@ -91,7 +91,7 @@ namespace AshenVale
                 Vector2 position = spark.origin + spark.velocity * (spark.age * (1f - .32f * t));
                 spark.renderer.transform.position = new Vector3(position.x, position.y, 0f);
                 var color = spark.color;
-                color.a *= (1f - t) * (1f - t);
+                color.a *= 1f - t * t;
                 spark.renderer.color = color;
             }
         }
@@ -110,7 +110,7 @@ namespace AshenVale
             var trail = projectile.AddComponent<TrailRenderer>();
             trail.sharedMaterial = projectile.GetComponent<SpriteRenderer>().sharedMaterial;
             trail.sortingOrder = ArrowOrder - 1;
-            trail.time = rime ? .13f : .075f;
+            trail.time = rime ? .28f : .16f;
             trail.minVertexDistance = .045f;
             trail.startWidth = rime ? .18f : .055f;
             trail.endWidth = 0f;
