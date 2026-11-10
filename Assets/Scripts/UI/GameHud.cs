@@ -219,6 +219,7 @@ namespace AshenVale
             if (smithyOpen && def.hasSmithy) DrawSmithy(me, def);
             if (worldMapOpen) DrawWorldMap(me);
             if (abilitiesOpen) DrawAbilities(me);
+            else if (!WindowOpen && !me.dead && me.ch.UnspentPoints > 0) DrawPointsHint(me);
             if (controlsOpen) DrawControls();
             if (!canvasActive && me.portalCast > 0) GUI.Label(new Rect(18, 218, 500, 35), "Casting Town Portal...", bodyStyle);
             if (!canvasActive) DrawBanner(me, def);

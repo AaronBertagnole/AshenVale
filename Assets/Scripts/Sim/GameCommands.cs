@@ -13,6 +13,8 @@ namespace AshenVale
         void Travel(int town);
         void Upgrade(int target);   // smithy: 0-3 worn slot, Smithing.InventoryTarget + i for inventory item i
         void SellPart(int part, int count);   // merchant: count parts of one kind (0 = all)
+        void RankUp(int ability);   // ability window: put one point into Abilities.Basic / Skill / Movement
+        void Respec();              // ability window, in a town: take every point back
     }
 
     public sealed class LocalCommands : IGameCommands
@@ -29,5 +31,7 @@ namespace AshenVale
         public void BuyGear(Slot slot) { world.BuyGear(player(), slot); }
         public void Travel(int town) { world.Travel(player(), town); }
         public void Upgrade(int target) { world.Upgrade(player(), target); }
+        public void RankUp(int ability) { world.RankUp(player(), ability); }
+        public void Respec() { world.Respec(player()); }
     }
 }

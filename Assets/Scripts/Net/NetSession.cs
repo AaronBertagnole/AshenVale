@@ -309,6 +309,8 @@ namespace AshenVale
                 case 4: world.Travel(playerId, argument); break;
                 case 5: world.Upgrade(playerId, argument); break;
                 case 6: world.SellPart(playerId, argument & 255, argument >> 8); break;
+                case 7: world.RankUp(playerId, argument); break;
+                case 8: world.Respec(playerId); break;
             }
             var p = world.GetPlayer(playerId);
             if (p != null) SendCharacter(sender, p);           // show the result right away
@@ -637,6 +639,8 @@ namespace AshenVale
         public void BuyGear(Slot slot) { net.SendCommand(3, (int)slot); }
         public void Travel(int town) { net.SendCommand(4, town); }
         public void Upgrade(int target) { net.SendCommand(5, target); }
+        public void RankUp(int ability) { net.SendCommand(7, ability); }
+        public void Respec() { net.SendCommand(8, 0); }
         public void SellPart(int part, int count) { net.SendCommand(6, (part & 255) | (Mathf.Clamp(count, 0, 9999) << 8)); }
     }
 }

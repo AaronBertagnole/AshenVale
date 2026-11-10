@@ -256,7 +256,7 @@ namespace AshenVale
                     if (atEdge) BeginRangerFlip(p);
                 }
             }
-            if (allowDash && input.dash && p.dashCooldown <= 0 && !knocked && !p.climbing)
+            if (allowDash && input.dash && p.dashCooldown <= 0 && !knocked && !p.climbing && Abilities.Unlocked(p, Abilities.Movement))
             {
                 if(RimecallerRules.Is(p.Hero)) { Froststep(p,def,vertical); axis=0; }
                 else if (p.Hero.dragonKnight)
@@ -410,6 +410,7 @@ namespace AshenVale
 
         void Attack(PlayerState p, MapRuntime map, bool skill)
         {
+            if (skill && !Abilities.Unlocked(p, Abilities.Skill)) return;
             if(RimecallerRules.Is(p.Hero)) { BeginRimeAttack(p,map,skill); return; }
             if (p.attackCooldown > 0 || (p.Hero.dragonKnight && (p.leapActive || p.climbing || p.knockTime > 0))) return;
             var hero = p.Hero;
@@ -441,10 +442,11 @@ namespace AshenVale
         {
             var hero = p.Hero;
             int count = skill ? Abilities.SkillArrows(p) : 1;
+            float middle = count <= 3 ? 1f : (count - 1) * .5f;     // one arrow and volleys of three sit where they always did
             events.Add(new SimEvent
             {
                 kind = SimEventKind.RangerRelease, map = map.def.id, playerId = p.id,
-                x = p.x + facing * .7f, y = p.y + 1.1f + ((count - 1) * .5f - 1f) * .17f,
+                x = p.x + facing * .7f, y = p.y + 1.1f + ((count - 1) * .5f - middle) * .17f,
                 facing = facing, heavy = skill
             });
             var volley = new HashSet<int>();
@@ -452,7 +454,7 @@ namespace AshenVale
                 map.shots.Add(new ProjectileState
                 {
                     id = NextId(), map = map.def.id, owner = p.id, damage = damage, pierce = skill ? Abilities.SkillPierce(p) : 1,
-                    x = p.x + facing * .7f, y = p.y + 1.1f + (i - 1) * .17f, direction = facing, life = Tuning.ArrowLife, hitSet = volley,
+                    x = p.x + facing * .7f, y = p.y + 1.1f + (i - middle) * .17f, direction = facing, life = Tuning.ArrowLife, hitSet = volley,
                 });
             for (int i = map.shots.Count - count; i < map.shots.Count; i++) { map.shots[i].px = map.shots[i].x; map.shots[i].py = map.shots[i].y; }
         }

@@ -11,7 +11,7 @@ namespace AshenVale {
   static ProjectileState Orb(PlayerState p,int id,float x,float y){return new ProjectileState {id=id,owner=p.id,map=p.map,x=x,px=x,y=y,py=y,direction=1,life=1.4f,damage=10,pierce=1};}
   [MenuItem("AshenVale/Hero polish/Run checks")]
   public static void Run(){
-   var w=new World(29);var p=w.AddPlayer(new Character {hero=2,name="Polish test"});var map=w.maps[p.map];
+   var w=new World(29);var p=w.AddPlayer(new Character {hero=2,name="Polish test"});var map=w.maps[p.map];p.ch.abilityRanks[1]=1;p.ch.abilityRanks[2]=1;
    int small=0;for(int i=1;i<Monsters.All.Length;i++)if(Monsters.All[i].height<Monsters.All[small].height)small=i;
    float x=(map.def.minX+map.def.maxX)*.5f,y=p.y;p.x=x;
    var target=Mob(9101,small,p.map,x+2,y);map.monsters.Add(target);

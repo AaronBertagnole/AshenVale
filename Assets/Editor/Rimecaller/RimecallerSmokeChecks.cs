@@ -9,7 +9,7 @@ namespace AshenVale {
   [MenuItem("AshenVale/Rimecaller/Run smoke checks")]
   public static void Run(){
    Check(Heroes.All.Length>=3 && Heroes.All[0].folder=="DragonKnight" && Heroes.All[1].folder=="ElvenRanger" && RimecallerRules.Is(Heroes.All[2]),"class IDs preserved");
-   var w=new World(17);var p=w.AddPlayer(new Character {hero=2,name="Rime test"});var map=w.maps[p.map];
+   var w=new World(17);var p=w.AddPlayer(new Character {hero=2,name="Rime test"});var map=w.maps[p.map];p.ch.abilityRanks[1]=1;p.ch.abilityRanks[2]=1;
    Call(w,"BeginRimeAttack",p,map,false);Call(w,"TickRimecaller",.19f);
    Check(map.shots.Count==1,"orb releases after windup");
    Call(w,"BeginRimeAttack",p,map,false);Call(w,"TickRimecaller",1f);Check(map.shots.Count==1,"cooldown blocks repeated cast");

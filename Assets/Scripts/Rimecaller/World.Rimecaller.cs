@@ -11,7 +11,7 @@ namespace AshenVale {
    p.attackCooldown=skill?Abilities.SkillSwing(p):Abilities.BasicCooldown(p);
    p.attackDuration=p.attackVisual=skill?.65f:.4f;
    float strikeX=Mathf.Clamp(p.x+p.facing*2.6f,map.def.minX,map.def.maxX);
-   rimeCasts.Add(new RimeCast {owner=p.id,map=p.map,facing=p.facing,storm=skill,remaining=skill?3:1,
+   rimeCasts.Add(new RimeCast {owner=p.id,map=p.map,facing=p.facing,storm=skill,remaining=skill?Abilities.SkillStrikes(p):1,
     wait=skill?p.Hero.skillWindup:p.Hero.basicWindup,
     damage=skill?Abilities.SkillDamage(p):Abilities.BasicDamage(p),
     x=strikeX,y=skill?FloorAt(map.def,strikeX,p.y):p.y});

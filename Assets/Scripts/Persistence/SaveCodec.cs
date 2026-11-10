@@ -9,7 +9,7 @@ namespace AshenVale
         // 1: first save format.  2: adds lastTown, towns, monster parts, item level and upgrade
         //    (older files start with Emberhaven only, no parts, items at level 1 +0).
         // 3: adds maps visited, for the world map (older files: the towns found and the map the hero is on).
-        // 4: adds ability ranks and picks (older files: every ability at rank 1, so all points are unspent).
+        // 4: adds ability ranks and picks (older files: basic attack only, so all points are unspent).
         public const int Version = 4;
 
         // forSave: true for the save file (a fallen hero is stored as woken in town); false for sending a
@@ -71,14 +71,15 @@ namespace AshenVale
             ch.mapsSeen = seen;
             if (d.parts != null)
                 for (int i = 0; i < d.parts.Length && i < ch.parts.Length; i++) ch.parts[i] = Mathf.Clamp(d.parts[i], 0, Tuning.MaxParts);
-            // Ability ranks: 1 to MaxRank each, and never more points spent than the level has earned
+            // Ability ranks: up to MaxRank each (the basic attack at least 1), and never more points spent than the level has earned
             // (anything over is taken back from the last ability first).
             int budget = ch.PointsEarned;
             for (int i = 0; i < Abilities.Count; i++)
             {
-                int rank = d.abilityRanks != null && i < d.abilityRanks.Length ? Mathf.Clamp(d.abilityRanks[i], 1, Abilities.MaxRank) : 1;
-                rank = Mathf.Min(rank, 1 + budget);
-                budget -= rank - 1;
+                int start = Abilities.StartRank(i);
+                int rank = d.abilityRanks != null && i < d.abilityRanks.Length ? Mathf.Clamp(d.abilityRanks[i], start, Abilities.MaxRank) : start;
+                rank = Mathf.Min(rank, start + budget);
+                budget -= rank - start;
                 ch.abilityRanks[i] = rank;
                 int pick = d.abilityPicks != null && i < d.abilityPicks.Length ? Mathf.Clamp(d.abilityPicks[i], 0, 2) : 0;
                 ch.abilityPicks[i] = rank >= Abilities.PickRank ? pick : 0;
