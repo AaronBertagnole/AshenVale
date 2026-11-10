@@ -282,8 +282,8 @@ namespace AshenVale
                     Mathf.Max(.001f, p.Hero.fangLungeDuration) * step / Mathf.Max(.000001f, dt);
                 p.fangLungeTime = Mathf.Max(0f, p.fangLungeTime - step);
             }
-            else if (p.leapActive) p.vx = p.leapDirection * p.Hero.leapSpeed;
-            else if (p.dashTime > 0) { p.dashTime -= dt; p.vx = p.facing * Tuning.DashSpeed; }
+            else if (p.leapActive) p.vx = p.leapDirection * Abilities.LeapSpeed(p);
+            else if (p.dashTime > 0) { p.dashTime -= dt; p.vx = p.facing * Abilities.DashSpeed(p); }
             else p.vx = axis * p.Hero.moveSpeed * (p.crouching ? Tuning.CrouchSpeedFactor : p.grounded || p.climbing ? 1f : Tuning.AirSpeedFactor);
             if (!p.grounded) p.fangLungeTime = 0;
             p.x = Mathf.Clamp(p.x + (p.climbing ? 0 : p.vx * dt), def.minX, def.maxX);

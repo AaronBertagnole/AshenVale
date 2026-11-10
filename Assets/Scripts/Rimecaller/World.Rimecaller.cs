@@ -66,7 +66,7 @@ namespace AshenVale {
    float destX=p.x,destY=p.y;bool vert=false;
    if(vertical>.5f) vert=BlinkVertical(p,def,true,out destX,out destY);
    else if(vertical<-.5f) vert=BlinkVertical(p,def,false,out destX,out destY);
-   if(!vert) { destX=Mathf.Clamp(p.x+p.facing*RimecallerRules.BlinkDistance,def.minX,def.maxX);destY=p.y; }
+   if(!vert) { destX=Mathf.Clamp(p.x+p.facing*Abilities.BlinkDistance(p),def.minX,def.maxX);destY=p.y; }
    p.mp-=Abilities.MoveCost(p);p.dashCooldown=Abilities.MoveCooldown(p);
    events.Add(new SimEvent {kind=SimEventKind.RimeTeleport,map=p.map,playerId=p.id,x=p.x,y=p.y});
    p.x=destX;p.px=p.x;

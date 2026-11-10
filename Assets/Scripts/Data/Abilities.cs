@@ -59,9 +59,9 @@ namespace AshenVale
             if (slot == Skill)
                 return "Each rank: +5% damage, 0.1s faster cooldown" + (hero.style == AttackStyle.Melee ? ", +2% reach" : "") + "; every 2nd rank: -1 MP"
                      + (hero.style == AttackStyle.Arrows ? "; ranks 5 and 10: +1 arrow" : hero.style == AttackStyle.Magic ? "; ranks 5 and 10: +1 strike" : "");
-            if (RimecallerRules.Is(hero)) return "Each rank: 0.04s faster cooldown; every 3rd rank: -1 MP";
-            if (hero.dragonKnight) return "Each rank: +5% damage, +3% fissure reach, 0.04s faster cooldown";
-            return "Each rank: 0.04s faster cooldown, a little longer untouchable";
+            if (RimecallerRules.Is(hero)) return "Each rank: blinks further, 0.04s faster cooldown; every 3rd rank: -1 MP";
+            if (hero.dragonKnight) return "Each rank: leaps further, +5% damage, +3% fissure reach, 0.04s faster cooldown";
+            return "Each rank: dashes further, 0.04s faster cooldown, a little longer untouchable";
         }
 
         // ---- Effective values (what the sim uses) ----
@@ -93,6 +93,15 @@ namespace AshenVale
             float cooldown = RimecallerRules.Is(p.Hero) ? RimecallerRules.BlinkCooldown : p.Hero.dragonKnight ? p.Hero.leapCooldown : Tuning.DashCooldown;
             return UnityEngine.Mathf.Max(.2f, cooldown - MoveCooldownPerRank * Steps(p, Movement));
         }
+        // How far the movement ability carries: short at rank 1, the old distance around rank 6, further at rank 10.
+        public const float MoveReachAtRank1 = .65f, MoveReachAtMax = 1.25f;
+        public static float MoveReach(PlayerState p)
+        {
+            return UnityEngine.Mathf.Lerp(MoveReachAtRank1, MoveReachAtMax, Steps(p, Movement) / (float)(MaxRank - 1));
+        }
+        public static float BlinkDistance(PlayerState p) { return RimecallerRules.BlinkDistance * MoveReach(p); }  // sideways Froststep
+        public static float LeapSpeed(PlayerState p) { return p.Hero.leapSpeed * MoveReach(p); }                  // same arc, more ground covered
+        public static float DashSpeed(PlayerState p) { return Tuning.DashSpeed * MoveReach(p); }                  // same time, more ground covered
         public static float DashImmunity(PlayerState p) { return Tuning.DashImmunity + ImmunityPerRank * Steps(p, Movement); }
         public static int LeapDamage(PlayerState p) { return Scaled(BaseDamage(p) + p.Hero.leapBonus, LeapDamagePerRank, Steps(p, Movement)); }
         public static float FissureRange(PlayerState p) { return p.Hero.fissureRange * (1f + FissurePerRank * Steps(p, Movement)); }
@@ -108,7 +117,7 @@ namespace AshenVale
                 if (p.Hero.style == AttackStyle.Magic) text += "   ·   " + SkillStrikes(p) + " strikes";
                 return text;
             }
-            string move = MoveCooldown(p).ToString("0.0") + "s cooldown";
+            string move = UnityEngine.Mathf.RoundToInt(MoveReach(p) * 100f) + "% distance   ·   " + MoveCooldown(p).ToString("0.0") + "s cooldown";
             if (MoveCost(p) > 0) move = MoveCost(p) + " MP   ·   " + move;
             if (p.Hero.dragonKnight) move = "Damage " + LeapDamage(p) + "   ·   " + move;
             return move;
