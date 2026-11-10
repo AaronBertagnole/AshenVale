@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace AshenVale
 {
-    public enum GameAction { Left, Right, Up, Down, Jump, Attack, Skill, Dash, Interact, TownPortal, HpPotion, MpPotion, Inventory, WorldMap, Minimap, Loot }
+    public enum GameAction { Left, Right, Up, Down, Jump, Attack, Skill, Dash, Interact, TownPortal, HpPotion, MpPotion, Inventory, WorldMap, Minimap, Loot, Abilities }
 
     // Key bindings: two keys per action (either works), saved on this PC (PlayerPrefs) and changed from the
     // Controls window in the Esc menu. Everything that reads the keyboard or names a key goes through here.
@@ -16,11 +16,13 @@ namespace AshenVale
             { KeyCode.Space, KeyCode.None }, { KeyCode.J, KeyCode.None }, { KeyCode.K, KeyCode.None }, { KeyCode.L, KeyCode.LeftShift },
             { KeyCode.E, KeyCode.None }, { KeyCode.T, KeyCode.None }, { KeyCode.Q, KeyCode.None }, { KeyCode.F, KeyCode.None },
             { KeyCode.I, KeyCode.None }, { KeyCode.M, KeyCode.None }, { KeyCode.Tab, KeyCode.None }, { KeyCode.E, KeyCode.None },
+            { KeyCode.P, KeyCode.None },
         };
         static readonly string[] names =
         {
             "Move left", "Move right", "Up / climb / enter portal", "Down / climb / crouch", "Jump (Down + Jump drops through)", "Attack", "Special attack",
             "Dash", "Talk / use", "Portal back to town", "HP potion", "MP potion", "Inventory", "World map", "Show / hide minimap", "Loot",
+            "Abilities",
         };
         static KeyCode[,] bound;
         public static int Count { get { return defaults.GetLength(0); } }

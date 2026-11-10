@@ -261,17 +261,17 @@ namespace AshenVale
                 if(RimecallerRules.Is(p.Hero)) { Froststep(p,def,vertical); axis=0; }
                 else if (p.Hero.dragonKnight)
                 {
-                    if (p.grounded && p.attackVisual <= 0 && p.mp >= p.Hero.leapManaCost)
+                    if (p.grounded && p.attackVisual <= 0 && p.mp >= Abilities.MoveCost(p))
                     {
-                        p.mp -= p.Hero.leapManaCost;
-                        p.dashCooldown = p.Hero.leapCooldown;
+                        p.mp -= Abilities.MoveCost(p);
+                        p.dashCooldown = Abilities.MoveCooldown(p);
                         p.leapActive = true; p.leapDirection = p.facing;
                         p.grounded = false; p.crouching = false;
                         p.dropTimer = 0; p.landVisual = 0; p.vy = p.Hero.leapJumpSpeed;
                     }
                 }
                 else
-                { p.dashTime = Tuning.DashTime; p.dashCooldown = Tuning.DashCooldown; p.immunity = Mathf.Max(p.immunity, Tuning.DashImmunity); }
+                { p.dashTime = Tuning.DashTime; p.dashCooldown = Abilities.MoveCooldown(p); p.immunity = Mathf.Max(p.immunity, Abilities.DashImmunity(p)); }
             }
             if (knocked) p.vx = p.knockVx;
             else if (p.fangLungeTime > 0 && p.grounded)
@@ -413,17 +413,17 @@ namespace AshenVale
             if(RimecallerRules.Is(p.Hero)) { BeginRimeAttack(p,map,skill); return; }
             if (p.attackCooldown > 0 || (p.Hero.dragonKnight && (p.leapActive || p.climbing || p.knockTime > 0))) return;
             var hero = p.Hero;
-            if (skill && (p.mp < hero.skillManaCost || p.skillRecharge > 0)) return;
-            if (skill) { p.mp -= hero.skillManaCost; p.skillRecharge = hero.skillRecharge; }
+            if (skill && (p.mp < Abilities.SkillCost(p) || p.skillRecharge > 0)) return;
+            if (skill) { p.mp -= Abilities.SkillCost(p); p.skillRecharge = Abilities.SkillRecharge(p); }
             p.landVisual = 0;
             p.rangerFlipTime = 0;
             p.lastWasSkill = skill;
             if (!skill) p.comboStep++;
-            p.attackCooldown = skill ? hero.skillCooldown : hero.attackCooldown;
+            p.attackCooldown = skill ? Abilities.SkillSwing(p) : Abilities.BasicCooldown(p);
             p.attackVisual = hero.dragonKnight ? p.attackCooldown : (skill ? Tuning.SkillAttackVisual : hero.style == AttackStyle.Arrows ? p.attackCooldown : Tuning.BasicAttackVisual);
             p.attackDuration = p.attackVisual;
             p.attackSerial++;
-            int damage = hero.baseDamage + p.ch.level * Tuning.DamagePerLevel + p.ch.BonusAttack + (skill ? hero.skillBonus : 0);
+            int damage = skill ? Abilities.SkillDamage(p) : Abilities.BasicDamage(p);
 
             if (hero.dragonKnight || hero.style == AttackStyle.Arrows)
             {
@@ -440,7 +440,7 @@ namespace AshenVale
         void ReleaseArrows(PlayerState p, MapRuntime map, bool skill, int damage, int facing)
         {
             var hero = p.Hero;
-            int count = skill ? hero.arrowsPerSkill : 1;
+            int count = skill ? Abilities.SkillArrows(p) : 1;
             events.Add(new SimEvent
             {
                 kind = SimEventKind.RangerRelease, map = map.def.id, playerId = p.id,
@@ -451,7 +451,7 @@ namespace AshenVale
             for (int i = 0; i < count; i++)
                 map.shots.Add(new ProjectileState
                 {
-                    id = NextId(), map = map.def.id, owner = p.id, damage = damage, pierce = skill ? hero.skillPierce : 1,
+                    id = NextId(), map = map.def.id, owner = p.id, damage = damage, pierce = skill ? Abilities.SkillPierce(p) : 1,
                     x = p.x + facing * .7f, y = p.y + 1.1f + (i - 1) * .17f, direction = facing, life = Tuning.ArrowLife, hitSet = volley,
                 });
             for (int i = map.shots.Count - count; i < map.shots.Count; i++) { map.shots[i].px = map.shots[i].x; map.shots[i].py = map.shots[i].y; }
@@ -465,7 +465,7 @@ namespace AshenVale
             // Reach is measured to the monster's near edge, not its centre (so a wide boss can be hit from where you
             // touch it), and the weapon's height band (knees to above the head) must overlap the monster's body, so a
             // tall boss can be hit from a ledge level with its trunk.
-            float range = skill ? hero.skillRange : hero.meleeRange;
+            float range = skill ? Abilities.SkillRange(p) : Abilities.BasicRange(p);
             var targets = new List<MonsterState>();
             foreach (var m in map.monsters)
             {
@@ -490,12 +490,12 @@ namespace AshenVale
             p.landVisual = .24f;
             events.Add(new SimEvent { kind = SimEventKind.DragonFissure, map = p.map,
                 playerId = p.id, x = p.x, y = p.y, facing = p.facing });
-            int damage = p.Hero.baseDamage + p.ch.level * Tuning.DamagePerLevel + p.ch.BonusAttack + p.Hero.leapBonus;
+            int damage = Abilities.LeapDamage(p);
             // Snapshot targets: deaths remove entries from the live monster list.
             var targets = new List<MonsterState>();
             foreach (var m in map.monsters)
                 if (Mathf.Abs(m.y - p.currentFloor) < .35f &&
-                    Mathf.Abs(m.x - p.x) - m.Def.width * .5f <= p.Hero.fissureRange)
+                    Mathf.Abs(m.x - p.x) - m.Def.width * .5f <= Abilities.FissureRange(p))
                     targets.Add(m);
             foreach (var m in targets) HitMonster(map, m, damage, p, Tuning.PushFissure);
         }

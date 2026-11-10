@@ -16,6 +16,8 @@ namespace AshenVale
         public long towns = 1L << Maps.FirstTown;       // version 2: towns found (one bit per map id), for waystones (long since the ruins: map ids past 31)
         public int[] parts = new int[0];                // version 2: monster parts carried, by Parts id
         public long maps = 1L << Maps.FirstTown;        // version 3: maps visited (one bit per map id), for the world map
+        public int[] abilityRanks = new int[0];         // version 4: rank of each ability (missing: all rank 1)
+        public int[] abilityPicks = new int[0];         // version 4: mutation picked for each ability (0 = none)
         public float playSeconds;
         public ItemData[] inventory = new ItemData[0];
         public ItemData[] equipped = new ItemData[0];   // only filled slots; each item knows its slot

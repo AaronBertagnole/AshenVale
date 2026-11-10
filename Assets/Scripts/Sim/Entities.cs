@@ -19,6 +19,15 @@ namespace AshenVale
 
         public long mapsSeen = 1L << Maps.FirstTown;     // maps visited, one bit per map id (the world map shows these)
 
+        // Ability points: one per level from level 2. Each of the three abilities (Abilities.Basic / Skill /
+        // Movement) starts at rank 1; a rank above that costs a point. Picks are the rank-3 mutation choices
+        // (0 = none yet). Unspent points are worked out from the level, so they can never drift from it.
+        public readonly int[] abilityRanks = { 1, 1, 1 };
+        public readonly int[] abilityPicks = { 0, 0, 0 };
+        public int PointsEarned { get { return level - 1; } }
+        public int PointsSpent { get { int n = 0; foreach (int r in abilityRanks) n += r - 1; return n; } }
+        public int UnspentPoints { get { return System.Math.Max(0, PointsEarned - PointsSpent); } }
+
         public bool KnowsTown(int map) { return map >= 0 && map < 64 && (towns & (1L << map)) != 0; }
         public void FindTown(int map) { if (Maps.IsTown(map) && map < 64) { towns |= 1L << map; lastTown = map; } }
         public bool HasSeen(int map) { return map >= 0 && map < 64 && (mapsSeen & (1L << map)) != 0; }

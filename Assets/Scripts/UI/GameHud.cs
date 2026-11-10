@@ -8,7 +8,7 @@ namespace AshenVale
     // Labels over portals and town folk, monster health bars,
     // inventory, shop, waystone, smithy, world map and the Esc menu. Clicks become World commands (Equip, BuyPotion, BuyGear, Sell,
     // Travel, Upgrade), which the world checks before applying.
-    public sealed class GameHud
+    public sealed partial class GameHud
     {
         const float NpcReach = 2f;          // how close you must be to the merchant or waystone to open its window
         const float NpcLeaveReach = 3f;     // walking further than this closes it
@@ -31,7 +31,7 @@ namespace AshenVale
         public void ToggleCanvasWindow(int which)
         {
             bool wasOpen = which == 0 ? inventoryOpen : which == 1 ? worldMapOpen : menuOpen;
-            inventoryOpen = shopOpen = waystoneOpen = smithyOpen = worldMapOpen = menuOpen = controlsOpen = false;
+            inventoryOpen = shopOpen = waystoneOpen = smithyOpen = worldMapOpen = menuOpen = controlsOpen = abilitiesOpen = false;
             capturingAction = -1;
             if (!wasOpen) { if (which == 0) inventoryOpen = true; else if (which == 1) worldMapOpen = true; else menuOpen = true; }
         }
@@ -65,9 +65,9 @@ namespace AshenVale
             }
             GUI.skin = canvasSkin;
         }
-        public bool inventoryOpen, shopOpen, menuOpen, waystoneOpen, smithyOpen, worldMapOpen, controlsOpen;
+        public bool inventoryOpen, shopOpen, menuOpen, waystoneOpen, smithyOpen, worldMapOpen, controlsOpen, abilitiesOpen;
         public bool minimapShown = true;
-        public bool WindowOpen { get { return inventoryOpen || shopOpen || menuOpen || waystoneOpen || smithyOpen || worldMapOpen || controlsOpen; } }
+        public bool WindowOpen { get { return inventoryOpen || shopOpen || menuOpen || waystoneOpen || smithyOpen || worldMapOpen || controlsOpen || abilitiesOpen; } }
         // Controls window: which binding is waiting for a key (-1 none); while one is, the game ignores the keyboard.
         int capturingAction = -1, capturingSlot;
         public bool Capturing { get { return controlsOpen && capturingAction >= 0; } }
@@ -91,19 +91,19 @@ namespace AshenVale
 
         public GameHud(World world) { this.world = world; }
 
-        public void Close() { inventoryOpen = shopOpen = menuOpen = waystoneOpen = smithyOpen = worldMapOpen = controlsOpen = false; capturingAction = -1; bannerMap = -1; }
+        public void Close() { inventoryOpen = shopOpen = menuOpen = waystoneOpen = smithyOpen = worldMapOpen = controlsOpen = abilitiesOpen = false; capturingAction = -1; bannerMap = -1; }
 
         // Window keys (bindings in Keys): inventory, world map, minimap, and the loot / talk key at the merchant,
         // waystone or smithy; Esc closes a window or opens the menu. The world keeps running while windows are
         // open; only attacks are blocked.
         public void HandleKeys(PlayerState me, bool ignoreMouse = false)
         {
-            if (me == null || me.dead) { inventoryOpen = shopOpen = menuOpen = waystoneOpen = smithyOpen = worldMapOpen = controlsOpen = false; capturingAction = -1; return; }
+            if (me == null || me.dead) { inventoryOpen = shopOpen = menuOpen = waystoneOpen = smithyOpen = worldMapOpen = controlsOpen = abilitiesOpen = false; capturingAction = -1; return; }
             if (Capturing) return;                      // the Controls window is waiting for a key
             if (Input.GetKeyDown(KeyCode.Escape))
             {
                 if (controlsOpen) controlsOpen = false;
-                else if (inventoryOpen || shopOpen || waystoneOpen || smithyOpen || worldMapOpen) { inventoryOpen = shopOpen = waystoneOpen = smithyOpen = worldMapOpen = false; }
+                else if (inventoryOpen || shopOpen || waystoneOpen || smithyOpen || worldMapOpen || abilitiesOpen) { inventoryOpen = shopOpen = waystoneOpen = smithyOpen = worldMapOpen = abilitiesOpen = false; }
                 else menuOpen = !menuOpen;
             }
             if (menuOpen || controlsOpen) return;
@@ -114,6 +114,8 @@ namespace AshenVale
             if (talk && world.NearMerchant(me, NpcReach)) { shopOpen = !shopOpen; inventoryOpen = waystoneOpen = smithyOpen = worldMapOpen = false; }
             else if (talk && world.NearWaystone(me, NpcReach)) { waystoneOpen = !waystoneOpen; inventoryOpen = shopOpen = smithyOpen = worldMapOpen = false; }
             else if (talk && world.NearSmithy(me, NpcReach)) { smithyOpen = !smithyOpen; inventoryOpen = shopOpen = waystoneOpen = worldMapOpen = false; }
+            if (Keys.Pressed(GameAction.Abilities, ignoreMouse)) { abilitiesOpen = !abilitiesOpen; inventoryOpen = shopOpen = waystoneOpen = smithyOpen = worldMapOpen = false; }
+            else if (inventoryOpen || shopOpen || waystoneOpen || smithyOpen || worldMapOpen) abilitiesOpen = false;   // one window at a time
             if (shopOpen && !world.NearMerchant(me, NpcLeaveReach)) shopOpen = false;
             if (waystoneOpen && !world.NearWaystone(me, NpcLeaveReach)) waystoneOpen = false;
             if (smithyOpen && !world.NearSmithy(me, NpcLeaveReach)) smithyOpen = false;
@@ -216,6 +218,7 @@ namespace AshenVale
             if (waystoneOpen && town) DrawWaystone(me);
             if (smithyOpen && def.hasSmithy) DrawSmithy(me, def);
             if (worldMapOpen) DrawWorldMap(me);
+            if (abilitiesOpen) DrawAbilities(me);
             if (controlsOpen) DrawControls();
             if (!canvasActive && me.portalCast > 0) GUI.Label(new Rect(18, 218, 500, 35), "Casting Town Portal...", bodyStyle);
             if (!canvasActive) DrawBanner(me, def);

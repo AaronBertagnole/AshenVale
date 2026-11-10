@@ -174,9 +174,9 @@ namespace AshenVale
                 slot.key.text=PrimaryKey(slot.action);slot.value.text="";float time=0,duration=1;bool ready=!blocked;
                 switch(slot.action)
                 {
-                    case GameAction.Attack: time=me.attackCooldown;duration=me.lastWasSkill?me.Hero.skillCooldown:me.Hero.attackCooldown;break;
-                    case GameAction.Skill: { float recharge=me.skillRecharge,swing=me.attackCooldown;time=Mathf.Max(recharge,swing);duration=recharge>=swing?Mathf.Max(.01f,me.Hero.skillRecharge):(me.lastWasSkill?me.Hero.skillCooldown:me.Hero.attackCooldown); }ready &= me.mp>=me.Hero.skillManaCost;slot.value.text=me.Hero.skillManaCost+" MP";break;
-                    case GameAction.Dash:time=me.dashCooldown;if(RimecallerRules.Is(me.Hero)){duration=RimecallerRules.BlinkCooldown;slot.value.text=RimecallerRules.BlinkCost+" MP";ready &= !me.climbing && me.mp>=RimecallerRules.BlinkCost && me.attackVisual<=0;break;}duration=me.Hero.dragonKnight?me.Hero.leapCooldown:Tuning.DashCooldown;ready &= !me.climbing;if(me.Hero.dragonKnight){slot.value.text=me.Hero.leapManaCost+" MP";ready &= me.mp>=me.Hero.leapManaCost&&me.grounded;}break;
+                    case GameAction.Attack: time=me.attackCooldown;duration=me.lastWasSkill?Abilities.SkillSwing(me):Abilities.BasicCooldown(me);break;
+                    case GameAction.Skill: { float recharge=me.skillRecharge,swing=me.attackCooldown;time=Mathf.Max(recharge,swing);duration=recharge>=swing?Mathf.Max(.01f,Abilities.SkillRecharge(me)):(me.lastWasSkill?Abilities.SkillSwing(me):Abilities.BasicCooldown(me)); }ready &= me.mp>=Abilities.SkillCost(me);slot.value.text=Abilities.SkillCost(me)+" MP";break;
+                    case GameAction.Dash:time=me.dashCooldown;if(RimecallerRules.Is(me.Hero)){duration=Abilities.MoveCooldown(me);slot.value.text=Abilities.MoveCost(me)+" MP";ready &= !me.climbing && me.mp>=Abilities.MoveCost(me) && me.attackVisual<=0;break;}duration=Abilities.MoveCooldown(me);ready &= !me.climbing;if(me.Hero.dragonKnight){slot.value.text=Abilities.MoveCost(me)+" MP";ready &= me.mp>=Abilities.MoveCost(me)&&me.grounded;}break;
                     case GameAction.TownPortal:time=me.portalCast;duration=Tuning.PortalCastTime;ready &= def.kind!=MapKind.Town&&!me.portalOpen&&me.portalCast<=0;break;
                     case GameAction.HpPotion:slot.value.text="x"+ch.hpPotions;ready &= ch.hpPotions>0&&me.hp<me.MaxHp;break;
                     case GameAction.MpPotion:slot.value.text="x"+ch.mpPotions;ready &= ch.mpPotions>0&&me.mp<me.MaxMp;break;
