@@ -102,6 +102,7 @@ namespace AshenVale
         public void Reset()
         {
             ClearRimeFx();
+            ClearAttackFeedback();
             ClearLandingLeaves();
             foreach (var v in heroViews.Values) Object.Destroy(v.go);
             heroViews.Clear();
@@ -126,6 +127,7 @@ namespace AshenVale
             SyncShots(alpha);
             SyncPortals();
             UpdateSlashes(frameDt);
+            UpdateAttackFeedback(frameDt);
             UpdateLandingLeaves(frameDt);
             UpdateCamera(local, frameDt, alpha);
         }
@@ -133,6 +135,7 @@ namespace AshenVale
         void ShowMap(int map)
         {
             ClearRimeFx();
+            ClearAttackFeedback();
             ClearLandingLeaves();
             dropsSynced = false;
             dropPops.Clear();
@@ -149,6 +152,7 @@ namespace AshenVale
             foreach (var e in world.events)
             {
                 if (e.map != shownMap) continue;
+                PlayAttackFeedback(e);
                 if(e.kind==SimEventKind.RimeBurst || e.kind==SimEventKind.RimeStorm || e.kind==SimEventKind.RimeTeleport) {SpawnRimeFx(e);continue;}
                 if (e.kind == SimEventKind.EmbermarksPickedUp) continue;   // the bottom-left pickup note covers it (owner: no floating text)
                 if (e.kind == SimEventKind.Slash) SpawnSlash(e);
@@ -623,6 +627,7 @@ namespace AshenVale
                     go = art != null ? Sprites.Picture("Arrow", art, ArrowOrder, null, s.x, s.y)
                                      : Sprites.Block("Arrow", new Color(.72f, 1, .43f), .52f, .11f, ArrowOrder);
                     if(rime && art!=null) go.transform.localScale=Vector3.one*(.65f/art.bounds.size.x);
+                    AddAttackTrail(go, rime, Mathf.Lerp(s.px, s.x, alpha), Mathf.Lerp(s.py, s.y, alpha));
                     shotViews[s.id] = go;
                 }
                 go.transform.position = new Vector3(Mathf.Lerp(s.px, s.x, alpha), Mathf.Lerp(s.py, s.y, alpha), 0);

@@ -441,6 +441,12 @@ namespace AshenVale
         {
             var hero = p.Hero;
             int count = skill ? hero.arrowsPerSkill : 1;
+            events.Add(new SimEvent
+            {
+                kind = SimEventKind.RangerRelease, map = map.def.id, playerId = p.id,
+                x = p.x + facing * .7f, y = p.y + 1.1f + ((count - 1) * .5f - 1f) * .17f,
+                facing = facing, heavy = skill
+            });
             var volley = new HashSet<int>();
             for (int i = 0; i < count; i++)
                 map.shots.Add(new ProjectileState
@@ -533,6 +539,14 @@ namespace AshenVale
             }
             events.Add(new SimEvent { kind = SimEventKind.MonsterHit, map = map.def.id, targetId = m.id, amount = damage,
                                       playerId = attacker != null ? attacker.id : 0, x = m.x, y = m.y });
+            if (attacker != null && (attacker.Hero.dragonKnight || attacker.Hero.style == AttackStyle.Arrows))
+            {
+                events.Add(new SimEvent
+                {
+                    kind = SimEventKind.HeroImpact, map = map.def.id, playerId = attacker.id,
+                    x = m.x, y = m.y + m.Def.hover + m.Def.height * .5f
+                });
+            }
             if (m.hp > 0)
             {
                 var hitDef = m.Def;
