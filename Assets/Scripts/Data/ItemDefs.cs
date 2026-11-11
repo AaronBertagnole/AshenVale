@@ -150,6 +150,13 @@ namespace AshenVale
             return "Art/Items/" + item.rarity + "/" + picture;
         }
 
+        // The same picture at 64 px, for windows (the large one turns blurry when drawn that small).
+        public static string SmallIconPath(Item item)
+        {
+            string path = IconPath(item);
+            return path == null ? null : path.Replace("Art/Items/", "Art/ItemIcons/");
+        }
+
         public static string SlotName(Slot slot, HeroDef hero)
         {
             return slot == Slot.Weapon ? hero.weaponName : SlotNames[(int)slot];

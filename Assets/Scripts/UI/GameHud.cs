@@ -528,7 +528,8 @@ namespace AshenVale
         // The painted icon for a piece of gear, fitted into rect (nothing is drawn if the picture is missing).
         static void ItemIcon(Rect rect, Item item)
         {
-            var icon = Sprites.Art(Loot.IconPath(item));
+            var icon = Sprites.Art(Loot.SmallIconPath(item));
+            if (icon == null) icon = Sprites.Art(Loot.IconPath(item));
             if (icon == null) return;
             Color old = GUI.color;
             GUI.color = Color.white;
@@ -677,8 +678,15 @@ namespace AshenVale
             Rect r = PanelRect();
             GUI.Box(r, def.name.ToUpperInvariant() + " GENERAL STORE — [" + Keys.Name(GameAction.Interact) + "] Close");
             GUI.Label(new Rect(r.x + 20, r.y + 32, 550, 28), "Embermarks: " + ch.gold + "   |   Sell unwanted gear for half its value", bodyStyle);
-            if (GUI.Button(new Rect(r.x + 20, r.y + 70, 270, 42), "Buy HP Potion — " + Tuning.HpPotionPrice + " marks")) commands.BuyPotion(true);
-            if (GUI.Button(new Rect(r.x + 320, r.y + 70, 270, 42), "Buy MP Potion — " + Tuning.MpPotionPrice + " marks")) commands.BuyPotion(false);
+            for (int potion = 0; potion < 2; potion++)
+            {
+                bool health = potion == 0;
+                Rect buy = new Rect(r.x + 20 + potion * 300, r.y + 70, 270, 42);
+                bool bought = GUI.Button(buy, "      Buy " + (health ? "HP" : "MP") + " Potion — " + (health ? Tuning.HpPotionPrice : Tuning.MpPotionPrice) + " marks");
+                var bottle = Sprites.Art(health ? "Art/Items/hp_potion" : "Art/Items/mp_potion");
+                if (bottle != null) GUI.DrawTexture(new Rect(buy.x + 5, buy.y + 4, 34, 34), bottle.texture, ScaleMode.ScaleToFit, true);
+                if (bought) commands.BuyPotion(health);
+            }
             GUI.Label(new Rect(r.x + 20, r.y + 123, 560, 25), "Merchant equipment (reliable Common gear)", smallStyle);
             for (int i = 0; i < 4; i++)
             {
