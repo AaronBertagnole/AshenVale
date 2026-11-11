@@ -575,12 +575,23 @@ namespace AshenVale
                     var icon = part ? Sprites.PartIcon(d.value)
                              : d.kind == DropKind.HpPotion ? Sprites.Art("Art/Items/hp_potion")
                              : d.kind == DropKind.MpPotion ? Sprites.Art("Art/Items/mp_potion")
-                             : d.kind == DropKind.Gold ? Sprites.Art("Art/Currency/embermark") : null;
+                             : d.kind == DropKind.Gold ? Sprites.Art("Art/Currency/embermark")
+                             : d.kind == DropKind.Item ? Sprites.Art(Loot.IconPath(d.item)) : null;
                     if (icon != null)
                     {
+                        // Gear icons have a clear margin around the picture, so they are drawn a little larger,
+                        // on a soft glow in the item's rarity colour.
+                        bool gear = d.kind == DropKind.Item;
                         go = Sprites.Picture(name, icon, DropOrder, null, 0, 0);
-                        float k = .5f / Mathf.Max(.01f, icon.bounds.size.y);
+                        float k = (gear ? .85f : .5f) / Mathf.Max(.01f, icon.bounds.size.y);
                         go.transform.localScale = new Vector3(k, k, 1f);
+                        if (gear)
+                        {
+                            var glow = Sprites.Blob("Rarity glow", new Color(color.r, color.g, color.b, d.item.rarity == Rarity.Common ? .28f : .55f),
+                                                    .62f, .62f, DropOrder - 1, go.transform, 0, 0);
+                            glow.transform.localPosition = Vector3.zero;
+                            glow.transform.localScale = new Vector3(glow.transform.localScale.x / k, glow.transform.localScale.y / k, 1f);
+                        }
                     }
                     else go = part ? Sprites.Blob(name, color, .3f, .3f, DropOrder, null, 0, 0) : Sprites.Block(name, color, .28f, .34f, DropOrder);
                     dropViews[d.id] = go;

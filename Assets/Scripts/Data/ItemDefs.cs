@@ -137,6 +137,23 @@ namespace AshenVale
     {
         static readonly string[] SlotNames = { "Weapon", "Helmet", "Armor", "Boots" };
 
+        // Painted icon for a piece of gear (under Resources): one per armour slot, and one per hero's weapon.
+        // An item doesn't record its hero, so a weapon is told apart by its name ("Rare Bow").
+        public static string IconPath(Item item)
+        {
+            if (item == null) return null;
+            switch (item.slot)
+            {
+                case Slot.Helmet: return "Art/Items/frostguard_helmet";
+                case Slot.Chest: return "Art/Items/wayfarer_vest";
+                case Slot.Boots: return "Art/Items/wayfarer_boots";
+            }
+            string name = item.name ?? "";
+            if (name.EndsWith("Bow")) return "Art/Items/glimmer_bow";
+            if (name.EndsWith("Crystal")) return "Art/Items/sapphire_cluster";
+            return "Art/Items/briar_spear";
+        }
+
         public static string SlotName(Slot slot, HeroDef hero)
         {
             return slot == Slot.Weapon ? hero.weaponName : SlotNames[(int)slot];

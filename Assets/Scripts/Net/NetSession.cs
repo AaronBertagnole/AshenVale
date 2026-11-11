@@ -411,7 +411,7 @@ namespace AshenVale
                     w.WriteValueSafe(d.id); w.WriteValueSafe((byte)d.kind); w.WriteValueSafe(d.x); w.WriteValueSafe(d.y);
                     int keeper = world.ReservedFor(d);
                     w.WriteValueSafe(keeper != 0 && keeper != viewer.id);
-                    if (d.kind == DropKind.Item) { w.WriteValueSafe((byte)d.item.rarity); w.WriteValueSafe(d.item.name ?? ""); }
+                    if (d.kind == DropKind.Item) { w.WriteValueSafe((byte)d.item.rarity); w.WriteValueSafe((byte)d.item.slot); w.WriteValueSafe(d.item.name ?? ""); }
                     else if (d.kind == DropKind.Part) w.WriteValueSafe((byte)d.value);
                 }
                 w.WriteValueSafe(map.shots.Count);
@@ -590,8 +590,9 @@ namespace AshenVale
                 if (dropKind == DropKind.Item)
                 {
                     r.ReadValueSafe(out byte rarity);
+                    r.ReadValueSafe(out byte itemSlot);
                     r.ReadValueSafe(out string itemName);
-                    item = new Item { rarity = (Rarity)Mathf.Clamp(rarity, 0, (int)Rarity.Epic), name = itemName };
+                    item = new Item { rarity = (Rarity)Mathf.Clamp(rarity, 0, (int)Rarity.Epic), slot = (Slot)Mathf.Clamp(itemSlot, 0, (int)Slot.Boots), name = itemName };
                 }
                 else if (dropKind == DropKind.Part)
                 {
