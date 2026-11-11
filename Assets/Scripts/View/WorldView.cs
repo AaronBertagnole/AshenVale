@@ -186,8 +186,9 @@ namespace AshenVale
                 TrackHeroLanding(p, v, localId, frameDt, alpha);
                 Animate(p, v, frameDt, alpha);
                 float x = Mathf.Lerp(p.px, p.x, alpha), y = Mathf.Lerp(p.py, p.y, alpha);
-                v.go.transform.localScale = v.fittedClimb ? v.climbScale : new Vector3(HeroScale, HeroScale, 1f);
-                float heroOffset = HeroPolishArt.Uses(p.Hero.folder) ? (114f/128f-.5f)*HeroScale : .48f; // Prone art shares the idle ground-contact baseline.
+                float heroScale = p.Hero.dragonKnight ? HeroScale * 1.1f : HeroScale;
+                v.go.transform.localScale = v.fittedClimb ? v.climbScale : new Vector3(heroScale, heroScale, 1f);
+                float heroOffset = HeroPolishArt.Uses(p.Hero.folder) ? (114f/128f-.5f)*heroScale : .48f; // Prone art shares the idle ground-contact baseline.
                 if (!p.climbing && !p.dead && PaintedMapFraming.UsesOwnGround(Maps.All[p.map]))
                     heroOffset = PaintedSpriteContact.HeroOffset(p.Hero.folder, v.sr.sprite, v.go.transform.localScale.y, heroOffset);
                 // Grounded attacks: a frame drawn mid-leap (the Knight's thrust / Dragon Strike windup) would look like a hop.
