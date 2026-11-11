@@ -5,9 +5,9 @@ namespace AshenVale
     // Only menu presentation. No world-space scenery or gameplay camera changes.
     public static class FrontMenuLook
     {
-        public static readonly Color Gold = new Color(.94f, .73f, .39f);
-        public static readonly Color Ivory = new Color(.98f, .93f, .81f);
-        public static readonly Color Quiet = new Color(.68f, .78f, .76f);
+        public static readonly Color Gold = new Color(.79f, .37f, .23f);
+        public static readonly Color Ivory = new Color(.96f, .92f, .85f);
+        public static readonly Color Quiet = new Color(.76f, .70f, .67f);
         public static GUIStyle Title, Heading, Subhead, Body, Small, Tiny, Button, Primary, Field, Panel, Menu, Track, Thumb, Choice, ChoiceShadow;
         static Texture2D background, glow, flame, logoArt, illustratedFlame;
         static bool loaded;
@@ -53,12 +53,12 @@ namespace AshenVale
             Subhead = Label(20, Gold, TextAnchor.UpperLeft, true);
             Body = Label(17, Ivory); Small = Label(14, Quiet); Tiny = Label(12, Quiet);
             Panel = new GUIStyle(GUI.skin.box) { border = new RectOffset(8, 8, 8, 8) };
-            Panel.normal.background = Tile(new Color(.035f, .105f, .105f, .92f), new Color(.57f, .47f, .28f, .7f));
+            Panel.normal.background = Tile(new Color(.14f, .105f, .11f, .95f), new Color(.48f, .31f, .27f, .9f));
             Button = new GUIStyle(GUI.skin.button) { fontSize = 17, fontStyle = FontStyle.Bold,
                 alignment = TextAnchor.MiddleCenter, border = new RectOffset(8, 8, 8, 8), padding = new RectOffset(12,12,6,6) };
-            Button.normal.background = Tile(new Color(.035f,.13f,.135f,.96f), new Color(.59f,.49f,.30f));
-            Button.hover.background = Tile(new Color(.10f,.23f,.22f), Gold);
-            Button.active.background = Tile(new Color(.20f,.28f,.22f), Gold);
+            Button.normal.background = Tile(new Color(.17f,.12f,.12f,.98f), new Color(.53f,.33f,.28f));
+            Button.hover.background = Tile(new Color(.28f,.18f,.16f), Gold);
+            Button.active.background = Tile(new Color(.36f,.22f,.17f), Gold);
             Button.focused.background = Button.hover.background;
             Button.normal.textColor = Ivory; Button.hover.textColor = Color.white;
             Button.active.textColor = Ivory; Button.focused.textColor = Color.white;

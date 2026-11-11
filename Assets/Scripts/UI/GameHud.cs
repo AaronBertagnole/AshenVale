@@ -93,7 +93,13 @@ namespace AshenVale
         static readonly Color EconomyCardAlt = new Color(.95f, .95f, .95f, .98f);
         static readonly Color EconomyInset = new Color(.74f, .74f, .74f, .97f);
         static readonly Color EconomyLine = new Color(.38f, .38f, .38f, .8f);
-        static readonly Color EconomyCopper = new Color(.77f, .34f, .20f, 1f);
+        static readonly Color EconomyCopper = new Color(.79f, .37f, .23f, 1f);
+        // The rest of the HUD (inventory, abilities, menus, status, minimap): smoky charcoal panels, ivory text.
+        static readonly Color ThemePanel = new Color(.15f, .115f, .12f, .96f);
+        static readonly Color ThemeInset = new Color(.11f, .085f, .09f, .96f);
+        static readonly Color ThemeLine = new Color(.48f, .32f, .27f, .9f);
+        static readonly Color ThemeIvory = new Color(.96f, .92f, .85f, 1f);
+        static readonly Color ThemeMuted = new Color(.76f, .70f, .67f, 1f);
         static readonly Color EconomyOlive = new Color(.97f, .88f, .76f, .98f);     // the selected row: a warm highlight
         static readonly Color EconomyIvory = new Color(.10f, .10f, .11f, 1f);       // main text (dark, on the light panels)
         static readonly Color EconomyOnCopper = new Color(1f, .97f, .92f, 1f);     // text on the copper buttons
@@ -143,31 +149,31 @@ namespace AshenVale
         {
             if (titleText != null) return;
             titleText = new GUIStyle(GUI.skin.label) { fontSize = 16, fontStyle = FontStyle.Bold };
-            titleText.normal.textColor = new Color(1f, .85f, .57f);
+            titleText.normal.textColor = ThemeIvory;
             barText = new GUIStyle(GUI.skin.label) { fontSize = 12, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleLeft };
-            barText.normal.textColor = Color.white;
+            barText.normal.textColor = ThemeIvory;
             detailText = new GUIStyle(GUI.skin.label) { fontSize = 12 };
-            detailText.normal.textColor = new Color(.88f, .9f, .94f);
+            detailText.normal.textColor = ThemeMuted;
             detailRight = new GUIStyle(detailText) { alignment = TextAnchor.UpperRight };
             menuButton = new GUIStyle(GUI.skin.button) { fontSize = 16, fontStyle = FontStyle.Bold };
             bodyStyle = new GUIStyle(GUI.skin.label) { fontSize = 17 };
-            bodyStyle.normal.textColor = Color.white;
+            bodyStyle.normal.textColor = ThemeIvory;
             smallStyle = new GUIStyle(GUI.skin.label) { fontSize = 14 };
-            smallStyle.normal.textColor = new Color(.82f, .85f, .9f);
+            smallStyle.normal.textColor = ThemeMuted;
             centeredStyle = new GUIStyle(bodyStyle) { alignment = TextAnchor.MiddleCenter, fontSize = 21 };
             statusStyle = new GUIStyle(GUI.skin.label) { fontSize = 15, fontStyle = FontStyle.Bold, alignment = TextAnchor.UpperRight };
-            statusStyle.normal.textColor = new Color(.62f, .9f, 1f);
+            statusStyle.normal.textColor = new Color(.70f, .82f, .66f);
             nameplate = new GUIStyle(GUI.skin.label) { fontSize = 13, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
-            nameplate.normal.textColor = new Color(1f, .93f, .75f);
+            nameplate.normal.textColor = ThemeIvory;
             bannerTitle = new GUIStyle(GUI.skin.label) { fontSize = 34, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
             bannerSub = new GUIStyle(GUI.skin.label) { fontSize = 17, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
             worldLabel = new GUIStyle(GUI.skin.label) { fontSize = 12, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
             mapLabel = new GUIStyle(GUI.skin.label) { fontSize = 14, fontStyle = FontStyle.Bold, alignment = TextAnchor.UpperRight };
-            mapLabel.normal.textColor = new Color(1f, .9f, .68f);
+            mapLabel.normal.textColor = ThemeIvory;
             minimapTitle = new GUIStyle(GUI.skin.label) { fontSize = 13, fontStyle = FontStyle.Bold };
-            minimapTitle.normal.textColor = new Color(1f, .9f, .68f);
+            minimapTitle.normal.textColor = ThemeIvory;
             minimapHint = new GUIStyle(GUI.skin.label) { fontSize = 10, alignment = TextAnchor.UpperRight };
-            minimapHint.normal.textColor = new Color(.7f, .74f, .8f);
+            minimapHint.normal.textColor = ThemeMuted;
             tooltipText = new GUIStyle(smallStyle) { fontSize = 13, wordWrap = true };
             // World map text: dark ink on parchment.
             atlasTitle = new GUIStyle(GUI.skin.label) { fontSize = 24, fontStyle = FontStyle.Bold, alignment = TextAnchor.UpperCenter };
@@ -361,7 +367,7 @@ namespace AshenVale
                 GUI.Label(new Rect(20, y - 22, size.x + 10, 22), n.text, smallStyle);
                 y -= 24;
             }
-            smallStyle.normal.textColor = new Color(.82f, .85f, .9f);
+            smallStyle.normal.textColor = ThemeMuted;
         }
 
         void Note(string text, Color color)
@@ -595,7 +601,7 @@ namespace AshenVale
         void Bar(float x, float y, float width, string label, int current, int maximum, Color fill)
         {
             float ratio = maximum > 0 ? Mathf.Clamp01((float)current / maximum) : 0f;
-            Fill(new Rect(x, y, width, 24), new Color(.055f, .075f, .12f, .95f));
+            Fill(new Rect(x, y, width, 24), ThemeInset);
             Fill(new Rect(x + 2, y + 2, (width - 4) * ratio, 20), fill);
             GUI.Label(new Rect(x + 9, y + 2, width - 18, 20), label + "   " + current + " / " + maximum, barText);
         }
@@ -606,8 +612,8 @@ namespace AshenVale
             Matrix4x4 oldMatrix = GUI.matrix;
             float scale = Mathf.Min(1f, Mathf.Max(.65f, Screen.width / 420f));
             GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1));
-            Fill(new Rect(10, 10, 364, 195), new Color(.055f, .075f, .12f, .90f));
-            Fill(new Rect(10, 10, 364, 3), new Color(.65f, .48f, .27f));
+            EconomySurface(new Rect(10, 10, 364, 195), ThemePanel, ThemeLine, 2f);
+            Fill(new Rect(24, 11, 336, 2), EconomyCopper);
             GUI.Label(new Rect(23, 17, 200, 25), (ch.name ?? me.Hero.name).ToUpperInvariant(), titleText);
             GUI.Label(new Rect(170, 19, 191, 22), me.Hero.name.ToUpperInvariant() + "   LV " + ch.level, detailRight);
             Bar(23, 49, 338, "HP", me.hp, me.MaxHp, new Color(.82f, .20f, .25f));

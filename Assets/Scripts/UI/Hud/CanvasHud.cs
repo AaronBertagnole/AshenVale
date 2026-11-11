@@ -76,8 +76,8 @@ namespace AshenVale
 
             var journey = Panel("Journey", safeRoot, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-20, -180), new Vector2(220, 120));
             Label("Journey heading", journey, 12, 8, 196, 16, 10, HudTheme.Copper, FontStyle.Bold).text = "YOUR JOURNEY";
-            var paper = Panel("Guidance", journey, new Vector2(0, 1), new Vector2(0, 1), new Vector2(8, -30), new Vector2(204, 82), theme.parchment);
-            Color ink = new Color(.22f, .18f, .12f);
+            var paper = Panel("Guidance", journey, new Vector2(0, 1), new Vector2(0, 1), new Vector2(8, -30), new Vector2(204, 82), theme.panel);
+            Color ink = HudTheme.Ivory;
             journeyTitle = Label("Guidance title", paper, 10, 6, 184, 19, 12, ink, FontStyle.Bold);
             journeyBody = Label("Guidance body", paper, 10, 28, 184, 50, 11, ink); journeyBody.horizontalOverflow = HorizontalWrapMode.Wrap;
 
