@@ -583,12 +583,12 @@ namespace AshenVale
                         // on a soft glow in the item's rarity colour.
                         bool gear = d.kind == DropKind.Item;
                         go = Sprites.Picture(name, icon, DropOrder, null, 0, 0);
-                        float k = (gear ? .85f : .5f) / Mathf.Max(.01f, icon.bounds.size.y);
+                        float k = (gear ? .6f : .5f) / Mathf.Max(.01f, icon.bounds.size.y);
                         go.transform.localScale = new Vector3(k, k, 1f);
                         if (gear)
                         {
                             var glow = Sprites.Blob("Rarity glow", new Color(color.r, color.g, color.b, d.item.rarity == Rarity.Common ? .28f : .55f),
-                                                    .62f, .62f, DropOrder - 1, go.transform, 0, 0);
+                                                    .44f, .44f, DropOrder - 1, go.transform, 0, 0);
                             glow.transform.localPosition = Vector3.zero;
                             glow.transform.localScale = new Vector3(glow.transform.localScale.x / k, glow.transform.localScale.y / k, 1f);
                         }
