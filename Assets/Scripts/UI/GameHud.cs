@@ -100,6 +100,7 @@ namespace AshenVale
         int bannerMap = -1;
         float bannerClock;
         Vector2 smithyScroll;
+        bool merchantSellTab;
 
         public GameHud(World world) { this.world = world; }
 
@@ -123,9 +124,10 @@ namespace AshenVale
             if (Keys.Pressed(GameAction.WorldMap, ignoreMouse)) { worldMapOpen = !worldMapOpen; inventoryOpen = shopOpen = waystoneOpen = smithyOpen = false; }
             if (Keys.Pressed(GameAction.Inventory, ignoreMouse)) { inventoryOpen = !inventoryOpen; shopOpen = waystoneOpen = smithyOpen = worldMapOpen = false; }
             bool talk = Keys.Pressed(GameAction.Interact, ignoreMouse);
-            if (talk && world.NearMerchant(me, NpcReach)) { shopOpen = !shopOpen; inventoryOpen = waystoneOpen = smithyOpen = worldMapOpen = false; }
+            if (talk && world.NearMerchant(me, NpcReach)) { shopOpen = true;       // closed with the X (or Esc), not the interact key
+                inventoryOpen = waystoneOpen = smithyOpen = worldMapOpen = false; }
             else if (talk && world.NearWaystone(me, NpcReach)) { waystoneOpen = !waystoneOpen; inventoryOpen = shopOpen = smithyOpen = worldMapOpen = false; }
-            else if (talk && world.NearSmithy(me, NpcReach)) { smithyOpen = !smithyOpen; inventoryOpen = shopOpen = waystoneOpen = worldMapOpen = false; }
+            else if (talk && world.NearSmithy(me, NpcReach)) { smithyOpen = true; inventoryOpen = shopOpen = waystoneOpen = worldMapOpen = false; }
             if (Keys.Pressed(GameAction.Abilities, ignoreMouse)) { abilitiesOpen = !abilitiesOpen; inventoryOpen = shopOpen = waystoneOpen = smithyOpen = worldMapOpen = false; }
             else if (inventoryOpen || shopOpen || waystoneOpen || smithyOpen || worldMapOpen) abilitiesOpen = false;   // one window at a time
             if (shopOpen && !world.NearMerchant(me, NpcLeaveReach)) shopOpen = false;
@@ -507,14 +509,17 @@ namespace AshenVale
             return GUI.Button(rect, GUIContent.none, GUIStyle.none);
         }
 
-        void EconomyWindow(Rect rect, string title)
+        // Draws the window frame and title; true when the X in its top right corner was clicked.
+        bool EconomyWindow(Rect rect, string title)
         {
             EconomySurface(rect, EconomyPanel, EconomyLine, 2f);
             Fill(new Rect(rect.x + 2, rect.y + 2, rect.width - 4, 56), EconomyHeader);
             Fill(new Rect(rect.x + 18, rect.y + 57, rect.width - 36, 1f), EconomyLine);
-            GUI.Label(new Rect(rect.x + 22, rect.y + 8, rect.width - 210, 40), title, economyTitleText);
-            GUI.Label(new Rect(rect.xMax - 180, rect.y + 17, 156, 24),
-                "[" + Keys.Name(GameAction.Interact) + "] CLOSE", economyHintText);
+            GUI.Label(new Rect(rect.x + 22, rect.y + 8, rect.width - 80, 40), title, economyTitleText);
+            Rect close = new Rect(rect.xMax - 46, rect.y + 13, 32, 32);
+            bool closed = EconomyHitButton(close);
+            GUI.Label(close, "X", economyButtonText);
+            return closed;
         }
 
         static void Fill(Rect rect, Color color)
@@ -734,15 +739,16 @@ namespace AshenVale
             int gearKinds = Math.Min(ch.inventory.Count, ShopRows);
             int partKinds = 0;
             for (int i = 0; i < ch.parts.Length; i++) if (ch.parts[i] > 0) partKinds++;
-            int shownRows = Math.Min(ShopRows, Math.Max(gearKinds, partKinds));
+            int sellRows = Math.Min(ShopRows, Math.Max(gearKinds, partKinds));
             bool overflow = ch.inventory.Count > ShopRows || partKinds > ShopRows;
-            float rowH = 32f;
-            float h = Mathf.Min(Screen.height - 24f, 359f + shownRows * rowH + (overflow ? 60f : 50f));
+            float h = merchantSellTab
+                ? Mathf.Min(Screen.height - 24f, Mathf.Max(300f, 199f + sellRows * 33f + (overflow ? 64f : 52f)))
+                : Mathf.Min(Screen.height - 24f, 414f);
             float w = Mathf.Min(Screen.width - 24f, 940f);
             Rect r = new Rect((Screen.width - w) * .5f, Mathf.Max(12f, (Screen.height - h) * .5f), w, h);
 
             Fill(new Rect(0, 0, Screen.width, Screen.height), new Color(.035f, .025f, .025f, .12f));
-            EconomyWindow(r, def.name.ToUpperInvariant() + "  /  MERCHANT");
+            if (EconomyWindow(r, def.name.ToUpperInvariant() + "  /  MERCHANT")) { shopOpen = false; return; }
             float pad = 22f, gap = 14f, col = (w - pad * 2 - gap) * .5f;
 
             Rect purse = new Rect(r.x + 18, r.y + 68, w - 36, 38);
@@ -750,44 +756,60 @@ namespace AshenVale
             GUI.Label(new Rect(purse.x + 12, purse.y + 3, 380, 30), "YOUR MARKS   " + ch.gold, economyTitleText);
             GUI.Label(new Rect(purse.xMax - 390, purse.y + 4, 370, 28), "Gear sells for half its value", economyHintText);
 
-            GUI.Label(new Rect(r.x + pad, r.y + 115, w - pad * 2, 23), "POTIONS", economySectionText);
-            for (int potion = 0; potion < 2; potion++)
+            Rect buyTab = new Rect(r.x + pad, r.y + 116, col, 34);
+            Rect sellTab = new Rect(r.x + pad + col + gap, r.y + 116, col, 34);
+            bool buyTabClicked = EconomyHitButton(buyTab, !merchantSellTab);
+            bool sellTabClicked = EconomyHitButton(sellTab, merchantSellTab);
+            GUI.Label(buyTab, "BUY ITEMS", economyButtonText);
+            GUI.Label(sellTab, "SELL ITEMS", economyButtonText);
+            if (buyTabClicked) merchantSellTab = false;
+            if (sellTabClicked) merchantSellTab = true;
+
+            if (!merchantSellTab)
             {
-                bool health = potion == 0;
-                Rect buy = new Rect(r.x + pad + potion * (col + gap), r.y + 140, col, 48);
-                bool clicked = EconomyHitButton(buy);
-                var bottle = Sprites.Art(health ? "Art/Items/hp_potion" : "Art/Items/mp_potion");
-                if (bottle != null) GUI.DrawTexture(new Rect(buy.x + 7, buy.y + 6, 36, 36), bottle.texture, ScaleMode.ScaleToFit, true);
-                GUI.Label(new Rect(buy.x + 52, buy.y + 4, col - 176, 40),
-                    "Buy " + (health ? "HP" : "MP") + " Potion", economyBodyText);
-                GUI.Label(new Rect(buy.x + col - 124, buy.y + 4, 112, 40),
-                    (health ? Tuning.HpPotionPrice : Tuning.MpPotionPrice) + " marks", economyPriceText);
-                int cost = health ? Tuning.HpPotionPrice : Tuning.MpPotionPrice;
-                if (ch.gold < cost)
+                GUI.Label(new Rect(r.x + pad, r.y + 162, w - pad * 2, 22), "POTIONS", economySectionText);
+                for (int potion = 0; potion < 2; potion++)
                 {
-                    Color old = GUI.color;
-                    GUI.color = new Color(1f, .58f, .48f);
-                    GUI.Label(new Rect(buy.x + col - 124, buy.y + 24, 112, 16), "NEED MORE", economyHintText);
-                    GUI.color = old;
+                    bool health = potion == 0;
+                    Rect buy = new Rect(r.x + pad + potion * (col + gap), r.y + 186, col, 48);
+                    bool clicked = EconomyHitButton(buy);
+                    var bottle = Sprites.Art(health ? "Art/Items/hp_potion" : "Art/Items/mp_potion");
+                    if (bottle != null) GUI.DrawTexture(new Rect(buy.x + 7, buy.y + 6, 36, 36), bottle.texture, ScaleMode.ScaleToFit, true);
+                    GUI.Label(new Rect(buy.x + 52, buy.y + 4, col - 176, 40),
+                        "Buy " + (health ? "HP" : "MP") + " Potion", economyBodyText);
+                    GUI.Label(new Rect(buy.x + col - 124, buy.y + 4, 112, 40),
+                        (health ? Tuning.HpPotionPrice : Tuning.MpPotionPrice) + " marks", economyPriceText);
+                    int cost = health ? Tuning.HpPotionPrice : Tuning.MpPotionPrice;
+                    if (ch.gold < cost)
+                    {
+                        Color old = GUI.color;
+                        GUI.color = new Color(1f, .58f, .48f);
+                        GUI.Label(new Rect(buy.x + col - 124, buy.y + 24, 112, 16), "NEED MORE", economyHintText);
+                        GUI.color = old;
+                    }
+                    if (clicked) commands.BuyPotion(health);
                 }
-                if (clicked) commands.BuyPotion(health);
+
+                GUI.Label(new Rect(r.x + pad, r.y + 246, w - pad * 2, 22), "COMMON EQUIPMENT", economySectionText);
+                for (int i = 0; i < 4; i++)
+                {
+                    Slot slot = (Slot)i;
+                    int cost = Loot.ShopGearCost(slot, ch.level);
+                    Rect buy = new Rect(r.x + pad + (i % 2) * (col + gap), r.y + 270 + (i / 2) * 48, col, 44);
+                    bool clicked = EconomyHitButton(buy);
+                    ItemIcon(new Rect(buy.x + 6, buy.y + 4, 36, 36), new Item { slot = slot, rarity = Rarity.Common, name = Loot.SlotName(slot, me.Hero) });
+                    GUI.Label(new Rect(buy.x + 50, buy.y + 3, col - 170, 38),
+                        Loot.SlotName(slot, me.Hero) + "  ·  Common", economyBodyText);
+                    GUI.Label(new Rect(buy.x + col - 124, buy.y + 3, 112, 38), cost + " marks", economyPriceText);
+                    if (clicked) commands.BuyGear(slot);
+                }
+                GUI.Label(new Rect(r.x + pad, r.y + h - 25, w - pad * 2, 18),
+                    "Reliable starter gear for the road ahead.", economyHintText);
+                return;
             }
 
-            GUI.Label(new Rect(r.x + pad, r.y + 198, w - pad * 2, 23), "COMMON EQUIPMENT", economySectionText);
-            for (int i = 0; i < 4; i++)
-            {
-                Slot slot = (Slot)i;
-                int cost = Loot.ShopGearCost(slot, ch.level);
-                Rect buy = new Rect(r.x + pad + (i % 2) * (col + gap), r.y + 222 + (i / 2) * 48, col, 44);
-                bool clicked = EconomyHitButton(buy);
-                ItemIcon(new Rect(buy.x + 6, buy.y + 4, 36, 36), new Item { slot = slot, rarity = Rarity.Common, name = Loot.SlotName(slot, me.Hero) });
-                GUI.Label(new Rect(buy.x + 50, buy.y + 3, col - 170, 38),
-                    Loot.SlotName(slot, me.Hero) + "  ·  Common", economyBodyText);
-                GUI.Label(new Rect(buy.x + col - 124, buy.y + 3, 112, 38), cost + " marks", economyPriceText);
-                if (clicked) commands.BuyGear(slot);
-            }
-
-            float lowerY = r.y + 327f;
+            float rowH = 33f;
+            float lowerY = r.y + 164f;
             Rect gearHeader = new Rect(r.x + pad, lowerY, col, 28);
             Rect partsHeader = new Rect(r.x + pad + col + gap, lowerY, col, 28);
             EconomySurface(gearHeader, EconomyInset, EconomyLine);
@@ -806,7 +828,8 @@ namespace AshenVale
                 GUI.Label(new Rect(sell.x + col - 108, sell.y + 2, 100, 27), "+" + Loot.SellPrice(item) + " marks", economyPriceText);
                 if (clicked) { commands.Sell(i); break; }
             }
-            if (ch.inventory.Count == 0) GUI.Label(new Rect(r.x + pad + 8, listY + 5, col - 16, 24), "No gear to sell.", economyDetailText);
+            if (ch.inventory.Count == 0)
+                GUI.Label(new Rect(r.x + pad + 8, listY + 5, col - 16, 24), "No gear to sell.", economyDetailText);
             if (ch.inventory.Count > ShopRows)
                 GUI.Label(new Rect(r.x + pad + 8, listY + ShopRows * rowH, col - 16, 20), "...and " + (ch.inventory.Count - ShopRows) + " more (sell these first)", economyDetailText);
 
@@ -832,7 +855,8 @@ namespace AshenVale
                 if (allClicked) { commands.SellPart(i, 0); break; }
                 shown++;
             }
-            if (shown == 0) GUI.Label(new Rect(r.x + pad + col + gap + 8, listY + 5, col - 16, 24), "No monster parts to sell yet.", economyDetailText);
+            if (shown == 0)
+                GUI.Label(new Rect(r.x + pad + col + gap + 8, listY + 5, col - 16, 24), "No monster parts to sell yet.", economyDetailText);
             if (partKinds > ShopRows)
                 GUI.Label(new Rect(r.x + pad + col + gap + 8, listY + ShopRows * rowH, col - 16, 20), "...and " + (partKinds - ShopRows) + " more kinds (sell these first)", economyDetailText);
             GUI.Label(new Rect(r.x + pad + col + gap, r.y + h - 42, col, 18), "Keep some materials for the blacksmith.", economyHintText);
@@ -1149,7 +1173,7 @@ namespace AshenVale
             float h = Mathf.Min(Screen.height - 24f, 560f);
             Rect r = new Rect((Screen.width - w) * .5f, Mathf.Max(12f, (Screen.height - h) * .5f), w, h);
             Fill(new Rect(0, 0, Screen.width, Screen.height), new Color(.035f, .025f, .025f, .12f));
-            EconomyWindow(r, def.name.ToUpperInvariant() + "  /  BLACKSMITH");
+            if (EconomyWindow(r, def.name.ToUpperInvariant() + "  /  BLACKSMITH")) { smithyOpen = false; return; }
 
             Rect materialsBar = new Rect(r.x + 18, r.y + 68, w - 36, 38);
             EconomySurface(materialsBar, EconomyInset, EconomyLine);
