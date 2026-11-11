@@ -10,7 +10,8 @@ namespace AshenVale
         {
             var ch = me.ch;
             Rect r = PanelRect();
-            GUI.Box(r, "ABILITIES   [" + Keys.Name(GameAction.Abilities) + "] Close");
+            GUI.Box(r, "ABILITIES");
+            if (CloseX(r)) { abilitiesOpen = false; return; }
             GUI.Label(new Rect(r.x + 18, r.y + 27, r.width - 36, 20),
                       ch.Def.name + "   |   Level " + ch.level + "   |   Ability points to spend: " + ch.UnspentPoints, smallStyle);
 

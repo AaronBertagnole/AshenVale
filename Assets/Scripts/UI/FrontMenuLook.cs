@@ -53,12 +53,12 @@ namespace AshenVale
             Subhead = Label(20, Gold, TextAnchor.UpperLeft, true);
             Body = Label(17, Ivory); Small = Label(14, Quiet); Tiny = Label(12, Quiet);
             Panel = new GUIStyle(GUI.skin.box) { border = new RectOffset(8, 8, 8, 8) };
-            Panel.normal.background = Tile(new Color(.14f, .105f, .11f, .95f), new Color(.48f, .31f, .27f, .9f));
+            Panel.normal.background = Tile(new Color(.16f, .16f, .17f, .95f), new Color(.45f, .45f, .46f, .9f));     // neutral charcoal: no brown
             Button = new GUIStyle(GUI.skin.button) { fontSize = 17, fontStyle = FontStyle.Bold,
                 alignment = TextAnchor.MiddleCenter, border = new RectOffset(8, 8, 8, 8), padding = new RectOffset(12,12,6,6) };
-            Button.normal.background = Tile(new Color(.17f,.12f,.12f,.98f), new Color(.53f,.33f,.28f));
-            Button.hover.background = Tile(new Color(.28f,.18f,.16f), Gold);
-            Button.active.background = Tile(new Color(.36f,.22f,.17f), Gold);
+            Button.normal.background = Tile(new Color(.21f,.21f,.22f,.98f), new Color(.48f,.48f,.49f));
+            Button.hover.background = Tile(new Color(.31f,.31f,.32f), Gold);
+            Button.active.background = Tile(new Color(.40f,.40f,.41f), Gold);
             Button.focused.background = Button.hover.background;
             Button.normal.textColor = Ivory; Button.hover.textColor = Color.white;
             Button.active.textColor = Ivory; Button.focused.textColor = Color.white;

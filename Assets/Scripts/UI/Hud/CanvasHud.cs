@@ -53,11 +53,11 @@ namespace AshenVale
             var status = Panel("Hero", safeRoot, new Vector2(0, 1), new Vector2(0, 1), new Vector2(20, -20), new Vector2(292, 90));
             var avatar = Panel("Portrait frame", status, new Vector2(0, 1), new Vector2(0, 1), new Vector2(8, -9), new Vector2(62, 72));
             portrait = Graphic<Image>("Hero sprite", avatar, new Vector2(0, 1), new Vector2(0, 1), new Vector2(4, -3), new Vector2(54, 62)); portrait.preserveAspect = true;
-            heroName = Label("Name", status, 80, 8, 200, 22, 16, HudTheme.Ivory, FontStyle.Bold);
-            heroClass = Label("Class", status, 82, 31, 198, 15, 10, HudTheme.Muted);
+            heroName = Label("Name", status, 80, 8, 200, 22, 16, HudTheme.Text, FontStyle.Bold);
+            heroClass = Label("Class", status, 82, 31, 198, 15, 10, HudTheme.TextMuted);
             health = MeterAt(status, 82, 50, 198, 14, new Color(.88f, .26f, .24f));
             mana = MeterAt(status, 82, 69, 198, 12, new Color(.13f, .64f, .82f));
-            level = Label("Level", avatar, 0, 54, 62, 16, 9, HudTheme.Ivory, FontStyle.Bold); level.alignment = TextAnchor.MiddleCenter;
+            level = Label("Level", avatar, 0, 54, 62, 16, 9, HudTheme.Text, FontStyle.Bold); level.alignment = TextAnchor.MiddleCenter;
             network = Label("Connection", safeRoot, 22, 118, 292, 30, 10, HudTheme.Muted); network.horizontalOverflow = HorizontalWrapMode.Wrap;
             copyCode = ButtonAt("Copy join code", safeRoot, new Vector2(0, 1), new Vector2(0, 1), new Vector2(22, -153), new Vector2(140, 23), () => { GUIUtility.systemCopyBuffer = legacy.joinCode; AddActivity("Join code copied.", HudTheme.Teal); });
             CenterLabel(copyCode.transform, "COPY JOIN CODE", 10, HudTheme.Ivory);
@@ -67,23 +67,24 @@ namespace AshenVale
             region = Label("Region", heading, 0, 33, 350, 16, 10, HudTheme.Copper); region.alignment = TextAnchor.MiddleCenter;
 
             var map = Panel("Minimap", safeRoot, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-20, -20), new Vector2(220, 110)); mapPanel = map.gameObject;
-            Label("Map header", map, 10, 6, 160, 16, 9, HudTheme.Copper, FontStyle.Bold).text = "LOCAL MAP";
-            var compass = Label("Compass", map, 190, 6, 20, 16, 10, HudTheme.Ivory); compass.text = "N";
+            Label("Map header", map, 10, 6, 160, 16, 9, HudTheme.CopperText, FontStyle.Bold).text = "LOCAL MAP";
+            var compass = Label("Compass", map, 190, 6, 20, 16, 10, HudTheme.Text); compass.text = "N";
+            Panel("Terrain back", map, new Vector2(0, 1), new Vector2(0, 1), new Vector2(8, -21), new Vector2(204, 69), theme.track);   // the map itself stays on a dark plate
             minimap = Graphic<HudMinimap>("Terrain", map, new Vector2(0, 1), new Vector2(0, 1), new Vector2(10, -23), new Vector2(200, 65));
-            mapHint = Label("Map keys", map, 10, 91, 200, 14, 8, HudTheme.Muted); mapHint.alignment = TextAnchor.MiddleRight;
+            mapHint = Label("Map keys", map, 10, 91, 200, 14, 8, HudTheme.TextMuted); mapHint.alignment = TextAnchor.MiddleRight;
             var purse = Panel("Embermarks", safeRoot, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-20, -140), new Vector2(140, 24));
-            gold = Label("Embermark value", purse, 8, 1, 124, 22, 12, HudTheme.Copper, FontStyle.Bold); gold.alignment = TextAnchor.MiddleCenter;
+            gold = Label("Embermark value", purse, 8, 1, 124, 22, 12, HudTheme.CopperText, FontStyle.Bold); gold.alignment = TextAnchor.MiddleCenter;
 
             var journey = Panel("Journey", safeRoot, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-20, -180), new Vector2(220, 120));
-            Label("Journey heading", journey, 12, 8, 196, 16, 10, HudTheme.Copper, FontStyle.Bold).text = "YOUR JOURNEY";
-            var paper = Panel("Guidance", journey, new Vector2(0, 1), new Vector2(0, 1), new Vector2(8, -30), new Vector2(204, 82), theme.panel);
-            Color ink = HudTheme.Ivory;
+            Label("Journey heading", journey, 12, 8, 196, 16, 10, HudTheme.CopperText, FontStyle.Bold).text = "YOUR JOURNEY";
+            var paper = Panel("Guidance", journey, new Vector2(0, 1), new Vector2(0, 1), new Vector2(8, -30), new Vector2(204, 82), theme.button);
+            Color ink = HudTheme.Text;
             journeyTitle = Label("Guidance title", paper, 10, 6, 184, 19, 12, ink, FontStyle.Bold);
             journeyBody = Label("Guidance body", paper, 10, 28, 184, 50, 11, ink); journeyBody.horizontalOverflow = HorizontalWrapMode.Wrap;
 
             var log = Panel("Adventure log", safeRoot, new Vector2(0, 0), new Vector2(0, 0), new Vector2(20, 8), new Vector2(220, 68));
-            Label("Log heading", log, 10, 5, 200, 13, 9, HudTheme.Copper, FontStyle.Bold).text = "ADVENTURE LOG";
-            for (int i = 0; i < 3; i++) lines.Add(Label("Activity " + i, log, 10, 21 + i * 14, 200, 14, 10, HudTheme.Muted));
+            Label("Log heading", log, 10, 5, 200, 13, 9, HudTheme.CopperText, FontStyle.Bold).text = "ADVENTURE LOG";
+            for (int i = 0; i < 3; i++) lines.Add(Label("Activity " + i, log, 10, 21 + i * 14, 200, 14, 10, HudTheme.TextMuted));
 
             var actions = Rect("Action bar", safeRoot, new Vector2(.5f, 0), new Vector2(.5f, 0), new Vector2(0, 8), new Vector2(292, 66)); actions.pivot = new Vector2(.5f, 0);
             GameAction[] actionsList = { GameAction.Attack, GameAction.Skill, GameAction.Dash, GameAction.TownPortal, GameAction.HpPotion, GameAction.MpPotion };
@@ -101,13 +102,13 @@ namespace AshenVale
                     image.sprite = painted; image.preserveAspect = true;
                 }
                 else { var icon = Graphic<HudGlyph>("Icon", button.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(6, -3), new Vector2(30, 30)); icon.symbol = glyphs[i]; icon.color = colors[i]; }
-                var mask = Graphic<Image>("Cooldown", button.transform, new Vector2(0, 1), new Vector2(0, 1), Vector2.zero, new Vector2(42, 42)); mask.sprite = theme.white; mask.type = Image.Type.Filled; mask.fillMethod = Image.FillMethod.Radial360; mask.color = new Color(.015f,.05f,.07f,.82f); mask.fillAmount = 0;
+                var mask = Graphic<Image>("Cooldown", button.transform, new Vector2(0, 1), new Vector2(0, 1), Vector2.zero, new Vector2(42, 42)); mask.sprite = theme.white; mask.type = Image.Type.Filled; mask.fillMethod = Image.FillMethod.Radial360; mask.color = new Color(.04f,.04f,.05f,.82f); mask.fillAmount = 0;
                 var timer = Label("Cooldown seconds", button.transform, 1, 10, 40, 20, 12, HudTheme.Ivory, FontStyle.Bold); timer.alignment = TextAnchor.MiddleCenter;
                 var keyFrame = Panel("Key", button.transform, new Vector2(.5f, 0), new Vector2(.5f, 0), new Vector2(0, -5), new Vector2(42, 16));
-                var key = CenterLabel(keyFrame, "", 8, HudTheme.Ivory); key.resizeTextForBestFit = true; key.resizeTextMinSize = 6; key.resizeTextMaxSize = 8;
+                var key = CenterLabel(keyFrame, "", 8, HudTheme.Text); key.resizeTextForBestFit = true; key.resizeTextMinSize = 6; key.resizeTextMaxSize = 8;
                 // The slot's number (potions carried, skill mana) on a dark tag at the top right, with a shadow, so it reads over the icon.
                 var tag = Panel("Count tag", button.transform, new Vector2(1, 1), new Vector2(1, 1), new Vector2(1, 1), new Vector2(30, 15));
-                tag.GetComponent<Image>().color = new Color(.02f, .06f, .08f, .9f);
+                tag.GetComponent<Image>().sprite = theme.track;
                 var count = Label("Count", tag, 0, 0, 30, 15, 10, HudTheme.Ivory, FontStyle.Bold); count.alignment = TextAnchor.MiddleCenter;
                 count.resizeTextForBestFit = true; count.resizeTextMinSize = 7; count.resizeTextMaxSize = 10;
                 var shadow = count.gameObject.AddComponent<Shadow>(); shadow.effectColor = new Color(0, 0, 0, .8f); shadow.effectDistance = new Vector2(1, -1);
@@ -126,7 +127,7 @@ namespace AshenVale
                 Label("Label",shortcuts,i*56,42,44,15,10,HudTheme.Ivory).text=labels[i];
             }
             var prompt=Panel("Interaction",safeRoot,new Vector2(.5f,0),new Vector2(.5f,0),new Vector2(0,125),new Vector2(270,26));interactionPanel=prompt.gameObject;
-            interaction=CenterLabel(prompt,"",11,HudTheme.Ivory);
+            interaction=CenterLabel(prompt,"",11,HudTheme.Text);
         }
 
         // Raycast at the current pointer rather than depending on EventSystem's Update ordering.
@@ -207,7 +208,7 @@ namespace AshenVale
                 interactionPanel.transform.position = at;
             }
             interactionPanel.SetActive(showPrompt); interaction.text = prompt;
-            for(int i=0;i<lines.Count;i++){int index=activity.Count-1-i;lines[i].text=index>=0?activity[index].text:"";lines[i].color=index>=0?activity[index].color:HudTheme.Muted;}
+            for(int i=0;i<lines.Count;i++){int index=activity.Count-1-i;lines[i].text=index>=0?activity[index].text:"";lines[i].color=index>=0?HudTheme.OnLight(activity[index].color):HudTheme.TextMuted;}
         }
 
         static string PrimaryKey(GameAction action)
@@ -242,7 +243,7 @@ namespace AshenVale
         Button ButtonAt(string name,Transform parent,Vector2 anchor,Vector2 pivot,Vector2 position,Vector2 size,Action callback)
         {
             var r=Panel(name,parent,anchor,pivot,position,size,theme.slot);var image=r.GetComponent<Image>();image.raycastTarget=true;
-            var b=r.gameObject.AddComponent<Button>();b.targetGraphic=image;var colors=b.colors;colors.normalColor=Color.white;colors.highlightedColor=new Color(.75f,1,.94f);colors.pressedColor=new Color(.45f,.7f,.66f);colors.disabledColor=new Color(.5f,.58f,.58f,.6f);b.colors=colors;
+            var b=r.gameObject.AddComponent<Button>();b.targetGraphic=image;var colors=b.colors;colors.normalColor=Color.white;colors.highlightedColor=new Color(1f,.90f,.82f);colors.pressedColor=new Color(.75f,.62f,.55f);colors.disabledColor=new Color(.55f,.55f,.55f,.6f);b.colors=colors;
             // Navigation must not claim arrows / Space that the side-scroller uses for movement and jumping.
             b.navigation=new Navigation{mode=Navigation.Mode.None};b.onClick.AddListener(()=>{callback();if(EventSystem.current)EventSystem.current.SetSelectedGameObject(null);});return b;
         }

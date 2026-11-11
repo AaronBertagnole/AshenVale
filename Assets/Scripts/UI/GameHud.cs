@@ -51,16 +51,18 @@ namespace AshenVale
                 canvasSkin.hideFlags = HideFlags.DontSave;
                 canvasSkin.box.normal.background = canvasTheme.panel.texture;
                 canvasSkin.box.border = new RectOffset(16, 16, 16, 16);
-                canvasSkin.box.normal.textColor = HudTheme.Ivory;
+                canvasSkin.box.normal.textColor = HudTheme.Text;
                 canvasSkin.box.fontSize = 15; canvasSkin.box.fontStyle = FontStyle.Bold;
                 canvasSkin.box.padding = new RectOffset(12, 12, 8, 8);
                 canvasSkin.button.border = new RectOffset(16, 16, 16, 16);
-                canvasSkin.button.normal.background = canvasTheme.slot.texture;
-                canvasSkin.button.hover.background = canvasTheme.slot.texture;
-                canvasSkin.button.active.background = canvasTheme.track.texture;
-                canvasSkin.button.normal.textColor = HudTheme.Ivory;
-                canvasSkin.button.hover.textColor = HudTheme.Teal;
-                canvasSkin.button.active.textColor = HudTheme.Ivory;
+                canvasSkin.button.normal.background = canvasTheme.button.texture;
+                canvasSkin.button.hover.background = canvasTheme.buttonHover.texture;
+                canvasSkin.button.active.background = canvasTheme.buttonPressed.texture;
+                canvasSkin.button.normal.textColor = HudTheme.Text;
+                canvasSkin.button.hover.textColor = HudTheme.CopperText;
+                canvasSkin.button.active.textColor = HudTheme.Text;
+                // Labels keep a light default: styles made from it are also used for text over the game world.
+                // Window text sets its own dark colour in InitStyles.
                 canvasSkin.label.normal.textColor = HudTheme.Ivory;
                 titleText = null; // Recreate styles from this skin once.
             }
@@ -94,12 +96,13 @@ namespace AshenVale
         static readonly Color EconomyInset = new Color(.74f, .74f, .74f, .97f);
         static readonly Color EconomyLine = new Color(.38f, .38f, .38f, .8f);
         static readonly Color EconomyCopper = new Color(.79f, .37f, .23f, 1f);
-        // The rest of the HUD (inventory, abilities, menus, status, minimap): smoky charcoal panels, ivory text.
-        static readonly Color ThemePanel = new Color(.15f, .115f, .12f, .96f);
-        static readonly Color ThemeInset = new Color(.11f, .085f, .09f, .96f);
-        static readonly Color ThemeLine = new Color(.48f, .32f, .27f, .9f);
-        static readonly Color ThemeIvory = new Color(.96f, .92f, .85f, 1f);
-        static readonly Color ThemeMuted = new Color(.76f, .70f, .67f, 1f);
+        // The rest of the HUD: the same light grey windows with dark text (ThemeText / ThemeTextMuted). Text drawn
+        // straight over the game world, and on the dark bar tracks, stays light (ThemeIvory / ThemeMuted).
+        static readonly Color ThemeInset = new Color(.10f, .10f, .11f, .96f);
+        static readonly Color ThemeIvory = new Color(.96f, .94f, .90f, 1f);
+        static readonly Color ThemeMuted = new Color(.80f, .79f, .77f, 1f);
+        static readonly Color ThemeText = new Color(.10f, .10f, .11f, 1f);
+        static readonly Color ThemeTextMuted = new Color(.26f, .26f, .27f, 1f);
         static readonly Color EconomyOlive = new Color(.97f, .88f, .76f, .98f);     // the selected row: a warm highlight
         static readonly Color EconomyIvory = new Color(.10f, .10f, .11f, 1f);       // main text (dark, on the light panels)
         static readonly Color EconomyOnCopper = new Color(1f, .97f, .92f, 1f);     // text on the copper buttons
@@ -149,17 +152,17 @@ namespace AshenVale
         {
             if (titleText != null) return;
             titleText = new GUIStyle(GUI.skin.label) { fontSize = 16, fontStyle = FontStyle.Bold };
-            titleText.normal.textColor = ThemeIvory;
+            titleText.normal.textColor = ThemeText;
             barText = new GUIStyle(GUI.skin.label) { fontSize = 12, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleLeft };
             barText.normal.textColor = ThemeIvory;
             detailText = new GUIStyle(GUI.skin.label) { fontSize = 12 };
-            detailText.normal.textColor = ThemeMuted;
+            detailText.normal.textColor = ThemeTextMuted;
             detailRight = new GUIStyle(detailText) { alignment = TextAnchor.UpperRight };
             menuButton = new GUIStyle(GUI.skin.button) { fontSize = 16, fontStyle = FontStyle.Bold };
             bodyStyle = new GUIStyle(GUI.skin.label) { fontSize = 17 };
             bodyStyle.normal.textColor = ThemeIvory;
             smallStyle = new GUIStyle(GUI.skin.label) { fontSize = 14 };
-            smallStyle.normal.textColor = ThemeMuted;
+            smallStyle.normal.textColor = ThemeTextMuted;
             centeredStyle = new GUIStyle(bodyStyle) { alignment = TextAnchor.MiddleCenter, fontSize = 21 };
             statusStyle = new GUIStyle(GUI.skin.label) { fontSize = 15, fontStyle = FontStyle.Bold, alignment = TextAnchor.UpperRight };
             statusStyle.normal.textColor = new Color(.70f, .82f, .66f);
@@ -175,6 +178,7 @@ namespace AshenVale
             minimapHint = new GUIStyle(GUI.skin.label) { fontSize = 10, alignment = TextAnchor.UpperRight };
             minimapHint.normal.textColor = ThemeMuted;
             tooltipText = new GUIStyle(smallStyle) { fontSize = 13, wordWrap = true };
+            tooltipText.normal.textColor = new Color(.82f, .85f, .9f);      // on the world map's own dark tooltip
             // World map text: dark ink on parchment.
             atlasTitle = new GUIStyle(GUI.skin.label) { fontSize = 24, fontStyle = FontStyle.Bold, alignment = TextAnchor.UpperCenter };
             atlasTitle.normal.textColor = new Color(.30f, .19f, .10f);
@@ -186,9 +190,9 @@ namespace AshenVale
             atlasSub.normal.textColor = new Color(.42f, .30f, .18f);
             atlasSmall = new GUIStyle(GUI.skin.label) { fontSize = 12 };
             atlasSmallLight = new GUIStyle(GUI.skin.label) { fontSize = 12 };
-            atlasSmallLight.normal.textColor = new Color(.85f, .78f, .62f);
+            atlasSmallLight.normal.textColor = ThemeTextMuted;    // in the light grey frame around the painted map
             atlasCornerLight = new GUIStyle(GUI.skin.label) { fontSize = 12, fontStyle = FontStyle.Bold, alignment = TextAnchor.UpperRight };
-            atlasCornerLight.normal.textColor = new Color(.92f, .84f, .66f);
+            atlasCornerLight.normal.textColor = ThemeText;
             atlasSmall.normal.textColor = new Color(.32f, .22f, .12f);
             numberStyle = new GUIStyle(GUI.skin.label) { fontSize = 22, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
             bigNumberStyle = new GUIStyle(numberStyle) { fontSize = 30 };
@@ -196,7 +200,7 @@ namespace AshenVale
             bossName.normal.textColor = new Color(1f, .92f, .75f);
             inventoryTabText = new GUIStyle(GUI.skin.button) { fontSize = 13, fontStyle = FontStyle.Bold };
             activeInventoryTabText = new GUIStyle(inventoryTabText);
-            activeInventoryTabText.normal.textColor = HudTheme.Copper;
+            activeInventoryTabText.normal.textColor = HudTheme.CopperText;
             partNameText = new GUIStyle(smallStyle) { fontSize = 13, alignment = TextAnchor.MiddleLeft, wordWrap = false, clipping = TextClipping.Clip };
             economyTitleText = new GUIStyle(GUI.skin.label) { fontSize = 20, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleLeft };
             economyTitleText.normal.textColor = EconomyIvory;
@@ -367,7 +371,7 @@ namespace AshenVale
                 GUI.Label(new Rect(20, y - 22, size.x + 10, 22), n.text, smallStyle);
                 y -= 24;
             }
-            smallStyle.normal.textColor = ThemeMuted;
+            smallStyle.normal.textColor = ThemeTextMuted;
         }
 
         void Note(string text, Color color)
@@ -455,7 +459,8 @@ namespace AshenVale
         void DrawMenu()
         {
             Rect r = new Rect((Screen.width - 320) / 2f, (Screen.height - 304) / 2f, 320, 304);
-            GUI.Box(r, "MENU   [ESC] Close");
+            GUI.Box(r, "MENU");
+            if (CloseX(r)) { menuOpen = false; return; }
             GUI.Label(new Rect(r.x + 20, r.y + 30, 280, 24), "Your hero saves automatically.", smallStyle);
             if (GUI.Button(new Rect(r.x + 30, r.y + 66, 260, 44), "RESUME", menuButton)) menuOpen = false;
             if (GUI.Button(new Rect(r.x + 30, r.y + 120, 260, 44), "CONTROLS", menuButton)) { menuOpen = false; controlsOpen = true; capturingAction = -1; }
@@ -469,7 +474,8 @@ namespace AshenVale
             int rows = Keys.Count;
             float h = 96 + rows * 27 + 50;
             Rect r = new Rect((Screen.width - 620) / 2f, Mathf.Max(20, (Screen.height - h) / 2f), 620, h);
-            GUI.Box(r, "CONTROLS   [ESC] Close");
+            GUI.Box(r, "CONTROLS");
+            if (CloseX(r)) { controlsOpen = false; capturingAction = -1; return; }
             GUI.Label(new Rect(r.x + 20, r.y + 28, 580, 44), Capturing ? "Press the key you want (Esc: keep the old one, Backspace: clear)."
                                                                : "Click a key to change it. Either key works for an action. Saved on this PC.", smallStyle);
             if (Capturing)
@@ -590,6 +596,12 @@ namespace AshenVale
             return closed;
         }
 
+        // The X in a window's top right corner; true when it was clicked.
+        static bool CloseX(Rect window)
+        {
+            return GUI.Button(new Rect(window.xMax - 38, window.y + 6, 30, 26), "X");
+        }
+
         static void Fill(Rect rect, Color color)
         {
             Color previous = GUI.color;
@@ -612,7 +624,7 @@ namespace AshenVale
             Matrix4x4 oldMatrix = GUI.matrix;
             float scale = Mathf.Min(1f, Mathf.Max(.65f, Screen.width / 420f));
             GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1));
-            EconomySurface(new Rect(10, 10, 364, 195), ThemePanel, ThemeLine, 2f);
+            EconomySurface(new Rect(10, 10, 364, 195), EconomyPanel, EconomyLine, 2f);
             Fill(new Rect(24, 11, 336, 2), EconomyCopper);
             GUI.Label(new Rect(23, 17, 200, 25), (ch.name ?? me.Hero.name).ToUpperInvariant(), titleText);
             GUI.Label(new Rect(170, 19, 191, 22), me.Hero.name.ToUpperInvariant() + "   LV " + ch.level, detailRight);
@@ -631,7 +643,8 @@ namespace AshenVale
         {
             var ch = me.ch;
             Rect r = PanelRect();
-            GUI.Box(r, "INVENTORY   [" + Keys.Name(GameAction.Inventory) + "] Close");
+            GUI.Box(r, "INVENTORY");
+            if (CloseX(r)) { inventoryOpen = false; dragItem = -1; return; }
             GUI.Label(new Rect(r.x + 18, r.y + 27, r.width - 36, 20),
                       "Embermarks " + ch.gold + "   |   Gear bonuses: ATK +" + ch.BonusAttack + "  DEF +" + ch.BonusDefense + "  HP +" + ch.BonusHealth, smallStyle);
             int partKinds = 0;
@@ -937,7 +950,8 @@ namespace AshenVale
         void DrawWaystone(PlayerState me)
         {
             Rect r = new Rect((Screen.width - 420) / 2f, Mathf.Max(120, (Screen.height - 410) / 2f), 420, 410);
-            GUI.Box(r, "WAYSTONE — [" + Keys.Name(GameAction.Interact) + "] Close");
+            GUI.Box(r, "WAYSTONE");
+            if (CloseX(r)) { waystoneOpen = false; return; }
             GUI.Label(new Rect(r.x + 20, r.y + 28, 380, 24), "Travel to a town you have found.", smallStyle);
             float y = r.y + 62;
             for (int i = 0; i < Maps.All.Length; i++)
@@ -1032,10 +1046,10 @@ namespace AshenVale
             Rect area, footerRect;
             if (art != null)
             {
-                Fill(new Rect(r.x - 6, r.y - frameTop, r.width + 12, r.height + frameTop + frameBottom), new Color(.23f, .15f, .09f, .97f));
+                Fill(new Rect(r.x - 6, r.y - frameTop, r.width + 12, r.height + frameTop + frameBottom), new Color(.80f, .80f, .80f, .97f));
                 GUI.DrawTexture(r, art.texture, ScaleMode.StretchToFill);
                 area = r;
-                GUI.Label(new Rect(r.x, r.y - frameTop + 6, r.width - 8, 20), "[" + Keys.Name(GameAction.WorldMap) + "] CLOSE", atlasCornerLight);
+                if (GUI.Button(new Rect(r.xMax - 24, r.y - frameTop + 3, 28, 24), "X")) { worldMapOpen = false; return; }
                 footerRect = new Rect(r.x + 10, r.yMax + 8, r.width - 20, frameBottom - 8);
             }
             else
