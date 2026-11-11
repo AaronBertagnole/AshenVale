@@ -97,6 +97,8 @@ namespace AshenVale
         static readonly Color EconomyIvory = new Color(.96f, .92f, .85f, 1f);
         static readonly Color EconomyMuted = new Color(.77f, .72f, .68f, 1f);
         static Texture2D dotTexture;
+        static Texture2D economySurfaceTexture;
+        static GUIStyle economyRoundedStyle;
         int bannerMap = -1;
         float bannerClock;
         Vector2 smithyScroll;
@@ -489,13 +491,67 @@ namespace AshenVale
             GUI.enabled = true;
         }
 
+        static void EnsureEconomyRoundedStyle()
+        {
+            if (economyRoundedStyle != null) return;
+            const int size = 48;
+            economySurfaceTexture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            economySurfaceTexture.name = "AshenVale Economy UI Rounded Surface";
+            economySurfaceTexture.hideFlags = HideFlags.HideAndDontSave;
+            economySurfaceTexture.wrapMode = TextureWrapMode.Clamp;
+            economySurfaceTexture.filterMode = FilterMode.Bilinear;
+            float radius = 9f, half = (size - 1) * .5f;
+            for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                float qx = Mathf.Abs(x - half) - (half - radius);
+                float qy = Mathf.Abs(y - half) - (half - radius);
+                float outsideX = Mathf.Max(qx, 0), outsideY = Mathf.Max(qy, 0);
+                float distance = Mathf.Sqrt(outsideX * outsideX + outsideY * outsideY) +
+                    Mathf.Min(Mathf.Max(qx, qy), 0) - radius;
+                float alpha = distance <= 0 ? 1f : (distance < 8f ? .22f * Mathf.Exp(-distance * .42f) : 0f);
+                float t = y / (float)(size - 1);
+                float shade = distance > -1.5f ? .72f : (distance > -3.5f ? .88f : Mathf.Lerp(.90f, 1.04f, t));
+                economySurfaceTexture.SetPixel(x, y, new Color(shade, shade, shade, alpha));
+            }
+            economySurfaceTexture.Apply(false, true);
+            economyRoundedStyle = new GUIStyle(GUI.skin.box);
+            economyRoundedStyle.name = "AshenVale Economy Rounded Surface";
+            economyRoundedStyle.normal.background = economySurfaceTexture;
+            economyRoundedStyle.hover.background = economySurfaceTexture;
+            economyRoundedStyle.active.background = economySurfaceTexture;
+            economyRoundedStyle.focused.background = economySurfaceTexture;
+            economyRoundedStyle.onNormal.background = economySurfaceTexture;
+            economyRoundedStyle.onHover.background = economySurfaceTexture;
+            economyRoundedStyle.onActive.background = economySurfaceTexture;
+            economyRoundedStyle.border = new RectOffset(15, 15, 15, 15);
+            economyRoundedStyle.padding = new RectOffset(0, 0, 0, 0);
+            economyRoundedStyle.margin = new RectOffset(0, 0, 0, 0);
+        }
+
         void EconomySurface(Rect rect, Color fill, Color outline, float thickness = 1f)
         {
-            Fill(rect, fill);
-            Fill(new Rect(rect.x, rect.y, rect.width, thickness), outline);
-            Fill(new Rect(rect.x, rect.yMax - thickness, rect.width, thickness), outline);
-            Fill(new Rect(rect.x, rect.y, thickness, rect.height), outline);
-            Fill(new Rect(rect.xMax - thickness, rect.y, thickness, rect.height), outline);
+            if (rect.width < 34f || rect.height < 34f)
+            {
+                // Too small for the rounded 9-slice (its corners alone are 30 px): a plain plate with a thin outline.
+                Fill(rect, fill);
+                Fill(new Rect(rect.x, rect.y, rect.width, 1f), outline);
+                Fill(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), outline);
+                Fill(new Rect(rect.x, rect.y, 1f, rect.height), outline);
+                Fill(new Rect(rect.xMax - 1f, rect.y, 1f, rect.height), outline);
+                return;
+            }
+            EnsureEconomyRoundedStyle();
+            Color old = GUI.color;
+            GUI.color = new Color(0f, 0f, 0f, .32f);
+            GUI.Box(new Rect(rect.x + 2, rect.y + 4, rect.width, rect.height), GUIContent.none, economyRoundedStyle);
+            GUI.color = fill;
+            GUI.Box(rect, GUIContent.none, economyRoundedStyle);
+            GUI.color = old;
+
+            float inset = Mathf.Min(10f, rect.height * .22f);
+            Fill(new Rect(rect.x + inset, rect.y + 1, Mathf.Max(0, rect.width - inset * 2), thickness), outline);
+            Fill(new Rect(rect.x + inset, rect.yMax - thickness - 1, Mathf.Max(0, rect.width - inset * 2), thickness), new Color(outline.r * .68f, outline.g * .68f, outline.b * .68f, outline.a));
         }
 
         bool EconomyHitButton(Rect rect, bool primary = false, bool selected = false)
@@ -774,7 +830,7 @@ namespace AshenVale
                     Rect buy = new Rect(r.x + pad + potion * (col + gap), r.y + 186, col, 48);
                     bool clicked = EconomyHitButton(buy);
                     var bottle = Sprites.Art(health ? "Art/Items/hp_potion" : "Art/Items/mp_potion");
-                    if (bottle != null) GUI.DrawTexture(new Rect(buy.x + 7, buy.y + 6, 36, 36), bottle.texture, ScaleMode.ScaleToFit, true);
+                    if (bottle != null) { EconomySurface(new Rect(buy.x + 4, buy.y + 3, 42, 42), EconomyInset, EconomyLine, .8f); GUI.DrawTexture(new Rect(buy.x + 7, buy.y + 6, 36, 36), bottle.texture, ScaleMode.ScaleToFit, true); }
                     GUI.Label(new Rect(buy.x + 52, buy.y + 4, col - 176, 40),
                         "Buy " + (health ? "HP" : "MP") + " Potion", economyBodyText);
                     GUI.Label(new Rect(buy.x + col - 124, buy.y + 4, 112, 40),
@@ -797,7 +853,8 @@ namespace AshenVale
                     int cost = Loot.ShopGearCost(slot, ch.level);
                     Rect buy = new Rect(r.x + pad + (i % 2) * (col + gap), r.y + 270 + (i / 2) * 48, col, 44);
                     bool clicked = EconomyHitButton(buy);
-                    ItemIcon(new Rect(buy.x + 6, buy.y + 4, 36, 36), new Item { slot = slot, rarity = Rarity.Common, name = Loot.SlotName(slot, me.Hero) });
+                    EconomySurface(new Rect(buy.x + 4, buy.y + 3, 42, 38), EconomyInset, EconomyLine, .8f);
+                ItemIcon(new Rect(buy.x + 7, buy.y + 4, 36, 36), new Item { slot = slot, rarity = Rarity.Common, name = Loot.SlotName(slot, me.Hero) });
                     GUI.Label(new Rect(buy.x + 50, buy.y + 3, col - 170, 38),
                         Loot.SlotName(slot, me.Hero) + "  ·  Common", economyBodyText);
                     GUI.Label(new Rect(buy.x + col - 124, buy.y + 3, 112, 38), cost + " marks", economyPriceText);
@@ -823,7 +880,8 @@ namespace AshenVale
                 Item item = ch.inventory[i];
                 Rect sell = new Rect(r.x + pad, listY + i * rowH, col, rowH - 2);
                 bool clicked = EconomyHitButton(sell);
-                ItemIcon(new Rect(sell.x + 4, sell.y + 2, 28, 28), item);
+                EconomySurface(new Rect(sell.x + 3, sell.y + 2, 32, 28), EconomyInset, EconomyLine, .7f);
+                ItemIcon(new Rect(sell.x + 5, sell.y + 2, 28, 28), item);
                 GUI.Label(new Rect(sell.x + 38, sell.y + 2, col - 148, 27), item.DisplayName, economyBodyText);
                 GUI.Label(new Rect(sell.x + col - 108, sell.y + 2, 100, 27), "+" + Loot.SellPrice(item) + " marks", economyPriceText);
                 if (clicked) { commands.Sell(i); break; }
@@ -847,7 +905,7 @@ namespace AshenVale
                 Rect allButton = new Rect(row.x + col - 90, row.y, 88, row.height);
                 bool oneClicked = EconomyHitButton(oneButton);
                 bool allClicked = EconomyHitButton(allButton);
-                if (icon != null) GUI.DrawTexture(new Rect(row.x + 3, row.y + 2, 28, 28), icon.texture, ScaleMode.ScaleToFit, true);
+                if (icon != null) { EconomySurface(new Rect(row.x + 3, row.y + 2, 32, 28), EconomyInset, EconomyLine, .7f); GUI.DrawTexture(new Rect(row.x + 5, row.y + 2, 28, 28), icon.texture, ScaleMode.ScaleToFit, true); }
                 GUI.Label(new Rect(row.x + (icon != null ? 36 : 8), row.y + 2, col - 202, 27), part.name + " x" + ch.parts[i], economyBodyText);
                 GUI.Label(oneButton, "1  +" + part.price, economyButtonText);
                 GUI.Label(allButton, "ALL  +" + part.price * ch.parts[i], economyButtonText);
@@ -1232,6 +1290,7 @@ namespace AshenVale
                 return;
             }
 
+            EconomySurface(new Rect(5, y + 6, 48, 52), EconomyInset, EconomyLine, .8f);
             ItemIcon(new Rect(7, y + 7, 44, 48), item);
             Color old = GUI.color;
             GUI.color = Loot.RarityColor(item.rarity);
@@ -1254,7 +1313,8 @@ namespace AshenVale
                 return;
             }
 
-            ItemIcon(new Rect(detail.x + 16, detail.y + 46, 74, 74), item);
+            EconomySurface(new Rect(detail.x + 14, detail.y + 44, 78, 78), EconomyCard, EconomyCopper, 1f);
+            ItemIcon(new Rect(detail.x + 17, detail.y + 47, 72, 72), item);
             GUI.Label(new Rect(detail.x + 100, detail.y + 51, detail.width - 116, 38),
                 item.DisplayName, economyTitleText);
             GUI.Label(new Rect(detail.x + 100, detail.y + 87, detail.width - 116, 24),
