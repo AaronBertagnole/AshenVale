@@ -56,7 +56,7 @@ namespace AshenVale
         readonly Dictionary<int, Vector2> tossFrom = new Dictionary<int, Vector2>();   // drop id -> the hands of the hero who dropped it
         readonly Dictionary<int, DropPop> dropPops = new Dictionary<int, DropPop>();
         bool dropsSynced;                   // false right after a map change, so what is already lying there doesn't pop
-        const float PopTime = .5f, PopHeight = .9f;
+        const float PopTime = .5f, PopHeight = .9f, DropSpin = 360f;
         readonly Dictionary<int, GameObject> shotViews = new Dictionary<int, GameObject>();
         readonly Dictionary<int, GameObject> portalViews = new Dictionary<int, GameObject>();
         readonly List<SlashFx> slashes = new List<SlashFx>();
@@ -619,7 +619,7 @@ namespace AshenVale
                 if (dropPops.TryGetValue(d.id, out pop))
                 {
                     float t = (Time.time - pop.start) / PopTime;
-                    if (t >= 1f) { dropPops.Remove(d.id); go.transform.localScale = pop.rest; }
+                    if (t >= 1f) { dropPops.Remove(d.id); go.transform.localScale = pop.rest; go.transform.rotation = Quaternion.identity; }
                     else
                     {
                         // An arc from the burst point to its resting spot, landing with a little squash-and-settle.
@@ -629,6 +629,9 @@ namespace AshenVale
                                        : d.y + Mathf.Sin(t * Mathf.PI) * PopHeight * (.6f + .4f * Mathf.Abs(d.x - pop.fromX));
                         float grow = t < .25f ? .3f + .7f * (t / .25f) : 1f + .15f * Mathf.Sin((t - .25f) / .75f * Mathf.PI);
                         go.transform.localScale = new Vector3(pop.rest.x * grow, pop.rest.y * grow, 1f);
+                        // One spin on the way, slowing to land upright; it turns the way it is travelling.
+                        float turn = d.x < pop.fromX ? 1f : -1f;
+                        go.transform.rotation = Quaternion.Euler(0f, 0f, turn * DropSpin * (1f - t) * (1f - t));
                     }
                 }
                 go.transform.position = new Vector3(x, y, 0);
