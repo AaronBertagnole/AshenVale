@@ -525,6 +525,17 @@ namespace AshenVale
             }
         }
 
+        // The painted icon for a piece of gear, fitted into rect (nothing is drawn if the picture is missing).
+        static void ItemIcon(Rect rect, Item item)
+        {
+            var icon = Sprites.Art(Loot.IconPath(item));
+            if (icon == null) return;
+            Color old = GUI.color;
+            GUI.color = Color.white;
+            GUI.DrawTexture(rect, icon.texture, ScaleMode.ScaleToFit, true);
+            GUI.color = old;
+        }
+
         int dragItem = -1;          // inventory slot being dragged with the left mouse button (-1: none)
         Vector2 dragStart;
 
@@ -544,9 +555,12 @@ namespace AshenVale
             for (int i = 0; i < 4; i++)
             {
                 Item item = ch.equipped[i];
-                GUI.Label(new Rect(r.x + 18 + (i % 2) * 300, r.y + 96 + (i / 2) * 25, 290, 23),
+                Rect line = new Rect(r.x + 18 + (i % 2) * 300, r.y + 94 + (i / 2) * 29, 290, 27);
+                if (item != null) ItemIcon(new Rect(line.x, line.y, 27, 27), item);
+                GUI.Label(new Rect(line.x + 32, line.y + 2, line.width - 32, 23),
                           ((Slot)i) + ": " + (item == null ? "Empty" : item.DisplayName), smallStyle);
             }
+            Item hovered = null;
             for (int i = 0; i < Tuning.InventoryCapacity; i++)
             {
                 int col = i % 5, row = i / 5;
@@ -558,8 +572,17 @@ namespace AshenVale
                 if (e.type == EventType.MouseDown && e.button == 0 && cell.Contains(e.mousePosition)) { dragItem = i; dragStart = e.mousePosition; }
                 Color previous = GUI.color;
                 GUI.color = Loot.RarityColor(item.rarity);
-                bool clicked = GUI.Button(cell, item.DisplayName + "\n+" + item.Attack + " ATK / +" + item.Defense + " DEF\n+" + item.Health + " HP");
+                bool clicked = GUI.Button(cell, GUIContent.none);
                 GUI.color = previous;
+                // Icon on the left, the stats it gives on the right; the full name shows below while the mouse is over it.
+                ItemIcon(new Rect(cell.x + 3, cell.y + 4, 52, 52), item);
+                int lineY = 0, lines = (item.Attack > 0 ? 1 : 0) + (item.Defense > 0 ? 1 : 0) + (item.Health > 0 ? 1 : 0) + (item.upgrade > 0 ? 1 : 0);
+                float textTop = cell.y + (cell.height - lines * 16) / 2f;
+                if (item.upgrade > 0) GUI.Label(new Rect(cell.x + 58, textTop + lineY++ * 16, 56, 16), "+" + item.upgrade, partNameText);
+                if (item.Attack > 0) GUI.Label(new Rect(cell.x + 58, textTop + lineY++ * 16, 56, 16), item.Attack + " ATK", partNameText);
+                if (item.Defense > 0) GUI.Label(new Rect(cell.x + 58, textTop + lineY++ * 16, 56, 16), item.Defense + " DEF", partNameText);
+                if (item.Health > 0) GUI.Label(new Rect(cell.x + 58, textTop + lineY++ * 16, 56, 16), item.Health + " HP", partNameText);
+                if (cell.Contains(Event.current.mousePosition)) hovered = item;
                 if (clicked) { if (Event.current.shift) commands.Drop(i); else commands.Equip(i); break; }
             }
             // The item being dragged follows the cursor once it has moved a little.
@@ -572,7 +595,15 @@ namespace AshenVale
                 GUI.Box(new Rect(mouse.mousePosition.x + 12, mouse.mousePosition.y + 10, 190, 40), held.DisplayName + (outside ? "\nRelease to drop" : "\nDrag out of the window to drop"));
                 GUI.color = before;
             }
-            GUI.Label(new Rect(r.x + 18, r.y + 433, r.width - 36, 28), "Click to equip.  Drop: right-click, Shift+click, or drag out of the window.", partNameText);
+            if (hovered != null)
+            {
+                Color old = GUI.color;
+                GUI.color = Loot.RarityColor(hovered.rarity);
+                GUI.Label(new Rect(r.x + 18, r.y + 433, r.width - 36, 28),
+                          hovered.DisplayName + "   ·   +" + hovered.Attack + " ATK / +" + hovered.Defense + " DEF / +" + hovered.Health + " HP   ·   Lv " + hovered.level, partNameText);
+                GUI.color = old;
+            }
+            else GUI.Label(new Rect(r.x + 18, r.y + 433, r.width - 36, 28), "Click to equip.  Drop: right-click, Shift+click, or drag out of the window.", partNameText);
         }
 
         void DrawUseablesTab(PlayerState me, Rect r)
@@ -653,15 +684,19 @@ namespace AshenVale
             {
                 Slot slot = (Slot)i;
                 int cost = Loot.ShopGearCost(slot, ch.level);
-                if (GUI.Button(new Rect(r.x + 20 + (i % 2) * 300, r.y + 154 + (i / 2) * 49, 270, 40), "Buy Common " + Loot.SlotName(slot, me.Hero) + " — " + cost + " marks"))
-                    commands.BuyGear(slot);
+                Rect buy = new Rect(r.x + 20 + (i % 2) * 300, r.y + 154 + (i / 2) * 49, 270, 40);
+                bool bought = GUI.Button(buy, "      Buy Common " + Loot.SlotName(slot, me.Hero) + " — " + cost + " marks");
+                ItemIcon(new Rect(buy.x + 4, buy.y + 3, 34, 34), new Item { slot = slot, rarity = Rarity.Common, name = Loot.SlotName(slot, me.Hero) });
+                if (bought) commands.BuyGear(slot);
             }
             GUI.Label(new Rect(r.x + 20, r.y + 255, 280, 25), "Sell gear", smallStyle);
             for (int i = 0; i < ch.inventory.Count && i < 7; i++)
             {
                 Item item = ch.inventory[i];
-                if (GUI.Button(new Rect(r.x + 20, r.y + 280 + i * 28, 280, 26), "Sell " + item.DisplayName + "  +" + Loot.SellPrice(item) + " marks"))
-                { commands.Sell(i); break; }
+                Rect sell = new Rect(r.x + 20, r.y + 280 + i * 28, 280, 26);
+                bool sold = GUI.Button(sell, "     Sell " + item.DisplayName + "  +" + Loot.SellPrice(item) + " marks");
+                ItemIcon(new Rect(sell.x + 3, sell.y + 1, 24, 24), item);
+                if (sold) { commands.Sell(i); break; }
             }
             if (ch.inventory.Count > 7) GUI.Label(new Rect(r.x + 20, r.y + 280 + 7 * 28, 280, 22), "...and " + (ch.inventory.Count - 7) + " more (sell these first)", smallStyle);
             GUI.Label(new Rect(r.x + 320, r.y + 255, 280, 25), "Sell monster parts", smallStyle);
@@ -1009,15 +1044,16 @@ namespace AshenVale
             if (item == null) { GUI.Label(new Rect(10, y + 6, width - 20, 22), where + ": empty", smallStyle); return; }
             Color old = GUI.color;
             GUI.color = Loot.RarityColor(item.rarity);
-            GUI.Label(new Rect(10, y + 4, 330, 22), where + ": " + item.DisplayName + "  (Lv " + item.level + ")", smallStyle);
+            GUI.Label(new Rect(56, y + 4, 284, 22), where + ": " + item.DisplayName + "  (Lv " + item.level + ")", smallStyle);
             GUI.color = old;
+            ItemIcon(new Rect(6, y + 5, 44, 44), item);
             if (item.upgrade >= Tuning.MaxUpgrade)
             {
-                GUI.Label(new Rect(10, y + 27, 330, 22), StatLine(item, item.upgrade) + "   ·   fully upgraded", smallStyle);
+                GUI.Label(new Rect(56, y + 27, 284, 22), StatLine(item, item.upgrade) + "   ·   fully upgraded", smallStyle);
                 return;
             }
             var cost = Smithing.Cost(item);
-            GUI.Label(new Rect(10, y + 27, 330, 22), StatLine(item, item.upgrade) + "   ->   " + StatLine(item, item.upgrade + 1), smallStyle);
+            GUI.Label(new Rect(56, y + 27, 284, 22), StatLine(item, item.upgrade) + "   ->   " + StatLine(item, item.upgrade + 1), smallStyle);
             string price = cost.partCount + " " + Parts.All[cost.part].name + " (" + ch.parts[cost.part] + ")";
             if (cost.rareCount > 0) price += "  +  " + cost.rareCount + " " + Parts.All[cost.rarePart].name + " (" + ch.parts[cost.rarePart] + ")";
             price += "  +  " + cost.gold + " marks";
