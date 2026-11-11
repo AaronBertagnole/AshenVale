@@ -525,9 +525,22 @@ namespace AshenVale
             }
         }
 
+        int dragItem = -1;          // inventory slot being dragged with the left mouse button (-1: none)
+        Vector2 dragStart;
+
         void DrawEquipsTab(PlayerState me, Rect r)
         {
             var ch = me.ch;
+            // Dragging an item out of the window and letting go drops it. This is checked before the buttons
+            // below see the mouse-up (rawType: a button may already have used the event).
+            var mouse = Event.current;
+            if (dragItem >= ch.inventory.Count) dragItem = -1;
+            if (mouse.rawType == EventType.MouseUp && mouse.button == 0)
+            {
+                if (dragItem >= 0 && !r.Contains(mouse.mousePosition)) commands.Drop(dragItem);
+                dragItem = -1;
+            }
+            else if (dragItem >= 0 && !Input.GetMouseButton(0)) dragItem = -1;     // the release happened somewhere we never saw
             for (int i = 0; i < 4; i++)
             {
                 Item item = ch.equipped[i];
@@ -542,13 +555,24 @@ namespace AshenVale
                 if (item == null) { GUI.Box(cell, "—"); continue; }
                 var e = Event.current;
                 if (e.type == EventType.MouseDown && e.button == 1 && cell.Contains(e.mousePosition)) { e.Use(); commands.Drop(i); break; }
+                if (e.type == EventType.MouseDown && e.button == 0 && cell.Contains(e.mousePosition)) { dragItem = i; dragStart = e.mousePosition; }
                 Color previous = GUI.color;
                 GUI.color = Loot.RarityColor(item.rarity);
                 bool clicked = GUI.Button(cell, item.DisplayName + "\n+" + item.Attack + " ATK / +" + item.Defense + " DEF\n+" + item.Health + " HP");
                 GUI.color = previous;
-                if (clicked) { commands.Equip(i); break; }
+                if (clicked) { if (Event.current.shift) commands.Drop(i); else commands.Equip(i); break; }
             }
-            GUI.Label(new Rect(r.x + 18, r.y + 433, r.width - 36, 28), "Click an item to equip it, right-click to drop it. Potions and monster parts have their own tabs.", partNameText);
+            // The item being dragged follows the cursor once it has moved a little.
+            if (dragItem >= 0 && dragItem < ch.inventory.Count && (mouse.mousePosition - dragStart).sqrMagnitude > 64f)
+            {
+                Item held = ch.inventory[dragItem];
+                bool outside = !r.Contains(mouse.mousePosition);
+                Color before = GUI.color;
+                GUI.color = Loot.RarityColor(held.rarity);
+                GUI.Box(new Rect(mouse.mousePosition.x + 12, mouse.mousePosition.y + 10, 190, 40), held.DisplayName + (outside ? "\nRelease to drop" : "\nDrag out of the window to drop"));
+                GUI.color = before;
+            }
+            GUI.Label(new Rect(r.x + 18, r.y + 433, r.width - 36, 28), "Click to equip.  Drop: right-click, Shift+click, or drag out of the window.", partNameText);
         }
 
         void DrawUseablesTab(PlayerState me, Rect r)
