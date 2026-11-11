@@ -607,6 +607,19 @@ namespace AshenVale
             map.drops.Add(new DropState { id = NextId(), map = map.def.id, owner = owner.id, born = time, kind = kind, x = x, y = floor + .25f, item = item, value = gold });
         }
 
+        // Puts an item from the bag on the ground just in front of the hero. Nobody owns it: anyone can pick it up.
+        public void DropItem(int playerId, int inventoryIndex)
+        {
+            var p = GetPlayer(playerId);
+            if (p == null || p.dead || inventoryIndex < 0 || inventoryIndex >= p.ch.inventory.Count) return;
+            var map = maps[p.map];
+            var item = p.ch.inventory[inventoryIndex];
+            p.ch.inventory.RemoveAt(inventoryIndex);
+            float x = Mathf.Clamp(p.x + p.facing * .7f, map.def.minX, map.def.maxX);
+            map.drops.Add(new DropState { id = NextId(), map = map.def.id, owner = 0, born = time, kind = DropKind.Item,
+                                          x = x, y = FloorAt(map.def, x, p.y) + .25f, item = item });
+        }
+
         void GainXp(PlayerState p, int amount)
         {
             p.ch.xp += amount;

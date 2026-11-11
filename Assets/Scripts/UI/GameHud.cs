@@ -540,13 +540,15 @@ namespace AshenVale
                 Rect cell = new Rect(r.x + 18 + col * 120, r.y + 161 + row * 65, 115, 60);
                 Item item = i < ch.inventory.Count ? ch.inventory[i] : null;
                 if (item == null) { GUI.Box(cell, "—"); continue; }
+                var e = Event.current;
+                if (e.type == EventType.MouseDown && e.button == 1 && cell.Contains(e.mousePosition)) { e.Use(); commands.Drop(i); break; }
                 Color previous = GUI.color;
                 GUI.color = Loot.RarityColor(item.rarity);
                 bool clicked = GUI.Button(cell, item.DisplayName + "\n+" + item.Attack + " ATK / +" + item.Defense + " DEF\n+" + item.Health + " HP");
                 GUI.color = previous;
                 if (clicked) { commands.Equip(i); break; }
             }
-            GUI.Label(new Rect(r.x + 18, r.y + 433, r.width - 36, 28), "Click an item to equip it. Potions and monster parts have their own tabs.", partNameText);
+            GUI.Label(new Rect(r.x + 18, r.y + 433, r.width - 36, 28), "Click an item to equip it, right-click to drop it. Potions and monster parts have their own tabs.", partNameText);
         }
 
         void DrawUseablesTab(PlayerState me, Rect r)
