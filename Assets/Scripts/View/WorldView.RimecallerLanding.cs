@@ -30,7 +30,6 @@ namespace AshenVale
         }
 
         readonly List<LandingLeaf> landingLeaves = new List<LandingLeaf>();
-        AudioClip rimeFootfall;
 
         void TrackHeroLanding(PlayerState player, HeroView view, int localId, float dt, float alpha)
         {
@@ -71,20 +70,7 @@ namespace AshenVale
 
             int leafCount = knight ? 8 : ranger ? 4 : 6;
             SpawnLandingLeaves(player.x, player.y, leafCount);
-            if (player.id != localId) return;
-
-            if (rimeFootfall == null)
-                rimeFootfall = Resources.Load<AudioClip>("Audio/RimecallerLeafFootfall");
-            if (rimeFootfall == null) return;
-            if (view.landingAudio == null)
-            {
-                view.landingAudio = view.go.AddComponent<AudioSource>();
-                view.landingAudio.playOnAwake = false;
-                view.landingAudio.spatialBlend = 0f;
-            }
-            view.landingAudio.pitch = knight ? .83f : ranger ? 1.18f : 1f;
-            float volume = knight ? .40f : ranger ? .24f : .32f;
-            view.landingAudio.PlayOneShot(rimeFootfall, volume);
+            // (The landing thump sound was removed at the owner's request; the leaves stay.)
         }
 
         void SpawnLandingLeaves(float x, float y, int leafCount)
