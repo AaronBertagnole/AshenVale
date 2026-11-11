@@ -52,7 +52,8 @@ namespace AshenVale
         readonly List<MonsterView> dying = new List<MonsterView>();
         readonly Dictionary<int, GameObject> dropViews = new Dictionary<int, GameObject>();
         // Drops pop out of the monster when they appear: each remembers when it was first seen and where it burst from.
-        sealed class DropPop { public float start, fromX; public Vector3 rest; }
+        sealed class DropPop { public float start, fromX, fromY; public bool tossed; public Vector3 rest; }
+        readonly Dictionary<int, Vector2> tossFrom = new Dictionary<int, Vector2>();   // drop id -> the hands of the hero who dropped it
         readonly Dictionary<int, DropPop> dropPops = new Dictionary<int, DropPop>();
         bool dropsSynced;                   // false right after a map change, so what is already lying there doesn't pop
         const float PopTime = .5f, PopHeight = .9f;
@@ -139,6 +140,7 @@ namespace AshenVale
             ClearLandingLeaves();
             dropsSynced = false;
             dropPops.Clear();
+            tossFrom.Clear();
             for (int i = 0; i < visuals.Length; i++) visuals[i].root.SetActive(i == map);
             shownMap = map;
             ClearMonsters();
@@ -154,6 +156,15 @@ namespace AshenVale
                 if (e.map != shownMap) continue;
                 PlayAttackFeedback(e);
                 if(e.kind==SimEventKind.RimeBurst || e.kind==SimEventKind.RimeStorm || e.kind==SimEventKind.RimeTeleport) {SpawnRimeFx(e);continue;}
+                if (e.kind == SimEventKind.ItemDropped)
+                {
+                    // A hero dropped an item: it is thrown from their hands (the drop itself may show up this frame or the next).
+                    GameObject shown; DropPop running;
+                    if (!dropViews.TryGetValue(e.amount, out shown)) tossFrom[e.amount] = new Vector2(e.x, e.y);
+                    else dropPops[e.amount] = new DropPop { start = Time.time, fromX = e.x, fromY = e.y, tossed = true,
+                        rest = dropPops.TryGetValue(e.amount, out running) ? running.rest : shown.transform.localScale };
+                    continue;
+                }
                 if (e.kind == SimEventKind.EmbermarksPickedUp) continue;   // the bottom-left pickup note covers it (owner: no floating text)
                 if (e.kind == SimEventKind.Slash) SpawnSlash(e);
                 else if (e.kind == SimEventKind.DragonThrust || e.kind == SimEventKind.DragonFang || e.kind == SimEventKind.DragonFissure || e.kind == SimEventKind.DragonSweep) SpawnDragonFx(e);
@@ -595,7 +606,13 @@ namespace AshenVale
                     }
                     else go = part ? Sprites.Blob(name, color, .3f, .3f, DropOrder, null, 0, 0) : Sprites.Block(name, color, .28f, .34f, DropOrder);
                     dropViews[d.id] = go;
-                    if (burst) dropPops[d.id] = new DropPop { start = Time.time, fromX = burstX, rest = go.transform.localScale };
+                    Vector2 hands;
+                    if (tossFrom.TryGetValue(d.id, out hands))
+                    {
+                        tossFrom.Remove(d.id);
+                        dropPops[d.id] = new DropPop { start = Time.time, fromX = hands.x, fromY = hands.y, tossed = true, rest = go.transform.localScale };
+                    }
+                    else if (burst) dropPops[d.id] = new DropPop { start = Time.time, fromX = burstX, rest = go.transform.localScale };
                 }
                 float x = d.x, y = d.y + Mathf.Sin(Time.time * 4 + d.x) * .1f;
                 DropPop pop;
@@ -608,7 +625,8 @@ namespace AshenVale
                         // An arc from the burst point to its resting spot, landing with a little squash-and-settle.
                         float ease = 1f - (1f - t) * (1f - t);
                         x = Mathf.Lerp(pop.fromX, d.x, ease);
-                        y = d.y + Mathf.Sin(t * Mathf.PI) * PopHeight * (.6f + .4f * Mathf.Abs(d.x - pop.fromX));
+                        y = pop.tossed ? Mathf.Lerp(pop.fromY, d.y, t * t) + Mathf.Sin(t * Mathf.PI) * PopHeight * .75f      // up out of the hands, then down to the ground
+                                       : d.y + Mathf.Sin(t * Mathf.PI) * PopHeight * (.6f + .4f * Mathf.Abs(d.x - pop.fromX));
                         float grow = t < .25f ? .3f + .7f * (t / .25f) : 1f + .15f * Mathf.Sin((t - .25f) / .75f * Mathf.PI);
                         go.transform.localScale = new Vector3(pop.rest.x * grow, pop.rest.y * grow, 1f);
                     }

@@ -607,7 +607,8 @@ namespace AshenVale
             map.drops.Add(new DropState { id = NextId(), map = map.def.id, owner = owner.id, born = time, kind = kind, x = x, y = floor + .25f, item = item, value = gold });
         }
 
-        // Puts an item from the bag on the ground just in front of the hero. Nobody owns it: anyone can pick it up.
+        // Tosses an item from the bag onto the ground just in front of the hero. Nobody owns it: anyone can pick it up.
+        // The ItemDropped event (amount: the drop's id) lets the view throw it from the hero's hands.
         public void DropItem(int playerId, int inventoryIndex)
         {
             var p = GetPlayer(playerId);
@@ -616,8 +617,10 @@ namespace AshenVale
             var item = p.ch.inventory[inventoryIndex];
             p.ch.inventory.RemoveAt(inventoryIndex);
             float x = Mathf.Clamp(p.x + p.facing * .7f, map.def.minX, map.def.maxX);
-            map.drops.Add(new DropState { id = NextId(), map = map.def.id, owner = 0, born = time, kind = DropKind.Item,
-                                          x = x, y = FloorAt(map.def, x, p.y) + .25f, item = item });
+            var drop = new DropState { id = NextId(), map = map.def.id, owner = 0, born = time, kind = DropKind.Item,
+                                       x = x, y = FloorAt(map.def, x, p.y) + .25f, item = item };
+            map.drops.Add(drop);
+            events.Add(new SimEvent { kind = SimEventKind.ItemDropped, map = p.map, playerId = p.id, amount = drop.id, x = p.x, y = p.y + .9f, facing = p.facing });
         }
 
         void GainXp(PlayerState p, int amount)
