@@ -85,17 +85,19 @@ namespace AshenVale
         GUIStyle titleText, barText, detailText, detailRight, bodyStyle, smallStyle, centeredStyle, menuButton, statusStyle, nameplate,
                  bannerTitle, bannerSub, worldLabel, mapLabel, minimapTitle, minimapHint, tooltipText,
                  atlasTitle, atlasCorner, atlasName, atlasSub, atlasSmall, atlasSmallLight, atlasCornerLight, numberStyle, bigNumberStyle, bossName, inventoryTabText, activeInventoryTabText, partNameText;
-        GUIStyle economyTitleText, economySectionText, economyBodyText, economyDetailText, economyPriceText, economyButtonText, economyHintText;
-        static readonly Color EconomyPanel = new Color(.145f, .118f, .12f, .91f);
-        static readonly Color EconomyHeader = new Color(.19f, .15f, .145f, .94f);
-        static readonly Color EconomyCard = new Color(.20f, .16f, .15f, .94f);
-        static readonly Color EconomyCardAlt = new Color(.24f, .185f, .17f, .96f);
-        static readonly Color EconomyInset = new Color(.14f, .115f, .11f, .94f);
-        static readonly Color EconomyLine = new Color(.42f, .32f, .28f, .78f);
+        GUIStyle economyTitleText, economySectionText, economyBodyText, economyDetailText, economyPriceText, economyButtonText, economyHintText, economyButtonLight, economyWarnText;
+        // Light grey panels (#cccccc, the owner's pick) with dark text; cards sit a little lighter, insets a little darker.
+        static readonly Color EconomyPanel = new Color(.80f, .80f, .80f, .95f);
+        static readonly Color EconomyHeader = new Color(.72f, .72f, .72f, .97f);
+        static readonly Color EconomyCard = new Color(.87f, .87f, .87f, .97f);
+        static readonly Color EconomyCardAlt = new Color(.95f, .95f, .95f, .98f);
+        static readonly Color EconomyInset = new Color(.74f, .74f, .74f, .97f);
+        static readonly Color EconomyLine = new Color(.38f, .38f, .38f, .8f);
         static readonly Color EconomyCopper = new Color(.77f, .34f, .20f, 1f);
-        static readonly Color EconomyOlive = new Color(.24f, .205f, .15f, .96f);
-        static readonly Color EconomyIvory = new Color(.96f, .92f, .85f, 1f);
-        static readonly Color EconomyMuted = new Color(.77f, .72f, .68f, 1f);
+        static readonly Color EconomyOlive = new Color(.97f, .88f, .76f, .98f);     // the selected row: a warm highlight
+        static readonly Color EconomyIvory = new Color(.10f, .10f, .11f, 1f);       // main text (dark, on the light panels)
+        static readonly Color EconomyOnCopper = new Color(1f, .97f, .92f, 1f);     // text on the copper buttons
+        static readonly Color EconomyMuted = new Color(.30f, .30f, .31f, 1f);
         static Texture2D dotTexture;
         static Texture2D economySurfaceTexture;
         static GUIStyle economyRoundedStyle;
@@ -199,9 +201,13 @@ namespace AshenVale
             economyDetailText = new GUIStyle(GUI.skin.label) { fontSize = 11, alignment = TextAnchor.MiddleLeft };
             economyDetailText.normal.textColor = EconomyMuted;
             economyPriceText = new GUIStyle(GUI.skin.label) { fontSize = 13, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleRight };
-            economyPriceText.normal.textColor = new Color(.96f, .69f, .48f);
+            economyPriceText.normal.textColor = new Color(.56f, .21f, .09f);
             economyButtonText = new GUIStyle(GUI.skin.label) { fontSize = 12, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
             economyButtonText.normal.textColor = EconomyIvory;
+            economyButtonLight = new GUIStyle(economyButtonText);
+            economyButtonLight.normal.textColor = EconomyOnCopper;
+            economyWarnText = new GUIStyle(GUI.skin.label) { fontSize = 10, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleRight };
+            economyWarnText.normal.textColor = new Color(.68f, .10f, .08f);
             economyHintText = new GUIStyle(GUI.skin.label) { fontSize = 10, alignment = TextAnchor.MiddleRight };
             economyHintText.normal.textColor = EconomyMuted;
         }
@@ -816,8 +822,8 @@ namespace AshenVale
             Rect sellTab = new Rect(r.x + pad + col + gap, r.y + 116, col, 34);
             bool buyTabClicked = EconomyHitButton(buyTab, !merchantSellTab);
             bool sellTabClicked = EconomyHitButton(sellTab, merchantSellTab);
-            GUI.Label(buyTab, "BUY ITEMS", economyButtonText);
-            GUI.Label(sellTab, "SELL ITEMS", economyButtonText);
+            GUI.Label(buyTab, "BUY ITEMS", merchantSellTab ? economyButtonText : economyButtonLight);
+            GUI.Label(sellTab, "SELL ITEMS", merchantSellTab ? economyButtonLight : economyButtonText);
             if (buyTabClicked) merchantSellTab = false;
             if (sellTabClicked) merchantSellTab = true;
 
@@ -839,8 +845,8 @@ namespace AshenVale
                     if (ch.gold < cost)
                     {
                         Color old = GUI.color;
-                        GUI.color = new Color(1f, .58f, .48f);
-                        GUI.Label(new Rect(buy.x + col - 124, buy.y + 24, 112, 16), "NEED MORE", economyHintText);
+                        GUI.color = Color.white;
+                        GUI.Label(new Rect(buy.x + col - 124, buy.y + 24, 112, 16), "NEED MORE", economyWarnText);
                         GUI.color = old;
                     }
                     if (clicked) commands.BuyPotion(health);
@@ -1355,7 +1361,7 @@ namespace AshenVale
             GUI.enabled = priorEnabled && canPay;
             Rect upgradeButton = new Rect(costs.x + 12, costs.yMax - 62, costs.width - 24, 40);
             bool clicked = EconomyHitButton(upgradeButton, canPay);
-            GUI.Label(upgradeButton, canPay ? "UPGRADE  ->  +" + (item.upgrade + 1) : "CAN'T AFFORD YET", economyButtonText);
+            GUI.Label(upgradeButton, canPay ? "UPGRADE  ->  +" + (item.upgrade + 1) : "CAN'T AFFORD YET", canPay ? economyButtonLight : economyButtonText);
             if (clicked) commands.Upgrade(target);
             GUI.enabled = priorEnabled;
         }
