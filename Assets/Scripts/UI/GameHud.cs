@@ -85,6 +85,18 @@ namespace AshenVale
         GUIStyle titleText, barText, detailText, detailRight, bodyStyle, smallStyle, centeredStyle, menuButton, statusStyle, nameplate,
                  bannerTitle, bannerSub, worldLabel, mapLabel, minimapTitle, minimapHint, tooltipText,
                  atlasTitle, atlasCorner, atlasName, atlasSub, atlasSmall, atlasSmallLight, atlasCornerLight, numberStyle, bigNumberStyle, bossName, inventoryTabText, activeInventoryTabText, partNameText;
+        GUIStyle economyTitleText, economySectionText, economyBodyText, economyDetailText, economyPriceText, economyButtonText, economyHintText, economyHintCentered;
+        static readonly Color EconomyPanel = new Color(.085f, .071f, .073f, .975f);
+        static readonly Color EconomyHeader = new Color(.13f, .105f, .108f, .98f);
+        static readonly Color EconomyCard = new Color(.145f, .118f, .12f, .98f);
+        static readonly Color EconomyCardAlt = new Color(.17f, .135f, .133f, .98f);
+        static readonly Color EconomyInset = new Color(.11f, .094f, .095f, .98f);
+        static readonly Color EconomyLine = new Color(.33f, .265f, .25f, .9f);
+        static readonly Color EconomyCopper = new Color(.77f, .34f, .20f, 1f);
+        static readonly Color EconomyCopperDark = new Color(.32f, .145f, .11f, .98f);
+        static readonly Color EconomyOlive = new Color(.235f, .235f, .18f, .98f);
+        static readonly Color EconomyIvory = new Color(.96f, .92f, .85f, 1f);
+        static readonly Color EconomyMuted = new Color(.77f, .72f, .68f, 1f);
         static Texture2D dotTexture;
         int bannerMap = -1;
         float bannerClock;
@@ -175,6 +187,22 @@ namespace AshenVale
             activeInventoryTabText = new GUIStyle(inventoryTabText);
             activeInventoryTabText.normal.textColor = HudTheme.Copper;
             partNameText = new GUIStyle(smallStyle) { fontSize = 13, alignment = TextAnchor.MiddleLeft, wordWrap = false, clipping = TextClipping.Clip };
+            economyTitleText = new GUIStyle(GUI.skin.label) { fontSize = 20, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleLeft };
+            economyTitleText.normal.textColor = EconomyIvory;
+            economySectionText = new GUIStyle(GUI.skin.label) { fontSize = 13, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleLeft };
+            economySectionText.normal.textColor = EconomyIvory;
+            economyBodyText = new GUIStyle(GUI.skin.label) { fontSize = 13, alignment = TextAnchor.MiddleLeft, clipping = TextClipping.Clip };
+            economyBodyText.normal.textColor = EconomyIvory;
+            economyDetailText = new GUIStyle(GUI.skin.label) { fontSize = 11, alignment = TextAnchor.MiddleLeft };
+            economyDetailText.normal.textColor = EconomyMuted;
+            economyPriceText = new GUIStyle(GUI.skin.label) { fontSize = 13, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleRight };
+            economyPriceText.normal.textColor = new Color(.96f, .69f, .48f);
+            economyButtonText = new GUIStyle(GUI.skin.label) { fontSize = 12, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
+            economyButtonText.normal.textColor = EconomyIvory;
+            economyHintText = new GUIStyle(GUI.skin.label) { fontSize = 10, alignment = TextAnchor.MiddleRight };
+            economyHintText.normal.textColor = EconomyMuted;
+            economyHintCentered = new GUIStyle(economyButtonText);
+            economyHintCentered.normal.textColor = new Color(EconomyMuted.r, EconomyMuted.g, EconomyMuted.b, .6f);
         }
 
         public void Draw(PlayerState me)
@@ -280,7 +308,7 @@ namespace AshenVale
                 Label(cam, def.returnX, def.returnY + 2.35f, "RETURN PORTAL (OPENS WHEN YOU USE " + Keys.Name(GameAction.TownPortal) + " IN THE FIELD)", new Color(.75f, .72f, .66f));
             foreach (var stand in def.merchants) Label(cam, stand.x, stand.y + 2.5f, "MERCHANT  [" + Keys.Name(GameAction.Interact) + "]", new Color(1f, .85f, .55f));
             Label(cam, def.waystoneX, def.waystoneY + 2.35f, "WAYSTONE  [" + Keys.Name(GameAction.Interact) + "]", new Color(.7f, .95f, 1f));
-            if (def.hasSmithy) Label(cam, def.smithyX, def.smithyY + 2.5f, "SMITHY  [" + Keys.Name(GameAction.Interact) + "]", new Color(1f, .7f, .45f));
+            if (def.hasSmithy) Label(cam, def.smithyX, def.smithyY + 2.5f, "BLACKSMITH  [" + Keys.Name(GameAction.Interact) + "]", new Color(1f, .7f, .45f));
         }
 
         // What you picked up: a line per item in the bottom left, fading after a few seconds. Found by watching your
@@ -460,6 +488,36 @@ namespace AshenVale
             if (GUI.Button(new Rect(r.x + 20, r.yMax - 40, 180, 30), "RESET TO DEFAULTS")) Keys.ResetAll();
             if (GUI.Button(new Rect(r.xMax - 140, r.yMax - 40, 120, 30), "DONE")) { controlsOpen = false; capturingAction = -1; }
             GUI.enabled = true;
+        }
+
+        void EconomySurface(Rect rect, Color fill, Color outline, float thickness = 1f)
+        {
+            Fill(rect, fill);
+            Fill(new Rect(rect.x, rect.y, rect.width, thickness), outline);
+            Fill(new Rect(rect.x, rect.yMax - thickness, rect.width, thickness), outline);
+            Fill(new Rect(rect.x, rect.y, thickness, rect.height), outline);
+            Fill(new Rect(rect.xMax - thickness, rect.y, thickness, rect.height), outline);
+        }
+
+        bool EconomyHitButton(Rect rect, bool primary = false, bool selected = false)
+        {
+            bool hover = rect.Contains(Event.current.mousePosition);
+            Color fill = selected ? EconomyOlive :
+                primary ? (hover ? new Color(.87f, .39f, .22f, 1f) : EconomyCopper) :
+                (hover ? EconomyCardAlt : EconomyCard);
+            Color outline = primary || selected ? EconomyCopper : EconomyLine;
+            EconomySurface(rect, fill, outline, 1f);
+            return GUI.Button(rect, GUIContent.none, GUIStyle.none);
+        }
+
+        void EconomyWindow(Rect rect, string title)
+        {
+            EconomySurface(rect, EconomyPanel, EconomyLine, 2f);
+            Fill(new Rect(rect.x + 2, rect.y + 2, rect.width - 4, 56), EconomyHeader);
+            Fill(new Rect(rect.x + 18, rect.y + 57, rect.width - 36, 1f), EconomyLine);
+            GUI.Label(new Rect(rect.x + 22, rect.y + 8, rect.width - 210, 40), title, economyTitleText);
+            GUI.Label(new Rect(rect.xMax - 180, rect.y + 17, 156, 24),
+                "[" + Keys.Name(GameAction.Interact) + "] CLOSE", economyHintText);
         }
 
         static void Fill(Rect rect, Color color)
@@ -670,7 +728,7 @@ namespace AshenVale
             }
             if (shown == 0) GUI.Label(new Rect(4, 16, area.width - 20, 30), "No monster parts yet. Collect materials from defeated monsters.", smallStyle);
             GUI.EndScrollView();
-            GUI.Label(new Rect(r.x + 18, r.y + 433, r.width - 36, 28), "Keep materials for the smithy, or sell them at a merchant.", partNameText);
+            GUI.Label(new Rect(r.x + 18, r.y + 433, r.width - 36, 28), "Keep materials for the blacksmith, or sell them at a merchant.", partNameText);
         }
 
         void DrawShop(PlayerState me, MapDef def)
@@ -679,64 +737,71 @@ namespace AshenVale
             float w = Mathf.Min(Screen.width - 24f, 940f);
             float h = Mathf.Min(Screen.height - 24f, 650f);
             Rect r = new Rect((Screen.width - w) * .5f, Mathf.Max(12f, (Screen.height - h) * .5f), w, h);
-            GUI.Box(r, def.name.ToUpperInvariant() + "  ·  GENERAL STORE   [" + Keys.Name(GameAction.Interact) + "] Close");
-            Fill(new Rect(r.x + 12, r.y + 34, w - 24, 42), new Color(.055f, .12f, .15f, .96f));
-            GUI.Label(new Rect(r.x + 24, r.y + 41, 420, 28), "YOUR PURSE   " + ch.gold + " MARKS", titleText);
-            GUI.Label(new Rect(r.x + w - 380, r.y + 43, 350, 24), "Sell gear for half its value", detailRight);
+            EconomyWindow(r, def.name.ToUpperInvariant() + "  /  MERCHANT");
+            Rect purse = new Rect(r.x + 18, r.y + 68, w - 36, 38);
+            EconomySurface(purse, EconomyInset, EconomyLine);
+            GUI.Label(new Rect(purse.x + 12, purse.y + 3, 380, 30), "YOUR MARKS   " + ch.gold, economyTitleText);
+            GUI.Label(new Rect(purse.xMax - 390, purse.y + 4, 370, 28), "Gear sells for half its value", economyHintText);
 
             float pad = 22f, gap = 14f, col = (w - pad * 2 - gap) * .5f;
-            GUI.Label(new Rect(r.x + pad, r.y + 84, w - pad * 2, 23), "RESTOCK", smallStyle);
+            GUI.Label(new Rect(r.x + pad, r.y + 115, w - pad * 2, 23), "POTIONS", economySectionText);
             for (int potion = 0; potion < 2; potion++)
             {
                 bool health = potion == 0;
-                Rect buy = new Rect(r.x + pad + potion * (col + gap), r.y + 108, col, 48);
+                Rect buy = new Rect(r.x + pad + potion * (col + gap), r.y + 140, col, 48);
+                bool clicked = EconomyHitButton(buy);
                 var bottle = Sprites.Art(health ? "Art/Items/hp_potion" : "Art/Items/mp_potion");
-                if (GUI.Button(buy, ""))
-                {
-                    commands.BuyPotion(health);
-                }
                 if (bottle != null) GUI.DrawTexture(new Rect(buy.x + 7, buy.y + 6, 36, 36), bottle.texture, ScaleMode.ScaleToFit, true);
-                GUI.Label(new Rect(buy.x + 50, buy.y + 4, col - 150, 40),
-                    "Buy " + (health ? "HP" : "MP") + " Potion", barText);
-                GUI.Label(new Rect(buy.x + col - 112, buy.y + 4, 100, 40),
-                    (health ? Tuning.HpPotionPrice : Tuning.MpPotionPrice) + " marks", detailRight);
-
+                GUI.Label(new Rect(buy.x + 52, buy.y + 4, col - 176, 40),
+                    "Buy " + (health ? "HP" : "MP") + " Potion", economyBodyText);
+                GUI.Label(new Rect(buy.x + col - 124, buy.y + 4, 112, 40),
+                    (health ? Tuning.HpPotionPrice : Tuning.MpPotionPrice) + " marks", economyPriceText);
                 int cost = health ? Tuning.HpPotionPrice : Tuning.MpPotionPrice;
-                if (ch.gold < cost) { Color old = GUI.color; GUI.color = new Color(.82f,.38f,.38f); GUI.Label(new Rect(buy.x + col - 112, buy.y + 26, 100, 17), "NEED MORE", detailRight); GUI.color = old; }
+                if (ch.gold < cost)
+                {
+                    Color old = GUI.color;
+                    GUI.color = new Color(1f, .58f, .48f);
+                    GUI.Label(new Rect(buy.x + col - 124, buy.y + 24, 112, 16), "NEED MORE", economyHintText);
+                    GUI.color = old;
+                }
+                if (clicked) commands.BuyPotion(health);
             }
 
-            GUI.Label(new Rect(r.x + pad, r.y + 162, w - pad * 2, 23), "RELIABLE COMMON GEAR", smallStyle);
+            GUI.Label(new Rect(r.x + pad, r.y + 198, w - pad * 2, 23), "COMMON EQUIPMENT", economySectionText);
             for (int i = 0; i < 4; i++)
             {
                 Slot slot = (Slot)i;
                 int cost = Loot.ShopGearCost(slot, ch.level);
-                Rect buy = new Rect(r.x + pad + (i % 2) * (col + gap), r.y + 186 + (i / 2) * 48, col, 44);
-                if (GUI.Button(buy, "")) commands.BuyGear(slot);
+                Rect buy = new Rect(r.x + pad + (i % 2) * (col + gap), r.y + 222 + (i / 2) * 48, col, 44);
+                bool clicked = EconomyHitButton(buy);
                 ItemIcon(new Rect(buy.x + 6, buy.y + 4, 36, 36), new Item { slot = slot, rarity = Rarity.Common, name = Loot.SlotName(slot, me.Hero) });
-                GUI.Label(new Rect(buy.x + 50, buy.y + 3, col - 160, 38),
-                    "Common " + Loot.SlotName(slot, me.Hero), barText);
-                GUI.Label(new Rect(buy.x + col - 112, buy.y + 3, 100, 38), cost + " marks", detailRight);
+                GUI.Label(new Rect(buy.x + 50, buy.y + 3, col - 170, 38),
+                    Loot.SlotName(slot, me.Hero) + "  ·  Common", economyBodyText);
+                GUI.Label(new Rect(buy.x + col - 124, buy.y + 3, 112, 38), cost + " marks", economyPriceText);
+                if (clicked) commands.BuyGear(slot);
             }
 
-            float lowerY = r.y + 289f, rowH = 34f;
-            Fill(new Rect(r.x + pad, lowerY, col, 28), new Color(.08f, .15f, .17f, .92f));
-            Fill(new Rect(r.x + pad + col + gap, lowerY, col, 28), new Color(.08f, .15f, .17f, .92f));
-            GUI.Label(new Rect(r.x + pad + 8, lowerY + 3, col - 16, 22), "SELL GEAR", smallStyle);
-            GUI.Label(new Rect(r.x + pad + col + gap + 8, lowerY + 3, col - 16, 22), "SELL MONSTER PARTS", smallStyle);
+            float lowerY = r.y + 327f, rowH = 34f;
+            Rect gearHeader = new Rect(r.x + pad, lowerY, col, 28);
+            Rect partsHeader = new Rect(r.x + pad + col + gap, lowerY, col, 28);
+            EconomySurface(gearHeader, EconomyInset, EconomyLine);
+            EconomySurface(partsHeader, EconomyInset, EconomyLine);
+            GUI.Label(new Rect(gearHeader.x + 9, gearHeader.y + 2, col - 18, 24), "SELL GEAR", economySectionText);
+            GUI.Label(new Rect(partsHeader.x + 9, partsHeader.y + 2, col - 18, 24), "SELL MONSTER PARTS", economySectionText);
             float listY = lowerY + 32f;
             for (int i = 0; i < ch.inventory.Count && i < ShopRows; i++)
             {
                 Item item = ch.inventory[i];
                 Rect sell = new Rect(r.x + pad, listY + i * rowH, col, rowH - 2);
-                if (GUI.Button(sell, "")) { commands.Sell(i); break; }
+                bool clicked = EconomyHitButton(sell);
                 ItemIcon(new Rect(sell.x + 4, sell.y + 2, 28, 28), item);
-                GUI.Label(new Rect(sell.x + 38, sell.y + 2, col - 134, 27), item.DisplayName, partNameText);
-                GUI.Label(new Rect(sell.x + col - 96, sell.y + 2, 88, 27), "+" + Loot.SellPrice(item) + " marks", detailRight);
+                GUI.Label(new Rect(sell.x + 38, sell.y + 2, col - 148, 27), item.DisplayName, economyBodyText);
+                GUI.Label(new Rect(sell.x + col - 108, sell.y + 2, 100, 27), "+" + Loot.SellPrice(item) + " marks", economyPriceText);
+                if (clicked) { commands.Sell(i); break; }
             }
-            if (ch.inventory.Count == 0) GUI.Label(new Rect(r.x + pad + 8, listY + 5, col - 16, 24), "No gear to sell.", smallStyle);
-            if (ch.inventory.Count > ShopRows) GUI.Label(new Rect(r.x + pad + 8, listY + ShopRows * rowH, col - 16, 22), "...and " + (ch.inventory.Count - ShopRows) + " more (sell these first)", smallStyle);
+            if (ch.inventory.Count == 0) GUI.Label(new Rect(r.x + pad + 8, listY + 5, col - 16, 24), "No gear to sell.", economyDetailText);
+            if (ch.inventory.Count > ShopRows) GUI.Label(new Rect(r.x + pad + 8, listY + ShopRows * rowH, col - 16, 22), "...and " + (ch.inventory.Count - ShopRows) + " more (sell these first)", economyDetailText);
 
-            // The total counts every part in the bag, not only the rows that fit.
             int shown = 0, kinds = 0, totalPartsValue = 0;
             for (int i = 0; i < ch.parts.Length; i++)
                 if (ch.parts[i] > 0) { kinds++; totalPartsValue += Parts.All[i].price * ch.parts[i]; }
@@ -747,16 +812,22 @@ namespace AshenVale
                 var part = Parts.All[i];
                 var icon = Sprites.PartIcon(i);
                 Rect row = new Rect(r.x + pad + col + gap, y, col, rowH - 2);
+                Rect oneButton = new Rect(row.x + col - 158, row.y, 64, row.height);
+                Rect allButton = new Rect(row.x + col - 90, row.y, 88, row.height);
+                bool oneClicked = EconomyHitButton(oneButton);
+                bool allClicked = EconomyHitButton(allButton);
                 if (icon != null) GUI.DrawTexture(new Rect(row.x + 3, row.y + 2, 28, 28), icon.texture, ScaleMode.ScaleToFit, true);
-                GUI.Label(new Rect(row.x + (icon != null ? 36 : 8), row.y + 2, col - 200, 27), part.name + " x" + ch.parts[i], partNameText);
-                if (GUI.Button(new Rect(row.x + col - 158, row.y, 64, row.height), "1  +" + part.price)) { commands.SellPart(i, 1); break; }
-                if (GUI.Button(new Rect(row.x + col - 90, row.y, 88, row.height), "ALL  +" + part.price * ch.parts[i])) { commands.SellPart(i, 0); break; }
+                GUI.Label(new Rect(row.x + (icon != null ? 36 : 8), row.y + 2, col - 202, 27), part.name + " x" + ch.parts[i], economyBodyText);
+                GUI.Label(oneButton, "1  +" + part.price, economyButtonText);
+                GUI.Label(allButton, "ALL  +" + part.price * ch.parts[i], economyButtonText);
+                if (oneClicked) { commands.SellPart(i, 1); break; }
+                if (allClicked) { commands.SellPart(i, 0); break; }
                 shown++;
             }
-            if (shown == 0) GUI.Label(new Rect(r.x + pad + col + gap + 8, listY + 5, col - 16, 24), "No monster parts to sell yet.", smallStyle);
-            if (kinds > shown) GUI.Label(new Rect(r.x + pad + col + gap + 8, listY + ShopRows * rowH, col - 16, 22), "...and " + (kinds - shown) + " more kinds (sell these first)", smallStyle);
-            GUI.Label(new Rect(r.x + pad + col + gap, r.y + h - 42, col, 18), "Keep some materials for smithing.", minimapHint);
-            GUI.Label(new Rect(r.x + pad + col + gap, r.y + h - 23, col, 18), "Total parts value: " + totalPartsValue + " marks", detailRight);
+            if (shown == 0) GUI.Label(new Rect(r.x + pad + col + gap + 8, listY + 5, col - 16, 24), "No monster parts to sell yet.", economyDetailText);
+            if (kinds > shown) GUI.Label(new Rect(r.x + pad + col + gap + 8, listY + ShopRows * rowH, col - 16, 22), "...and " + (kinds - shown) + " more kinds (sell these first)", economyDetailText);
+            GUI.Label(new Rect(r.x + pad + col + gap, r.y + h - 42, col, 18), "Keep some materials for the blacksmith.", economyHintText);
+            GUI.Label(new Rect(r.x + pad + col + gap, r.y + h - 23, col, 18), "Total parts value: " + totalPartsValue + " marks", economyPriceText);
         }
 
         // Waystone: travel to any town you have found (walking into a town finds it).
@@ -938,7 +1009,7 @@ namespace AshenVale
             var text = new System.Text.StringBuilder();
             if (!seen) text.Append("Not explored yet. Follow the road to find out what lives here.");
             else if (def.kind == MapKind.Town)
-                text.Append(def.merchants.Length > 1 ? "Merchants" : "Merchant").Append(", waystone").Append(def.hasSmithy ? ", smithy" : "").Append(".");
+                text.Append(def.merchants.Length > 1 ? "Merchants" : "Merchant").Append(", waystone").Append(def.hasSmithy ? ", blacksmith" : "").Append(".");
             else
             {
                 var names = new List<string>();
@@ -1066,16 +1137,14 @@ namespace AshenVale
             float w = Mathf.Min(Screen.width - 24f, 940f);
             float h = Mathf.Min(Screen.height - 24f, 600f);
             Rect r = new Rect((Screen.width - w) * .5f, Mathf.Max(12f, (Screen.height - h) * .5f), w, h);
-            GUI.Box(r, def.name.ToUpperInvariant() + "  ·  BLACKSMITH   [" + Keys.Name(GameAction.Interact) + "] Close");
-            Fill(new Rect(r.x + 12, r.y + 34, w - 24, 46), new Color(.055f, .12f, .15f, .96f));
-            GUI.Label(new Rect(r.x + 24, r.y + 41, 340, 30), "FORGE YOUR EQUIPMENT", titleText);
-            GUI.Label(new Rect(r.x + 350, r.y + 43, w - 380, 26),
-                "Upgrades always succeed   ·   limit +" + Tuning.MaxUpgrade + "   ·   " + ch.gold + " marks", detailRight);
-            Fill(new Rect(r.x + 20, r.y + 88, w - 40, 38), new Color(.08f, .15f, .17f, .9f));
-            GUI.Label(new Rect(r.x + 32, r.y + 93, w - 64, 28), PartsLine(ch), partNameText);
+            EconomyWindow(r, def.name.ToUpperInvariant() + "  /  BLACKSMITH");
+            Rect materialsBar = new Rect(r.x + 18, r.y + 68, w - 36, 42);
+            EconomySurface(materialsBar, EconomyInset, EconomyLine);
+            GUI.Label(new Rect(materialsBar.x + 12, materialsBar.y + 5, 300, 30), "YOUR MATERIALS", economySectionText);
+            GUI.Label(new Rect(materialsBar.x + 170, materialsBar.y + 5, materialsBar.width - 185, 30), PartsLine(ch), economyDetailText);
 
             int rows = ch.equipped.Length + ch.inventory.Count;
-            Rect view = new Rect(r.x + 18, r.y + 137, r.width - 36, r.height - 165);
+            Rect view = new Rect(r.x + 18, r.y + 124, r.width - 36, r.height - 152);
             smithyScroll = GUI.BeginScrollView(view, smithyScroll, new Rect(0, 0, view.width - 20, rows * SmithyRowHeight));
             float y = 0;
             for (int target = 0; target < ch.equipped.Length; target++, y += SmithyRowHeight)
@@ -1084,55 +1153,60 @@ namespace AshenVale
                 SmithyRow(ch, Smithing.InventoryTarget + i, "IN BAG", y, view.width - 20);
             GUI.EndScrollView();
             GUI.Label(new Rect(r.x + 22, r.y + h - 23, w - 44, 18),
-                "Each row shows the next stat increase and what it costs.", minimapHint);
+                "Each row shows the next stat increase and material cost.", economyHintText);
         }
 
         void SmithyRow(Character ch, int target, string where, float y, float width)
         {
             var item = World.UpgradeTarget(ch, target);
             Rect row = new Rect(0, y, width, SmithyRowHeight - 5);
-            Fill(row, new Color(.045f, .105f, .13f, .96f));
-            GUI.Box(row, GUIContent.none);
+            EconomySurface(row, EconomyCard, EconomyLine);
             if (item == null)
             {
-                GUI.Label(new Rect(14, y + 10, width - 28, 28), where + ": empty", smallStyle);
+                GUI.Label(new Rect(14, y + 10, width - 28, 28), where + ": empty", economyDetailText);
                 return;
             }
 
             ItemIcon(new Rect(8, y + 8, 52, 52), item);
             Color old = GUI.color;
             GUI.color = Loot.RarityColor(item.rarity);
-            GUI.Label(new Rect(70, y + 8, 275, 24),
-                where + "  ·  " + item.DisplayName + "  (Lv " + item.level + ")", barText);
+            GUI.Label(new Rect(70, y + 7, 275, 25),
+                where + "  ·  " + item.DisplayName + "  (Lv " + item.level + ")", economyBodyText);
             GUI.color = old;
 
             if (item.upgrade >= Tuning.MaxUpgrade)
             {
-                GUI.Label(new Rect(70, y + 34, 300, 23),
-                    StatLine(item, item.upgrade) + "   ·   MAX UPGRADE", smallStyle);
-                GUI.Label(new Rect(width - 152, y + 19, 138, 28), "FULLY FORGED", detailRight);
+                GUI.Label(new Rect(70, y + 35, 300, 22),
+                    StatLine(item, item.upgrade) + "   ·   MAX UPGRADE", economyDetailText);
+                Rect max = new Rect(width - 158, y + 17, 146, 34);
+                EconomySurface(max, EconomyInset, EconomyLine);
+                GUI.Label(max, "FULLY FORGED", economyButtonText);
                 return;
             }
 
             var cost = Smithing.Cost(item);
             GUI.Label(new Rect(70, y + 35, 285, 22),
-                StatLine(item, item.upgrade) + "  ->  " + StatLine(item, item.upgrade + 1), smallStyle);
+                StatLine(item, item.upgrade) + "  ->  " + StatLine(item, item.upgrade + 1), economyDetailText);
 
             string materials = cost.partCount + " " + Parts.All[cost.part].name +
                 " (" + ch.parts[cost.part] + ")";
             if (cost.rareCount > 0)
                 materials += "   ·   " + cost.rareCount + " " + Parts.All[cost.rarePart].name +
                     " (" + ch.parts[cost.rarePart] + ")";
-            GUI.Label(new Rect(360, y + 9, width - 530, 23), materials, smallStyle);
-            GUI.Label(new Rect(360, y + 35, width - 530, 22), cost.gold + " marks", detailText);
+            GUI.Label(new Rect(360, y + 8, width - 530, 25), materials, economyBodyText);
+            GUI.Label(new Rect(360, y + 36, width - 530, 22), cost.gold + " marks", economyPriceText);
 
-            GUI.enabled = Smithing.CanPay(ch, cost);
-            if (GUI.Button(new Rect(width - 158, y + 19, 146, 34),
-                "UPGRADE  ->  +" + (item.upgrade + 1)))
-                commands.Upgrade(target);
-            GUI.enabled = true;
+            bool canPay = Smithing.CanPay(ch, cost);
+            bool priorEnabled = GUI.enabled;
+            GUI.enabled = priorEnabled && canPay;
+            Rect button = new Rect(width - 158, y + 17, 146, 34);
+            // Can't pay: a plain inset plate with dim text, so it doesn't look like the copper button you can press.
+            bool clicked = canPay && EconomyHitButton(button, true);
+            if (!canPay) EconomySurface(button, EconomyInset, EconomyLine);
+            GUI.Label(button, "UPGRADE  ->  +" + (item.upgrade + 1), canPay ? economyButtonText : economyHintCentered);
+            if (clicked) commands.Upgrade(target);
+            GUI.enabled = priorEnabled;
         }
-
     }
 }
 
