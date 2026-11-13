@@ -931,49 +931,53 @@ namespace AshenVale
         public static readonly Color MapPortalColor = new Color(.45f, .68f, 1f), ReturnPortalColor = new Color(1f, .78f, .38f),
                                      TownPortalColor = new Color(.7f, .55f, 1f);
 
-        // The rune circle's picture is painted already lying flat (twice as wide as it is tall), so it is drawn at its
-        // own shape: RuneWidth across, and RuneLift is how far its centre sits above the floor line.
-        const float RuneWidth = 2.65f, RuneHeight = RuneWidth / 2f, RuneLift = .14f;
+        // The portal picture (Art/Props/swirl_portal): a tall swirl standing on a round seal. It is drawn PortalDrawHeight
+        // tall (the whole picture, margins included), with the middle of its seal SealLift above the floor line.
+        // The three numbers after that describe the picture: how far up it the seal's middle and the swirl's middle
+        // are (as fractions of its height), and the seal's half-width (as a fraction of its width).
+        const float PortalDrawHeight = 3.0f, SealLift = .08f;
+        const float SealUp = 194f / 1214f, SwirlUp = 614f / 1214f, SealHalfWidth = 272f / 1295f;
 
-        // Ground rune portal, shared by map gates, return gates, and the temporary town portal.
+        // Map gates and a town's return gate.
         static void BuildPortal(Transform root, float x, float y, bool townReturn)
         {
             Portal(root, x, y, townReturn ? "Art/Props/return_portal" : "Art/Props/portal", townReturn ? ReturnPortalColor : MapPortalColor, PortalOrder);
         }
 
-        // Also the T town portal (WorldView, violet). The old `picture` argument is kept so existing
-        // call sites remain compatible; every portal now uses the same ground-circle art.
+        // A portal standing at (x, y) on the floor. Also the T town portal (WorldView, violet). The old `picture`
+        // argument is kept so existing call sites remain compatible; every portal uses the same swirl art, and
+        // `color` tints its particles.
         public static void Portal(Transform parent, float x, float y, string picture, Color color, int order)
         {
-            var anchor = new GameObject("Ground Rune Portal").transform;
+            var anchor = new GameObject("Swirl Portal").transform;      // sits at the middle of the seal
             anchor.SetParent(parent, false);
-            anchor.localPosition = new Vector3(x, y + RuneLift, 0f);
+            anchor.localPosition = new Vector3(x, y + SealLift, 0f);
 
-            var sprite = Sprites.Art("Art/Props/rune_circle_portal");
+            Transform art = null;
+            float sealRadius = .67f, swirlHeight = 1.05f;
+            var sprite = Sprites.Art("Art/Props/swirl_portal");
             if (sprite != null)
             {
-                var art = Sprites.Picture("Rune Circle", sprite, order, anchor, 0f, 0f);
-                // Centre the picture on the anchor wherever its pivot is (props are imported standing on their bottom edge).
-                // Never squashed: one scale for both directions, centred just above the walking surface.
-                float sx = RuneWidth / sprite.bounds.size.x, sy = sx;
-                art.transform.localScale = new Vector3(sx, sy, 1f);
-                art.transform.localPosition = new Vector3(-sprite.bounds.center.x * sx, -sprite.bounds.center.y * sy, 0f);
-                art.GetComponent<SpriteRenderer>().color = Color.white;
+                var shown = Sprites.Picture("Swirl", sprite, order, anchor, 0f, 0f);
+                float scale = PortalDrawHeight / sprite.bounds.size.y;
+                float width = sprite.bounds.size.x * scale;
+                shown.transform.localScale = new Vector3(scale, scale, 1f);
+                // Put the seal's middle on the anchor, wherever the sprite's pivot is.
+                shown.transform.localPosition = new Vector3(-sprite.bounds.center.x * scale, -(sprite.bounds.min.y * scale + SealUp * PortalDrawHeight), 0f);
+                art = shown.transform;
+                sealRadius = SealHalfWidth * width;
+                swirlHeight = (SwirlUp - SealUp) * PortalDrawHeight;
             }
             else
             {
-                // Simple ground-level dotted rune fallback until the painted sprite is imported.
-                for (int i = 0; i < 24; i++)
-                {
-                    float angle = i * Mathf.PI * 2f / 24f;
-                    Color dot = Color.Lerp(color, Color.white, .35f);
-                    dot.a = i % 3 == 0 ? .9f : .48f;
-                    Sprites.Blob("Rune mote", dot, i % 3 == 0 ? .075f : .045f, i % 3 == 0 ? .075f : .045f,
-                        order, parent, x + Mathf.Cos(angle) * 1.05f, y + RuneLift + Mathf.Sin(angle) * RuneHeight * .25f);
-                }
+                // Stand-in until the picture is imported: a glow and a bright core.
+                Color glow = color; glow.a = .45f;
+                Color core = Color.Lerp(color, Color.white, .7f); core.a = .85f;
+                Sprites.Blob("Portal glow", glow, 1.1f, 2.1f, order, parent, x, y + 1f);
+                Sprites.Blob("Portal core", core, .5f, 1.5f, order + 1, parent, x, y + 1f);
             }
 
-            anchor.gameObject.AddComponent<PortalManaVfx>().Initialize(color, order + 1);
+            anchor.gameObject.AddComponent<PortalManaVfx>().Initialize(color, order + 1, art, sealRadius, swirlHeight, swirlHeight * .6f);
         }
 
         // placeholder: draw stand-in shapes when there is no art (false on painted scenes, which show their own).

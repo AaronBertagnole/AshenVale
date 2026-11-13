@@ -321,12 +321,12 @@ namespace AshenVale
             var cam = Camera.main;
             if (cam == null) return;
             foreach (var portal in def.portals)
-                Label(cam, portal.x, portal.y + 2.35f, Maps.All[portal.targetMap].name.ToUpperInvariant() + "  [" + Keys.Name(GameAction.Up) + "]", new Color(.75f, .9f, 1f));
+                Label(cam, portal.x, portal.y + 2.75f, Maps.All[portal.targetMap].name.ToUpperInvariant() + "  [" + Keys.Name(GameAction.Up) + "]", new Color(.75f, .9f, 1f));
             if (def.kind != MapKind.Town) return;
             if (me.returnReady && me.returnMap >= 0 && me.returnMap < Maps.All.Length)
-                Label(cam, def.returnX, def.returnY + 2.35f, "BACK TO " + Maps.All[me.returnMap].name.ToUpperInvariant() + "  [" + Keys.Name(GameAction.Up) + "]", new Color(1f, .88f, .6f));
+                Label(cam, def.returnX, def.returnY + 2.75f, "BACK TO " + Maps.All[me.returnMap].name.ToUpperInvariant() + "  [" + Keys.Name(GameAction.Up) + "]", new Color(1f, .88f, .6f));
             else
-                Label(cam, def.returnX, def.returnY + 2.35f, "RETURN PORTAL (OPENS WHEN YOU USE " + Keys.Name(GameAction.TownPortal) + " IN THE FIELD)", new Color(.75f, .72f, .66f));
+                Label(cam, def.returnX, def.returnY + 2.75f, "RETURN PORTAL (OPENS WHEN YOU USE " + Keys.Name(GameAction.TownPortal) + " IN THE FIELD)", new Color(.75f, .72f, .66f));
             foreach (var stand in def.merchants) Label(cam, stand.x, stand.y + 2.5f, "MERCHANT  [" + Keys.Name(GameAction.Interact) + "]", new Color(1f, .85f, .55f));
             Label(cam, def.waystoneX, def.waystoneY + 2.35f, "WAYSTONE  [" + Keys.Name(GameAction.Interact) + "]", new Color(.7f, .95f, 1f));
             if (def.hasSmithy) Label(cam, def.smithyX, def.smithyY + 2.5f, "BLACKSMITH  [" + Keys.Name(GameAction.Interact) + "]", new Color(1f, .7f, .45f));
