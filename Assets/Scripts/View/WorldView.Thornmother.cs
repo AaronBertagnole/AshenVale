@@ -16,7 +16,14 @@ namespace AshenVale
         // The frame for a monster's special pose, or null when it is just standing or walking.
         Sprite PoseFrame(MonsterView v, MonsterState m, float dt)
         {
-            if (m.pose != v.pose) { v.pose = m.pose; v.poseClock = 0f; } else v.poseClock += dt;
+            if (m.pose != v.pose)
+            {
+                v.pose = m.pose; v.poseClock = 0f;
+                // Her calls and her rooting are heard as the pose begins (the slam, marks and walls sound from their events).
+                if (m.pose == 3 || m.pose == 4) GameSfx.Play("thorn_summon", .8f);
+                else if (m.pose == 5) GameSfx.Play("thorn_root");
+            }
+            else v.poseClock += dt;
             string anim; float span = 0f; int from = 0, count = 4; float loopRate = 0f;
             switch (m.pose)
             {
@@ -37,7 +44,7 @@ namespace AshenVale
             return frames[Mathf.Clamp(index, 0, frames.Length - 1)];
         }
 
-        sealed class Bramble { public GameObject go; public SpriteRenderer sr; public float x, y, age; }
+        sealed class Bramble { public GameObject go; public SpriteRenderer sr; public float x, y, age; public bool erupted; }
         sealed class ThornWall { public GameObject go; public SpriteRenderer sr; public float x, y, age, falling = -1f; public int side; }
         sealed class HealMote { public GameObject go; public SpriteRenderer sr; public float x, y, age; public int target; }
         readonly List<Bramble> bramblesShown = new List<Bramble>();
@@ -66,11 +73,13 @@ namespace AshenVale
             GameObject go;
             var sr = ThornSprite("Bramble", ThornGroundOrder, out go);
             bramblesShown.Add(new Bramble { go = go, sr = sr, x = e.x, y = e.y });
+            GameSfx.Play("thorn_warn", .8f);
         }
 
         void SpawnThornWalls(SimEvent e)
         {
             EndThornWalls();
+            GameSfx.Play("thorn_walls");
             for (int side = -1; side <= 1; side += 2)
             {
                 GameObject go;
@@ -80,13 +89,19 @@ namespace AshenVale
             }
         }
 
-        void EndThornWalls() { foreach (var wall in thornWalls) if (wall.falling < 0f) wall.falling = 0f; }
+        void EndThornWalls()
+        {
+            bool any = false;
+            foreach (var wall in thornWalls) if (wall.falling < 0f) { wall.falling = 0f; any = true; }
+            if (any) GameSfx.Play("thorn_break");
+        }
 
         void SpawnHealMote(SimEvent e)
         {
             GameObject go;
             var sr = ThornSprite("Healing Mote", SlashOrder, out go);
             healMotes.Add(new HealMote { go = go, sr = sr, x = e.x, y = e.y + .8f, target = e.amount });
+            GameSfx.Play("sprout_heal", .5f, .25f);
         }
 
         void UpdateThornFx(float dt)
@@ -108,6 +123,7 @@ namespace AshenVale
                 }
                 else
                 {
+                    if (!b.erupted) { b.erupted = true; GameSfx.Play("thorn_erupt"); }
                     float t = (b.age - Tuning.BossEruptWarn) / EruptShow;
                     b.sr.sortingOrder = ThornFrontOrder;
                     StandOn(b.sr, Frame(eruption, t), b.x, b.y - .05f);

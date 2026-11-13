@@ -172,7 +172,7 @@ namespace AshenVale
                 if (e.kind == SimEventKind.EmbermarksPickedUp) continue;   // the bottom-left pickup note covers it (owner: no floating text)
                 if (e.kind == SimEventKind.Slash) SpawnSlash(e);
                 else if (e.kind == SimEventKind.DragonThrust || e.kind == SimEventKind.DragonFang || e.kind == SimEventKind.DragonFissure || e.kind == SimEventKind.DragonSweep) SpawnDragonFx(e);
-                else if (e.kind == SimEventKind.BossSlam) SpawnSlamRing(e);
+                else if (e.kind == SimEventKind.BossSlam) { SpawnSlamRing(e); GameSfx.Play("thorn_slam"); }
                 else if (e.kind == SimEventKind.BrambleWarn) SpawnBramble(e);
                 else if (e.kind == SimEventKind.ThornWalls) SpawnThornWalls(e);
                 else if (e.kind == SimEventKind.ThornWallsEnd) EndThornWalls();
@@ -453,7 +453,11 @@ namespace AshenVale
 
             stale.Clear();
             foreach (var kv in monsterViews) if (!seen.Contains(kv.Key)) stale.Add(kv.Key);
-            foreach (var id in stale) { dying.Add(monsterViews[id]); monsterViews.Remove(id); }   // killed, or a chest moving on: fade out
+            foreach (var id in stale)
+            {
+                if (monsterViews[id].def.boss && dropsSynced) GameSfx.Play("thorn_death");      // not when the map is merely being left
+                dying.Add(monsterViews[id]); monsterViews.Remove(id);
+            }   // killed, or a chest moving on: fade out
 
             for (int i = dying.Count - 1; i >= 0; i--)
             {
