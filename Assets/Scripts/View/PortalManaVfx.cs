@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace AshenVale
 {
-    /// <summary>Slow orbiting mana and quick glints that make a ground rune portal shimmer.</summary>
+    /// <summary>Mana motes and quick glints that rise straight up from a ground rune portal's ring.</summary>
     [DisallowMultipleComponent]
     public sealed class PortalManaVfx : MonoBehaviour
     {
@@ -29,7 +29,7 @@ namespace AshenVale
             main.simulationSpace = ParticleSystemSimulationSpace.Local;
             main.maxParticles = 54;
             main.startLifetime = new ParticleSystem.MinMaxCurve(1.4f, 2.1f);
-            main.startSpeed = new ParticleSystem.MinMaxCurve(.03f, .12f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0f, 0f);     // no sideways push from the ring
             main.startSize = new ParticleSystem.MinMaxCurve(.13f, .22f);
             main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
             main.startColor = Color.white;
@@ -46,13 +46,13 @@ namespace AshenVale
             var velocity = particles.velocityOverLifetime;
             velocity.enabled = true;
             velocity.space = ParticleSystemSimulationSpace.Local;
-            velocity.orbitalZ = new ParticleSystem.MinMaxCurve(.55f);
+            velocity.orbitalZ = new ParticleSystem.MinMaxCurve(0f);      // no circling: they start on the ring and go straight up
             // Rise out of the circle as they turn. (Local space, and this object is squashed to .25 in y, so the
             // numbers are four times the speed seen on screen: about half to one unit a second.)
             velocity.x = new ParticleSystem.MinMaxCurve(0f, 0f);
             velocity.y = new ParticleSystem.MinMaxCurve(2.0f, 3.8f);
             velocity.z = new ParticleSystem.MinMaxCurve(0f, 0f);
-            velocity.radial = new ParticleSystem.MinMaxCurve(-.035f);
+            velocity.radial = new ParticleSystem.MinMaxCurve(0f);
 
             var rotation = particles.rotationOverLifetime;
             rotation.enabled = true;
@@ -109,7 +109,7 @@ namespace AshenVale
             main.simulationSpace = ParticleSystemSimulationSpace.Local;
             main.maxParticles = 70;
             main.startLifetime = new ParticleSystem.MinMaxCurve(.40f, .85f);
-            main.startSpeed = new ParticleSystem.MinMaxCurve(.015f, .08f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0f, 0f);
             main.startSize = new ParticleSystem.MinMaxCurve(.17f, .30f);
             main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
             main.startColor = Color.white;
@@ -135,7 +135,7 @@ namespace AshenVale
             var velocity = sparkles.velocityOverLifetime;
             velocity.enabled = true;
             velocity.space = ParticleSystemSimulationSpace.Local;
-            velocity.orbitalZ = new ParticleSystem.MinMaxCurve(.78f);
+            velocity.orbitalZ = new ParticleSystem.MinMaxCurve(0f);
             velocity.x = new ParticleSystem.MinMaxCurve(0f, 0f);
             velocity.y = new ParticleSystem.MinMaxCurve(1.4f, 2.8f);     // glints drift upward too (see the motes above)
             velocity.z = new ParticleSystem.MinMaxCurve(0f, 0f);
