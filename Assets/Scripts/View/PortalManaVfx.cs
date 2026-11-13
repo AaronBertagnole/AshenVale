@@ -15,7 +15,7 @@ namespace AshenVale
 
             var particleObject = new GameObject("Orbiting Mana");
             particleObject.transform.SetParent(transform, false);
-            particleObject.transform.localScale = new Vector3(1f, .48f, 1f);
+            particleObject.transform.localScale = new Vector3(1f, .58f, 1f);
             particles = particleObject.AddComponent<ParticleSystem>();
             // A new system starts playing at once, and Unity refuses changes to its duration while it plays:
             // stop and clear it, set it up, then Play() at the end.
@@ -26,26 +26,26 @@ namespace AshenVale
             main.playOnAwake = true;
             main.duration = 2f;
             main.simulationSpace = ParticleSystemSimulationSpace.Local;
-            main.maxParticles = 24;
-            main.startLifetime = new ParticleSystem.MinMaxCurve(1.25f, 1.9f);
-            main.startSpeed = new ParticleSystem.MinMaxCurve(.015f, .09f);
-            main.startSize = new ParticleSystem.MinMaxCurve(.055f, .105f);
+            main.maxParticles = 36;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(1.4f, 2.1f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(.03f, .12f);
+            main.startSize = new ParticleSystem.MinMaxCurve(.09f, .15f);
             main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
             main.startColor = Color.white;
 
             var emission = particles.emission;
-            emission.rateOverTime = 5.2f;
+            emission.rateOverTime = 7.5f;
 
             var shape = particles.shape;
             shape.enabled = true;
             shape.shapeType = ParticleSystemShapeType.Circle;
             shape.radius = 1.05f;
-            shape.radiusThickness = .04f;
+            shape.radiusThickness = .12f;
 
             var velocity = particles.velocityOverLifetime;
             velocity.enabled = true;
             velocity.space = ParticleSystemSimulationSpace.Local;
-            velocity.orbitalZ = new ParticleSystem.MinMaxCurve(.30f);
+            velocity.orbitalZ = new ParticleSystem.MinMaxCurve(.55f);
             velocity.radial = new ParticleSystem.MinMaxCurve(-.035f);
 
             var rotation = particles.rotationOverLifetime;
@@ -67,8 +67,8 @@ namespace AshenVale
                 new[]
                 {
                     new GradientAlphaKey(0f, 0f),
-                    new GradientAlphaKey(.78f, .16f),
-                    new GradientAlphaKey(.58f, .72f),
+                    new GradientAlphaKey(.92f, .16f),
+                    new GradientAlphaKey(.70f, .72f),
                     new GradientAlphaKey(0f, 1f)
                 });
             colorLife.color = new ParticleSystem.MinMaxGradient(gradient);

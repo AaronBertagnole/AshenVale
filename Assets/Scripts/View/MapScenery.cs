@@ -943,14 +943,15 @@ namespace AshenVale
         {
             var anchor = new GameObject("Ground Rune Portal").transform;
             anchor.SetParent(parent, false);
-            anchor.localPosition = new Vector3(x, y + .52f, 0f);
+            anchor.localPosition = new Vector3(x, y + .60f, 0f);
 
             var sprite = Sprites.Art("Art/Props/rune_circle_portal");
             if (sprite != null)
             {
                 var art = Sprites.Picture("Rune Circle", sprite, order, anchor, 0f, 0f);
                 // Centre the picture on the anchor wherever its pivot is (props are imported standing on their bottom edge).
-                float sx = 2.65f / sprite.bounds.size.x, sy = 1.04f / sprite.bounds.size.y;
+                // Tall enough to read as a circle at side-scroller scale, still clearly wider than it is tall.
+                float sx = 2.65f / sprite.bounds.size.x, sy = 1.42f / sprite.bounds.size.y;
                 art.transform.localScale = new Vector3(sx, sy, 1f);
                 art.transform.localPosition = new Vector3(-sprite.bounds.center.x * sx, -sprite.bounds.center.y * sy, 0f);
                 art.GetComponent<SpriteRenderer>().color = Color.white;
@@ -964,7 +965,7 @@ namespace AshenVale
                     Color dot = Color.Lerp(color, Color.white, .35f);
                     dot.a = i % 3 == 0 ? .9f : .48f;
                     Sprites.Blob("Rune mote", dot, i % 3 == 0 ? .075f : .045f, i % 3 == 0 ? .075f : .045f,
-                        order, parent, x + Mathf.Cos(angle) * 1.05f, y + .52f + Mathf.Sin(angle) * .40f);
+                        order, parent, x + Mathf.Cos(angle) * 1.05f, y + .60f + Mathf.Sin(angle) * .56f);
                 }
             }
 
