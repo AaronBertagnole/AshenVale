@@ -22,6 +22,7 @@ namespace AshenVale
         World world; GameHud legacy; Action<GameAction> queue;
         Canvas canvas; RectTransform safeRoot; CanvasGroup group; HudTheme theme; GameObject ownedEventSystem;
         Text heroName, heroClass, level, location, region, gold, network, journeyTitle, journeyBody, mapHint, xpText, interaction;
+        RawImage mapPicture;        // the current map's painted background, dimmed, behind the minimap's lines and marks
         Button copyCode; Image portrait; Meter health, mana, xp; HudMinimap minimap;
         GameObject mapPanel, interactionPanel; string characterId; int mapId = -1, seenLevel = -1, portraitHero = -1;
         readonly List<RaycastResult> hoverHits = new List<RaycastResult>();
@@ -76,6 +77,7 @@ namespace AshenVale
             Label("Map header", map, 10, 6, 160, 16, 9, HudTheme.CopperText, FontStyle.Bold).text = "LOCAL MAP";
             var compass = Label("Compass", map, 168, 6, 20, 16, 10, HudTheme.Text); compass.text = "N";
             Panel("Terrain back", map, new Vector2(0, 1), new Vector2(0, 1), new Vector2(8, -21), new Vector2(204, 69), theme.track);   // the map itself stays on a dark plate
+            mapPicture = Graphic<RawImage>("Terrain picture", map, new Vector2(0, 1), new Vector2(0, 1), new Vector2(10, -23), new Vector2(200, 65)); mapPicture.enabled = false;
             minimap = Graphic<HudMinimap>("Terrain", map, new Vector2(0, 1), new Vector2(0, 1), new Vector2(10, -23), new Vector2(200, 65));
             mapHint = Label("Map keys", map, 10, 91, 200, 14, 8, HudTheme.TextMuted); mapHint.alignment = TextAnchor.MiddleRight;
             var purse = Panel("Embermarks", safeRoot, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-20, -140), new Vector2(140, 24));
@@ -230,7 +232,7 @@ namespace AshenVale
             group.interactable=!blocked; group.blocksRaycasts=!blocked; group.alpha = legacy.WindowOpen ? 0f : 1f;
             var ch=me.ch; var def=world.maps[me.map].def;
             if(characterId!=ch.id){characterId=ch.id;mapId=-1;seenLevel=ch.level;portraitHero=-1;activity.Clear();AddActivity("Your adventure continues.",HudTheme.Muted);}
-            if(mapId!=me.map){mapId=me.map;AddActivity("Arrived in "+def.name+".",HudTheme.Ivory);}
+            if(mapId!=me.map){mapId=me.map;AddActivity("Arrived in "+def.name+".",HudTheme.Ivory);ShowMapPicture(def);}
             if(ch.level>seenLevel){AddActivity("Level "+ch.level+" reached!",HudTheme.Copper);seenLevel=ch.level;}
             if(portraitHero!=ch.hero){portraitHero=ch.hero;var frames=Sprites.Hero(me.Hero.folder+"/idle");portrait.sprite=frames.Length>0?frames[0]:null;portrait.enabled=portrait.sprite!=null;}
             heroName.text=string.IsNullOrEmpty(ch.name)?me.Hero.name:ch.name;heroClass.text=me.Hero.name;level.text="LEVEL "+ch.level;
@@ -284,6 +286,24 @@ namespace AshenVale
             }
             interactionPanel.SetActive(showPrompt); interaction.text = prompt;
             for(int i=0;i<lines.Count;i++){int index=activity.Count-1-i;lines[i].text=index>=0?activity[index].text:"";lines[i].color=index>=0?HudTheme.OnLight(activity[index].color):HudTheme.TextMuted;}
+        }
+
+        // Puts the map's painted scene or backdrop behind the minimap, cropped to fill it; maps without a picture keep the plain plate.
+        void ShowMapPicture(MapDef def)
+        {
+            string path = !string.IsNullOrEmpty(def.scene) ? def.scene : !string.IsNullOrEmpty(def.backdrop) ? def.backdrop : "Art/Backdrops/" + def.key;
+            var picture = Sprites.Art(path);
+            mapPicture.enabled = picture != null;
+            if (picture == null) return;
+            mapPicture.texture = picture.texture;
+            mapPicture.color = new Color(.62f, .62f, .62f, 1f);     // dimmed so the platforms and marks stay readable
+            // Crop (never stretch): show the middle of the picture at the minimap's own shape.
+            Rect area = mapPicture.rectTransform.rect;
+            float want = area.width / Mathf.Max(1f, area.height), have = picture.texture.width / (float)Mathf.Max(1, picture.texture.height);
+            float w = have > want ? want / have : 1f, h = have > want ? 1f : have / want;
+            var uv = new Rect((1f - w) / 2f, (1f - h) / 2f, w, h);
+            if (def.backdropFlip && string.IsNullOrEmpty(def.scene)) { uv.x += uv.width; uv.width = -uv.width; }
+            mapPicture.uvRect = uv;
         }
 
         static string PrimaryKey(GameAction action)
