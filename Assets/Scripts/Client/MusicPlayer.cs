@@ -12,7 +12,9 @@ namespace AshenVale
         // The theme for a map (a clip under Resources), or null for none.
         static string MapClipPath(int mapId)
         {
-            return mapId == Maps.Emberhaven ? "Audio/TheBellsOfEmberhaven" : null;
+            return mapId == Maps.Emberhaven ? "Audio/TheBellsOfEmberhaven"
+                 : mapId == Maps.ThornGlade ? "Audio/BeneathTheTangledBough"      // Thornmother's Glade
+                 : null;
         }
 
         readonly AudioSource source;
