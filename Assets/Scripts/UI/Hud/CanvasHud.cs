@@ -28,6 +28,12 @@ namespace AshenVale
         PointerEventData hoverData;
         Rect safeArea; int screenWidth, screenHeight;
 
+        // Movable panels (see HudLayout): drag one with the left mouse button; some have an x to close them.
+        sealed class Piece { public string id; public RectTransform rect; public Vector2 home; public bool closable; }
+        readonly List<Piece> pieces = new List<Piece>();
+        Piece held; bool dragging; Vector2 pressMouse, pressPosition; float dragEnded = -1f; int layoutVersion = -1;
+        const float DragStart = 8f;         // pixels the mouse must travel before a press becomes a drag
+
         public void Bind(World state, GameHud hud, Action<GameAction> enqueue)
         {
             world = state; legacy = hud; queue = enqueue; theme = new HudTheme();
@@ -68,7 +74,7 @@ namespace AshenVale
 
             var map = Panel("Minimap", safeRoot, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-20, -20), new Vector2(220, 110)); mapPanel = map.gameObject;
             Label("Map header", map, 10, 6, 160, 16, 9, HudTheme.CopperText, FontStyle.Bold).text = "LOCAL MAP";
-            var compass = Label("Compass", map, 190, 6, 20, 16, 10, HudTheme.Text); compass.text = "N";
+            var compass = Label("Compass", map, 168, 6, 20, 16, 10, HudTheme.Text); compass.text = "N";
             Panel("Terrain back", map, new Vector2(0, 1), new Vector2(0, 1), new Vector2(8, -21), new Vector2(204, 69), theme.track);   // the map itself stays on a dark plate
             minimap = Graphic<HudMinimap>("Terrain", map, new Vector2(0, 1), new Vector2(0, 1), new Vector2(10, -23), new Vector2(200, 65));
             mapHint = Label("Map keys", map, 10, 91, 200, 14, 8, HudTheme.TextMuted); mapHint.alignment = TextAnchor.MiddleRight;
@@ -128,7 +134,75 @@ namespace AshenVale
             }
             var prompt=Panel("Interaction",safeRoot,new Vector2(.5f,0),new Vector2(.5f,0),new Vector2(0,125),new Vector2(270,26));interactionPanel=prompt.gameObject;
             interaction=CenterLabel(prompt,"",11,HudTheme.Text);
+
+            AddPiece("status", status, false); AddPiece("actions", actions, false); AddPiece("shortcuts", shortcuts, false);
+            AddPiece("purse", purse, false); AddPiece("minimap", map, true); AddPiece("journey", journey, true); AddPiece("log", log, true);
         }
+
+        void AddPiece(string id, RectTransform rect, bool closable)
+        {
+            var piece = new Piece { id = id, rect = rect, home = rect.anchoredPosition, closable = closable };
+            pieces.Add(piece);
+            if (!closable) return;
+            var close = ButtonAt("Close", rect, new Vector2(1, 1), new Vector2(1, 1), new Vector2(-4, -4), new Vector2(15, 15), () =>
+            {
+                if (id == "minimap") legacy.minimapShown = false;     // the minimap key brings it back, as before
+                else HudLayout.SetHidden(id, true);
+            });
+            CenterLabel(close.transform, "x", 9, HudTheme.Ivory);
+        }
+
+        // Applies saved positions and closed panels, and lets the mouse drag a panel around.
+        void UpdateLayout(bool blocked)
+        {
+            if (layoutVersion != HudLayout.Version)
+            {
+                layoutVersion = HudLayout.Version;
+                foreach (var piece in pieces)
+                {
+                    piece.rect.anchoredPosition = HudLayout.HasPosition(piece.id) ? HudLayout.Position(piece.id) : piece.home;
+                    if (piece.closable && piece.id != "minimap") piece.rect.gameObject.SetActive(!HudLayout.Hidden(piece.id));
+                }
+            }
+            if (blocked) { held = null; dragging = false; return; }
+            Vector2 mouse = Input.mousePosition;
+            if (Input.GetMouseButtonDown(0))
+            {
+                held = null; dragging = false;
+                for (int i = pieces.Count - 1; i >= 0 && held == null; i--)
+                    if (pieces[i].rect.gameObject.activeInHierarchy && RectTransformUtility.RectangleContainsScreenPoint(pieces[i].rect, mouse, null)) held = pieces[i];
+                if (held != null) { pressMouse = mouse; pressPosition = held.rect.anchoredPosition; }
+            }
+            if (held == null) return;
+            if (Input.GetMouseButton(0))
+            {
+                if (!dragging && (mouse - pressMouse).sqrMagnitude > DragStart * DragStart) dragging = true;
+                if (dragging)
+                {
+                    held.rect.anchoredPosition = pressPosition + (mouse - pressMouse) / Mathf.Max(.01f, canvas.scaleFactor);
+                    KeepOnScreen(held.rect);
+                }
+            }
+            else
+            {
+                if (dragging) { HudLayout.SetPosition(held.id, held.rect.anchoredPosition); layoutVersion = HudLayout.Version; dragEnded = Time.unscaledTime; }
+                held = null; dragging = false;
+            }
+        }
+
+        // Nudges a panel back so at least a good part of it stays on the screen.
+        readonly Vector3[] corners = new Vector3[4];
+        void KeepOnScreen(RectTransform rect)
+        {
+            rect.GetWorldCorners(corners);      // screen pixels on an overlay canvas: bottom-left, top-left, top-right, bottom-right
+            float margin = 24f, dx = 0f, dy = 0f;
+            if (corners[2].x < margin) dx = margin - corners[2].x; else if (corners[0].x > Screen.width - margin) dx = Screen.width - margin - corners[0].x;
+            if (corners[2].y < margin) dy = margin - corners[2].y; else if (corners[0].y > Screen.height - margin) dy = Screen.height - margin - corners[0].y;
+            if (dx != 0f || dy != 0f) rect.anchoredPosition += new Vector2(dx, dy) / Mathf.Max(.01f, canvas.scaleFactor);
+        }
+
+        // A drag that ends over a button must not also press it.
+        bool JustDragged { get { return dragging || Time.unscaledTime - dragEnded < .2f; } }
 
         // Raycast at the current pointer rather than depending on EventSystem's Update ordering.
         // Only Buttons are raycast targets; the decorative HUD never blocks world clicks.
@@ -138,7 +212,7 @@ namespace AshenVale
             if (hoverData == null) hoverData = new PointerEventData(EventSystem.current);
             hoverData.Reset(); hoverData.position = Input.mousePosition; hoverHits.Clear();
             canvas.GetComponent<GraphicRaycaster>().Raycast(hoverData, hoverHits);
-            return hoverHits.Count > 0;
+            return hoverHits.Count > 0 || dragging;
         }
 
         public void SetVisible(bool visible)
@@ -165,6 +239,7 @@ namespace AshenVale
             location.text=def.name.ToUpperInvariant();region.text=def.kind==MapKind.Town?"A HAVEN ON THE ROAD":def.LevelText.ToUpperInvariant();
             gold.text=ch.gold.ToString("N0")+" EMBERMARKS";
             network.text=legacy.status??"";copyCode.gameObject.SetActive(!string.IsNullOrEmpty(legacy.joinCode));
+            UpdateLayout(blocked);
             mapPanel.SetActive(legacy.minimapShown);if(legacy.minimapShown)minimap.Refresh(world,me);
             mapHint.text=Keys.Name(GameAction.WorldMap)+"  WORLD  /  "+Keys.Name(GameAction.Minimap)+"  HIDE";
             journeyTitle.text=def.kind==MapKind.Town?"A moment to prepare":"Beyond the walls";
@@ -218,8 +293,8 @@ namespace AshenVale
             return Keys.KeyName(key);
         }
         static int KnownTowns(Character ch){int count=0;for(int i=0;i<Maps.All.Length;i++)if(Maps.IsTown(i)&&ch.KnowsTown(i))count++;return count;}
-        void Request(GameAction action){if(legacy.WindowOpen)return;if(queue!=null)queue(action);}
-        void Open(int which){legacy.ToggleCanvasWindow(which);}
+        void Request(GameAction action){if(legacy.WindowOpen||JustDragged)return;if(queue!=null)queue(action);}
+        void Open(int which){if(JustDragged)return;legacy.ToggleCanvasWindow(which);}
         public void AddActivity(string message,Color tint){activity.Add(new Entry{text=message,color=tint});if(activity.Count>12)activity.RemoveAt(0);}
         void UpdateSafeArea()
         {
