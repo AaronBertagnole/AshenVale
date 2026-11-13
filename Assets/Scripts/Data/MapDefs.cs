@@ -341,7 +341,7 @@ namespace AshenVale
             MapLayout.WithBackdrop(MapLayout.Build(ThornGlade, "Thornmother's Glade", "forest", MapKind.Field, ThornGladeLayout,
                     new[] { MapLayout.S('z', Monsters.Thornmother) },
                     new[] { MapLayout.L('T', Mosswood, 'T') }),
-                "Art/Backdrops/mosswood", 130f / 724f, 42f),       // Mosswood's pictures until the glade has its own
+                "Art/Backdrops/thorn_glade", 126f / 724f, 42f),    // her own haunted glade: the moss floor is 126 px above the bottom
         };
 
         public static bool IsTown(int map) { return map >= 0 && map < All.Length && All[map].kind == MapKind.Town; }

@@ -129,7 +129,12 @@ namespace AshenVale
             };
             a[Maps.AshenMarsh] = new MapArtDef { ambient = new[] { Ash() } };
             a[Maps.ShaleCliffs] = new MapArtDef { ambient = new[] { Snow() } };
-            a[Maps.ThornGlade] = a[Maps.Mosswood];     // shows Mosswood's pictures until it has its own
+            // Thornmother's Glade: its own haunted clearing, with teal mist hanging in the glow between the trees.
+            a[Maps.ThornGlade] = new MapArtDef
+            {
+                effects = new[] { Fx("Mist", 1086, 470, 1700, 170, new Color(.45f, .8f, .78f), 2) },
+                ambient = new[] { Motes() },
+            };
             // Highspire: snow on the open maps, embers underground
             var snow = new MapArtDef { ambient = new[] { Snow() } };
             a[Maps.FrostpinePass] = snow;
