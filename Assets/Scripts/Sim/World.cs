@@ -709,8 +709,11 @@ namespace AshenVale
 
         void UpdateMonsters(MapRuntime map, float dt)
         {
-            foreach (var m in map.monsters)
+            // By index, up to the monsters here when the tick began: a boss may summon sprouts while this runs, and they
+            // join at the end of the list (a foreach would throw when the list grows).
+            for (int index = 0, count = map.monsters.Count; index < count; index++)
             {
+                var m = map.monsters[index];
                 var d = m.Def;
                 var target = PickTarget(map.def.id, m, dt);
                 if (d.speed <= 0f) { m.knockbackTime = 0f; continue; }   // chests and other things that never move
