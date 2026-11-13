@@ -27,15 +27,15 @@ namespace AshenVale
             main.playOnAwake = true;
             main.duration = 2f;
             main.simulationSpace = ParticleSystemSimulationSpace.Local;
-            main.maxParticles = 36;
+            main.maxParticles = 54;
             main.startLifetime = new ParticleSystem.MinMaxCurve(1.4f, 2.1f);
             main.startSpeed = new ParticleSystem.MinMaxCurve(.03f, .12f);
-            main.startSize = new ParticleSystem.MinMaxCurve(.09f, .15f);
+            main.startSize = new ParticleSystem.MinMaxCurve(.13f, .22f);
             main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
             main.startColor = Color.white;
 
             var emission = particles.emission;
-            emission.rateOverTime = 7.5f;
+            emission.rateOverTime = 11f;
 
             var shape = particles.shape;
             shape.enabled = true;
@@ -102,10 +102,10 @@ namespace AshenVale
             main.playOnAwake = true;
             main.duration = 1f;
             main.simulationSpace = ParticleSystemSimulationSpace.Local;
-            main.maxParticles = 28;
-            main.startLifetime = new ParticleSystem.MinMaxCurve(.30f, .68f);
+            main.maxParticles = 70;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(.40f, .85f);
             main.startSpeed = new ParticleSystem.MinMaxCurve(.015f, .08f);
-            main.startSize = new ParticleSystem.MinMaxCurve(.085f, .145f);
+            main.startSize = new ParticleSystem.MinMaxCurve(.17f, .30f);
             main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
             main.startColor = Color.white;
 
@@ -114,10 +114,10 @@ namespace AshenVale
             var burst = new ParticleSystem.Burst
             {
                 time = .04f,
-                minCount = 2,
-                maxCount = 4,
+                minCount = 4,
+                maxCount = 7,
                 cycleCount = 0,
-                repeatInterval = .38f
+                repeatInterval = .24f
             };
             emission.SetBursts(new[] { burst });
 
