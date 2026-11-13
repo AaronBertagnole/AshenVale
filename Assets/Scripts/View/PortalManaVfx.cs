@@ -17,6 +17,9 @@ namespace AshenVale
             particleObject.transform.SetParent(transform, false);
             particleObject.transform.localScale = new Vector3(1f, .48f, 1f);
             particles = particleObject.AddComponent<ParticleSystem>();
+            // A new system starts playing at once, and Unity refuses changes to its duration while it plays:
+            // stop and clear it, set it up, then Play() at the end.
+            particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
 
             var main = particles.main;
             main.loop = true;
