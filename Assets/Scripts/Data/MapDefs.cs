@@ -338,7 +338,7 @@ namespace AshenVale
                 new[] { MapLayout.L('G', MossgateHollow, 'G'), MapLayout.L('H', FrostpinePass, 'H') }),
             // Region 1's boss glade, off the east end of Mosswood: a bramble-walled clearing with two ledges to
             // shoot from. Thornmother waits in the middle and comes back a few minutes after she falls.
-            MapLayout.WithBackdrop(MapLayout.Build(ThornGlade, "Thornmother's Glade", "forest", MapKind.Field, ThornGladeLayout,
+            MapLayout.WithBackdrop(MapLayout.Build(ThornGlade, "Thornmother's Glade", "thornglade", MapKind.Field, ThornGladeLayout,
                     new[] { MapLayout.S('z', Monsters.Thornmother) },
                     new[] { MapLayout.L('T', Mosswood, 'T') }),
                 "Art/Backdrops/thorn_glade", 126f / 724f, 42f),    // her own haunted glade: the moss floor is 126 px above the bottom

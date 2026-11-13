@@ -167,6 +167,17 @@ namespace AshenVale
                     flecks = new[] { new Color(.55f, .72f, .30f), new Color(.38f, .60f, .28f), new Color(.93f, .50f, .18f), new Color(.75f, .30f, .12f) },
                     groundSurface = .16f, platformSurface = .10f,
                 };
+                case "thornglade": return new Theme     // Thornmother's Glade: colours from its haunted backdrop (the tiles are cut from it)
+                {
+                    skyBottom = new Color(.20f, .42f, .42f), skyTop = new Color(.05f, .12f, .14f),
+                    far = new Color(.12f, .26f, .27f), farDark = new Color(.08f, .18f, .19f),
+                    mid = new Color(.10f, .18f, .16f), midDark = new Color(.14f, .10f, .08f),
+                    groundBody = new Color(.10f, .09f, .07f), groundTop = new Color(.26f, .30f, .16f),
+                    platformBody = new Color(.13f, .11f, .08f), platformTop = new Color(.27f, .31f, .17f),
+                    accent = new Color(.45f, .85f, .80f), farStyle = "pines", midStyle = "bigtrees",
+                    ladderRail = new Color(.20f, .15f, .10f), ladderRung = new Color(.32f, .24f, .15f),
+                    hanging = new Color(.20f, .26f, .12f),
+                };
                 case "forest": return new Theme
                 {
                     skyBottom = new Color(.62f, .84f, .74f), skyTop = new Color(.22f, .46f, .50f),
