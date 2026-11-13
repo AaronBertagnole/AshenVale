@@ -86,7 +86,7 @@ namespace AshenVale
 
         GUIStyle titleText, barText, detailText, detailRight, bodyStyle, smallStyle, centeredStyle, menuButton, statusStyle, nameplate,
                  bannerTitle, bannerSub, worldLabel, mapLabel, minimapTitle, minimapHint, tooltipText,
-                 atlasTitle, atlasCorner, atlasName, atlasSub, atlasSmall, atlasSmallLight, atlasCornerLight, numberStyle, bigNumberStyle, bossName, inventoryTabText, activeInventoryTabText, partNameText;
+                 atlasTitle, atlasCorner, atlasName, atlasSub, atlasSmall, atlasSmallLight, atlasCornerLight, numberStyle, bigNumberStyle, bossName, keycapText, inventoryTabText, activeInventoryTabText, partNameText;
         GUIStyle economyTitleText, economySectionText, economyBodyText, economyDetailText, economyPriceText, economyButtonText, economyHintText, economyButtonLight, economyWarnText;
         // Light grey panels (#cccccc, the owner's pick) with dark text; cards sit a little lighter, insets a little darker.
         static readonly Color EconomyPanel = new Color(.80f, .80f, .80f, .95f);
@@ -173,6 +173,8 @@ namespace AshenVale
             bannerTitle = new GUIStyle(GUI.skin.label) { fontSize = 34, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
             bannerSub = new GUIStyle(GUI.skin.label) { fontSize = 17, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
             worldLabel = new GUIStyle(GUI.skin.label) { fontSize = 12, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
+            keycapText = new GUIStyle(GUI.skin.label) { fontSize = 22, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter, clipping = TextClipping.Overflow };
+            keycapText.normal.textColor = KeycapGlyph;
             mapLabel = new GUIStyle(GUI.skin.label) { fontSize = 14, fontStyle = FontStyle.Bold, alignment = TextAnchor.UpperRight };
             mapLabel.normal.textColor = ThemeIvory;
             minimapTitle = new GUIStyle(GUI.skin.label) { fontSize = 13, fontStyle = FontStyle.Bold };
@@ -315,18 +317,68 @@ namespace AshenVale
             GUI.Label(new Rect(at.x - 150, at.y - 10, 300, 20), text, worldLabel);
         }
 
+        // A floating keycap over something you can use: it fades in while `inRange`, bobs gently, and shows the key
+        // bound to `action` (arrow keys as arrows). `id` tells the prompts on one map apart (their fade is remembered).
+        readonly Dictionary<int, float> keyPromptFade = new Dictionary<int, float>();
+        int keyPromptMap = -1;
+        static readonly Color KeycapFill = new Color(1f, .91f, .69f, .98f), KeycapEdge = new Color(.92f, .48f, .12f, 1f), KeycapGlyph = new Color(.24f, .16f, .09f, 1f);
+
+        void KeyPrompt(Camera cam, int id, float x, float y, bool inRange, GameAction action)
+        {
+            if (Event.current.type != EventType.Repaint) return;        // once a frame: OnGUI also runs for layout and input
+            float shown; keyPromptFade.TryGetValue(id, out shown);
+            shown = Mathf.MoveTowards(shown, inRange ? 1f : 0f, Time.unscaledDeltaTime * 10f);
+            keyPromptFade[id] = shown;
+            if (shown <= 0f) return;
+            float wave = Mathf.Sin(Time.unscaledTime * 2.2f);
+            Vector2 at;
+            if (!ToScreen(cam, x, y + wave * .12f, out at)) return;
+
+            KeyCode key = Keys.Get(action, 0);
+            if (key == KeyCode.None) key = Keys.Get(action, 1);
+            string glyph = key == KeyCode.UpArrow ? "\u2191" : key == KeyCode.DownArrow ? "\u2193" : key == KeyCode.LeftArrow ? "\u2190"
+                         : key == KeyCode.RightArrow ? "\u2192" : Keys.KeyName(key);
+            float size = 36f * (1f + wave * .025f) * Mathf.Clamp(Screen.height / 900f, .8f, 1.6f);
+            keycapText.fontSize = Mathf.RoundToInt(size * (glyph.Length > 1 ? .42f : .66f));
+            float width = Mathf.Max(size, keycapText.CalcSize(new GUIContent(glyph)).x + size * .45f);
+            Rect cap = new Rect(at.x - width / 2f, at.y - size / 2f, width, size);
+
+            Color old = GUI.color;
+            GUI.color = new Color(1f, 1f, 1f, shown);
+            Fill(new Rect(cap.x - 2, cap.y + 2, cap.width + 4, cap.height + 4), Faded(new Color(.12f, .08f, .03f, .4f), shown));     // drop shadow
+            Fill(new Rect(cap.x - 2, cap.y - 2, cap.width + 4, cap.height + 4), Faded(KeycapEdge, shown));
+            Fill(cap, Faded(KeycapFill, shown));
+            Fill(new Rect(cap.x, cap.yMax - 4, cap.width, 4), Faded(new Color(.86f, .72f, .48f, 1f), shown));           // the key's lower lip
+            GUI.Label(new Rect(cap.x, cap.y - 2, cap.width, cap.height), glyph, keycapText);
+            GUI.color = old;
+        }
+
+        static Color Faded(Color c, float alpha) { c.a *= alpha; return c; }
+
         // Where each portal leads, and who's who in town.
         void DrawWorldLabels(PlayerState me, MapDef def)
         {
             var cam = Camera.main;
             if (cam == null) return;
-            foreach (var portal in def.portals)
-                Label(cam, portal.x, portal.y + 2.35f, Maps.All[portal.targetMap].name.ToUpperInvariant() + "  [" + Keys.Name(GameAction.Up) + "]", new Color(.75f, .9f, 1f));
+            if (keyPromptMap != me.map) { keyPromptMap = me.map; keyPromptFade.Clear(); }
+            // Portals: the name of where it leads, and a floating keycap (the key to press) while your hero is standing in it.
+            bool canUse = !me.dead && me.grounded;
+            for (int i = 0; i < def.portals.Length; i++)
+            {
+                var portal = def.portals[i];
+                Label(cam, portal.x, portal.y + 1.75f, Maps.All[portal.targetMap].name.ToUpperInvariant(), new Color(.75f, .9f, 1f));
+                KeyPrompt(cam, i, portal.x, portal.y + 2.55f, canUse && Mathf.Abs(me.x - portal.x) < Tuning.GateReach && Mathf.Abs(me.y - portal.y) < .6f, GameAction.Up);
+            }
+            // Your own town portal, out in the field.
+            KeyPrompt(cam, -2, me.portalX, me.portalY + 2.2f,
+                      me.portalOpen && me.portalMap == me.map && !me.dead && Mathf.Abs(me.x - me.portalX) < 1.5f && Mathf.Abs(me.y - me.portalY) < 1.8f, GameAction.Up);
             if (def.kind != MapKind.Town) return;
-            if (me.returnReady && me.returnMap >= 0 && me.returnMap < Maps.All.Length)
-                Label(cam, def.returnX, def.returnY + 2.35f, "BACK TO " + Maps.All[me.returnMap].name.ToUpperInvariant() + "  [" + Keys.Name(GameAction.Up) + "]", new Color(1f, .88f, .6f));
+            bool canReturn = me.returnReady && me.returnMap >= 0 && me.returnMap < Maps.All.Length;
+            KeyPrompt(cam, -1, def.returnX, def.returnY + 2.55f, canReturn && canUse && Mathf.Abs(me.x - def.returnX) < Tuning.GateReach && Mathf.Abs(me.y - def.returnY) < .6f, GameAction.Up);
+            if (canReturn)
+                Label(cam, def.returnX, def.returnY + 1.75f, "BACK TO " + Maps.All[me.returnMap].name.ToUpperInvariant(), new Color(1f, .88f, .6f));
             else
-                Label(cam, def.returnX, def.returnY + 2.35f, "RETURN PORTAL (OPENS WHEN YOU USE " + Keys.Name(GameAction.TownPortal) + " IN THE FIELD)", new Color(.75f, .72f, .66f));
+                Label(cam, def.returnX, def.returnY + 1.75f, "RETURN PORTAL (OPENS WHEN YOU USE " + Keys.Name(GameAction.TownPortal) + " IN THE FIELD)", new Color(.75f, .72f, .66f));
             foreach (var stand in def.merchants) Label(cam, stand.x, stand.y + 2.5f, "MERCHANT  [" + Keys.Name(GameAction.Interact) + "]", new Color(1f, .85f, .55f));
             Label(cam, def.waystoneX, def.waystoneY + 2.35f, "WAYSTONE  [" + Keys.Name(GameAction.Interact) + "]", new Color(.7f, .95f, 1f));
             if (def.hasSmithy) Label(cam, def.smithyX, def.smithyY + 2.5f, "BLACKSMITH  [" + Keys.Name(GameAction.Interact) + "]", new Color(1f, .7f, .45f));
