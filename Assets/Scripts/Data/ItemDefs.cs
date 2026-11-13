@@ -15,6 +15,7 @@ namespace AshenVale
         public int attack, defense, health, price;
         public int level = 1;       // level of the monster (or hero, for shop gear) it came from: sets its smithing tier
         public int upgrade;         // smithy upgrades, 0 .. Tuning.MaxUpgrade
+        public int haste;           // % faster basic attacks while worn (boss weapons; 0 on ordinary gear)
 
         public int Attack { get { return attack + upgrade * Smithing.Step(attack); } }
         public int Defense { get { return defense + upgrade * Smithing.Step(defense); } }
@@ -173,7 +174,7 @@ namespace AshenVale
                           : roll < .05 ? Rarity.Epic : roll < .25 ? Rarity.Rare : Rarity.Common;
             int mult = rarity == Rarity.Epic ? 3 : rarity == Rarity.Rare ? 2 : 1;
             int power = 1 + level / 3;
-            return new Item
+            var item = new Item
             {
                 name = rarity + " " + (string.IsNullOrEmpty(bossMark) ? "" : bossMark + " ") + SlotName(slot, hero), slot = slot, rarity = rarity,
                 attack = slot == Slot.Weapon ? mult * (2 + power) : 0,
@@ -181,6 +182,13 @@ namespace AshenVale
                 health = slot == Slot.Boots || slot == Slot.Chest ? mult * (4 + power * 2) : 0,
                 price = (25 + level * 10) * mult * mult, level = Mathf.Max(1, level),
             };
+            // A boss's weapon hits harder than its level alone gives, and swings faster.
+            if (bossEpicChance >= 0f && slot == Slot.Weapon)
+            {
+                item.attack = Mathf.RoundToInt(item.attack * Tuning.BossWeaponDamage);
+                item.haste = rarity == Rarity.Epic ? Tuning.BossWeaponHasteEpic : Tuning.BossWeaponHaste;
+            }
+            return item;
         }
 
         public static int ShopGearCost(Slot slot, int level)

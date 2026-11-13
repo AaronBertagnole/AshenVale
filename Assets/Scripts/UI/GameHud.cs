@@ -769,12 +769,13 @@ namespace AshenVale
                 GUI.color = previous;
                 // Icon on the left, the stats it gives on the right; the full name shows below while the mouse is over it.
                 ItemIcon(new Rect(cell.x + 3, cell.y + 4, 52, 52), item);
-                int lineY = 0, lines = (item.Attack > 0 ? 1 : 0) + (item.Defense > 0 ? 1 : 0) + (item.Health > 0 ? 1 : 0) + (item.upgrade > 0 ? 1 : 0);
+                int lineY = 0, lines = (item.Attack > 0 ? 1 : 0) + (item.Defense > 0 ? 1 : 0) + (item.Health > 0 ? 1 : 0) + (item.upgrade > 0 ? 1 : 0) + (item.haste > 0 ? 1 : 0);
                 float textTop = cell.y + (cell.height - lines * 16) / 2f;
                 if (item.upgrade > 0) GUI.Label(new Rect(cell.x + 58, textTop + lineY++ * 16, 56, 16), "+" + item.upgrade, partNameText);
                 if (item.Attack > 0) GUI.Label(new Rect(cell.x + 58, textTop + lineY++ * 16, 56, 16), item.Attack + " ATK", partNameText);
                 if (item.Defense > 0) GUI.Label(new Rect(cell.x + 58, textTop + lineY++ * 16, 56, 16), item.Defense + " DEF", partNameText);
                 if (item.Health > 0) GUI.Label(new Rect(cell.x + 58, textTop + lineY++ * 16, 56, 16), item.Health + " HP", partNameText);
+                if (item.haste > 0) GUI.Label(new Rect(cell.x + 58, textTop + lineY++ * 16, 56, 16), "+" + item.haste + "% SPD", partNameText);
                 if (cell.Contains(Event.current.mousePosition)) hovered = item;
                 if (clicked) { if (Event.current.shift) commands.Drop(i); else commands.Equip(i); break; }
             }
@@ -793,7 +794,7 @@ namespace AshenVale
                 Color old = GUI.color;
                 GUI.color = Loot.RarityColor(hovered.rarity);
                 GUI.Label(new Rect(r.x + 18, r.y + 433, r.width - 36, 28),
-                          hovered.DisplayName + "   ·   +" + hovered.Attack + " ATK / +" + hovered.Defense + " DEF / +" + hovered.Health + " HP   ·   Lv " + hovered.level, partNameText);
+                          hovered.DisplayName + "   ·   +" + hovered.Attack + " ATK / +" + hovered.Defense + " DEF / +" + hovered.Health + " HP" + (hovered.haste > 0 ? " / +" + hovered.haste + "% attack speed" : "") + "   ·   Lv " + hovered.level, partNameText);
                 GUI.color = old;
             }
             else GUI.Label(new Rect(r.x + 18, r.y + 433, r.width - 36, 28), "Click to equip.  Drop: right-click, Shift+click, or drag out of the window.", partNameText);

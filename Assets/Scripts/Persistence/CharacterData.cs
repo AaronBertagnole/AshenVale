@@ -29,5 +29,6 @@ namespace AshenVale
         public string name;
         public int rarity, slot, attack, defense, health, price;
         public int level, upgrade;                      // version 2 (0 in older files: read as level 1, +0)
+        public int haste;                               // % faster basic attacks (boss weapons; 0 in older files)
     }
 }

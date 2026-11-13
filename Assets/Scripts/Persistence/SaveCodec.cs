@@ -103,7 +103,7 @@ namespace AshenVale
         {
             return new ItemData { name = item.name, rarity = (int)item.rarity, slot = (int)item.slot,
                                   attack = item.attack, defense = item.defense, health = item.health, price = item.price,
-                                  level = item.level, upgrade = item.upgrade };
+                                  level = item.level, upgrade = item.upgrade, haste = item.haste };
         }
 
         static Item ToItem(ItemData d)
@@ -115,6 +115,7 @@ namespace AshenVale
                 slot = (Slot)Mathf.Clamp(d.slot, 0, (int)Slot.Boots),
                 attack = d.attack, defense = d.defense, health = d.health, price = Mathf.Max(0, d.price),
                 level = Mathf.Max(1, d.level), upgrade = Mathf.Clamp(d.upgrade, 0, Tuning.MaxUpgrade),
+                haste = Mathf.Clamp(d.haste, 0, Tuning.MaxHaste),
             };
         }
 

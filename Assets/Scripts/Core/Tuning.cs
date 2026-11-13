@@ -54,6 +54,9 @@ namespace AshenVale
         public const float PackSpread = 2.5f;               // pack members land within this of the spawn point
         // Bosses
         public const float BossEpicChance = .3f;       // a boss's gear is Epic this often, Rare otherwise
+        public const float BossWeaponDamage = 1.25f;   // a boss's weapon: this much more attack than an ordinary one of its level
+        public const int BossWeaponHaste = 10, BossWeaponHasteEpic = 15;   // and % faster basic attacks (Rare, Epic)
+        public const int MaxHaste = 40;                // however much gear adds
         public const int BossLootLevels = 3;           // and this many levels above the boss
         public const float BossRespawn = 180f;         // seconds before a beaten boss returns to its glade
         public const float BossSlamWindup = .9f;       // it rears up this long before the root slam lands

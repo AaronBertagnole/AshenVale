@@ -71,7 +71,7 @@ namespace AshenVale
         static int Scaled(int value, float perRank, int steps) { return UnityEngine.Mathf.RoundToInt(value * (1f + perRank * steps)); }
 
         public static int BasicDamage(PlayerState p) { return Scaled(BaseDamage(p), BasicDamagePerRank, Steps(p, Basic)); }
-        public static float BasicCooldown(PlayerState p) { return p.Hero.attackCooldown; }
+        public static float BasicCooldown(PlayerState p) { return p.Hero.attackCooldown * (1f - p.ch.AttackHaste / 100f); }     // gear haste (boss weapons)
         public static float BasicRange(PlayerState p) { return p.Hero.meleeRange * (1f + ReachPerRank * Steps(p, Basic)); }
 
         public static int SkillDamage(PlayerState p) { return Scaled(BaseDamage(p) + p.Hero.skillBonus, SkillDamagePerRank, Steps(p, Skill)); }

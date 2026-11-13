@@ -34,6 +34,7 @@ namespace AshenVale
         public void SeeMap(int map) { if (map >= 0 && map < 64) mapsSeen |= 1L << map; }
 
         public HeroDef Def { get { return Heroes.All[hero]; } }
+        public int AttackHaste { get { int n = 0; foreach (var i in equipped) if (i != null) n += i.haste; return System.Math.Min(n, Tuning.MaxHaste); } }   // % faster basic attacks
         public int BonusAttack { get { int n = 0; foreach (var i in equipped) if (i != null) n += i.Attack; return n; } }
         public int BonusDefense { get { int n = 0; foreach (var i in equipped) if (i != null) n += i.Defense; return n; } }
         public int BonusHealth { get { int n = 0; foreach (var i in equipped) if (i != null) n += i.Health; return n; } }
