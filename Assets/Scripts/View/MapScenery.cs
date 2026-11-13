@@ -931,6 +931,10 @@ namespace AshenVale
         public static readonly Color MapPortalColor = new Color(.45f, .68f, 1f), ReturnPortalColor = new Color(1f, .78f, .38f),
                                      TownPortalColor = new Color(.7f, .55f, 1f);
 
+        // How tall the rune circle's picture is drawn (it is 2.65 wide) and how far its centre sits above the floor.
+        // Smaller height = flatter on the ground.
+        const float RuneHeight = .62f, RuneLift = .10f;
+
         // Ground rune portal, shared by map gates, return gates, and the temporary town portal.
         static void BuildPortal(Transform root, float x, float y, bool townReturn)
         {
@@ -943,15 +947,16 @@ namespace AshenVale
         {
             var anchor = new GameObject("Ground Rune Portal").transform;
             anchor.SetParent(parent, false);
-            anchor.localPosition = new Vector3(x, y + .60f, 0f);
+            anchor.localPosition = new Vector3(x, y + RuneLift, 0f);
 
             var sprite = Sprites.Art("Art/Props/rune_circle_portal");
             if (sprite != null)
             {
                 var art = Sprites.Picture("Rune Circle", sprite, order, anchor, 0f, 0f);
                 // Centre the picture on the anchor wherever its pivot is (props are imported standing on their bottom edge).
-                // Tall enough to read as a circle at side-scroller scale, still clearly wider than it is tall.
-                float sx = 2.65f / sprite.bounds.size.x, sy = 1.42f / sprite.bounds.size.y;
+                // Lying flat: seen from the side a circle on the floor is a thin ellipse, so the picture is squashed
+                // hard and centred just above the walking surface (its near edge dips a touch below the floor line).
+                float sx = 2.65f / sprite.bounds.size.x, sy = RuneHeight / sprite.bounds.size.y;
                 art.transform.localScale = new Vector3(sx, sy, 1f);
                 art.transform.localPosition = new Vector3(-sprite.bounds.center.x * sx, -sprite.bounds.center.y * sy, 0f);
                 art.GetComponent<SpriteRenderer>().color = Color.white;
@@ -965,7 +970,7 @@ namespace AshenVale
                     Color dot = Color.Lerp(color, Color.white, .35f);
                     dot.a = i % 3 == 0 ? .9f : .48f;
                     Sprites.Blob("Rune mote", dot, i % 3 == 0 ? .075f : .045f, i % 3 == 0 ? .075f : .045f,
-                        order, parent, x + Mathf.Cos(angle) * 1.05f, y + .60f + Mathf.Sin(angle) * .56f);
+                        order, parent, x + Mathf.Cos(angle) * 1.05f, y + RuneLift + Mathf.Sin(angle) * RuneHeight * .4f);
                 }
             }
 

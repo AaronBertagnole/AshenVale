@@ -15,7 +15,7 @@ namespace AshenVale
 
             var particleObject = new GameObject("Orbiting Mana");
             particleObject.transform.SetParent(transform, false);
-            particleObject.transform.localScale = new Vector3(1f, .58f, 1f);
+            particleObject.transform.localScale = new Vector3(1f, .25f, 1f);     // the motes follow the flattened circle
             particles = particleObject.AddComponent<ParticleSystem>();
             // A new system starts playing at once, and Unity refuses changes to its duration while it plays:
             // stop and clear it, set it up, then Play() at the end.
