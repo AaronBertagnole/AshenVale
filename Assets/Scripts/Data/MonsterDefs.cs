@@ -31,6 +31,7 @@ namespace AshenVale
         public int part = -1;           // the monster part it drops (Parts), -1 for none
         public float partChance = Tuning.PartDropChance;
         public int[] chestParts;        // chests: spill Tuning.ChestParts parts picked from this list
+        public string lootMark;         // bosses: the word their own gear carries in its name ("Thornbound")
 
         // Bosses (World.UpdateBoss): slow giants that telegraph a slam, call minions and enrage when low. They give
         // their XP to everyone alive on the map, always drop their part, and spill chestParts like a chest.
@@ -142,7 +143,7 @@ namespace AshenVale
             // Region 1's boss, in Thornmother's Glade off Mosswood. Her bark is thick: a party job, or a well-geared solo.
             new MonsterDef { key = "thornmother", name = "Thornmother", level = 9, color = new Color(.36f, .30f, .22f),
                 width = 2.6f, height = 3.3f, hp = 2600, speed = 1.1f, damage = 26, xp = 420, goldMin = 160, goldRange = 120,
-                aggressive = true, boss = true, minion = ThornSprout, respawn = Tuning.BossRespawn, itemChance = .9f,
+                aggressive = true, boss = true, minion = ThornSprout, respawn = Tuning.BossRespawn, itemChance = .9f, lootMark = "Thornbound",
                 part = Parts.WraithSilk, partChance = 1f,
                 chestParts = new[] { Parts.BoarTusk, Parts.MossTuft, Parts.ShadeEssence, Parts.WraithSilk, Parts.BoarTusk, Parts.MossTuft } },
             new MonsterDef { key = "thorn_sprout", name = "Thorn Sprout", level = 8, color = new Color(.45f, .62f, .25f),

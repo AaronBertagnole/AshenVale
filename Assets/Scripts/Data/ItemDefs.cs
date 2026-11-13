@@ -163,16 +163,19 @@ namespace AshenVale
         }
 
         // Drop roll: 75% Common, 20% Rare, 5% Epic. Stats grow every 3 levels; Rare doubles them, Epic triples.
-        public static Item Roll(System.Random rng, int level, HeroDef hero)
+        // bossEpicChance >= 0 is a boss's own drop: never Common (Epic with that chance, else Rare), and it carries
+        // the boss's mark in its name (bossMark, e.g. "Thornbound").
+        public static Item Roll(System.Random rng, int level, HeroDef hero, float bossEpicChance = -1f, string bossMark = null)
         {
             Slot slot = (Slot)rng.Next(4);
             double roll = rng.NextDouble();
-            Rarity rarity = roll < .05 ? Rarity.Epic : roll < .25 ? Rarity.Rare : Rarity.Common;
+            Rarity rarity = bossEpicChance >= 0f ? (roll < bossEpicChance ? Rarity.Epic : Rarity.Rare)
+                          : roll < .05 ? Rarity.Epic : roll < .25 ? Rarity.Rare : Rarity.Common;
             int mult = rarity == Rarity.Epic ? 3 : rarity == Rarity.Rare ? 2 : 1;
             int power = 1 + level / 3;
             return new Item
             {
-                name = rarity + " " + SlotName(slot, hero), slot = slot, rarity = rarity,
+                name = rarity + " " + (string.IsNullOrEmpty(bossMark) ? "" : bossMark + " ") + SlotName(slot, hero), slot = slot, rarity = rarity,
                 attack = slot == Slot.Weapon ? mult * (2 + power) : 0,
                 defense = slot == Slot.Helmet || slot == Slot.Chest ? mult * (1 + power / 2) : 0,
                 health = slot == Slot.Boots || slot == Slot.Chest ? mult * (4 + power * 2) : 0,

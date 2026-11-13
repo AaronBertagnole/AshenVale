@@ -588,12 +588,26 @@ namespace AshenVale
             // Chests (and bosses) roll for gear first and always add gold; other monsters roll for a potion first.
             bool chest = def.itemChance >= 0f;
             float itemChance = chest ? def.itemChance : Tuning.EquipmentDropChance;
-            bool equipment = chest && rng.NextDouble() < itemChance;
+            bool equipment = chest && !def.boss && rng.NextDouble() < itemChance;     // a boss's gear is handled below
             int potion = !equipment && rng.NextDouble() < Tuning.PotionDropChance ? (rng.NextDouble() < .5 ? 1 : 2) : 0;
             if (!chest) equipment = potion == 0 && rng.NextDouble() < itemChance;
             var kind = potion == 1 ? DropKind.HpPotion : potion == 2 ? DropKind.MpPotion : equipment ? DropKind.Item : DropKind.Gold;
             AddDrop(map, attacker, kind, m.x, m.y, equipment ? Loot.Roll(rng, def.level, attacker.Hero) : null, def.goldMin + rng.Next(def.goldRange));
             if (chest && kind != DropKind.Gold) AddDrop(map, attacker, DropKind.Gold, m.x + .45f, m.y, null, def.goldMin + rng.Next(def.goldRange));
+
+            // A boss's own loot: every hero who fought it and is still standing gets a piece for their own class,
+            // Rare at least, a few levels above the boss, reserved for them like any drop.
+            if (def.boss)
+            {
+                int given = 0;
+                foreach (var p in players)
+                {
+                    if (p.dead || p.map != map.def.id || p != attacker && !m.damageBy.ContainsKey(p.id)) continue;
+                    AddDrop(map, p, DropKind.Item, m.x + .9f + given * .55f, m.y,
+                            Loot.Roll(rng, def.level + Tuning.BossLootLevels, p.Hero, Tuning.BossEpicChance, def.lootMark), 0);
+                    given++;
+                }
+            }
 
             // Monster parts for the smithy, on top of the usual drop.
             if (def.part >= 0 && rng.NextDouble() < def.partChance) AddDrop(map, attacker, DropKind.Part, m.x - .45f, m.y, null, def.part);
