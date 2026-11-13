@@ -47,6 +47,11 @@ namespace AshenVale
             velocity.enabled = true;
             velocity.space = ParticleSystemSimulationSpace.Local;
             velocity.orbitalZ = new ParticleSystem.MinMaxCurve(.55f);
+            // Rise out of the circle as they turn. (Local space, and this object is squashed to .25 in y, so the
+            // numbers are four times the speed seen on screen: about half to one unit a second.)
+            velocity.x = new ParticleSystem.MinMaxCurve(0f, 0f);
+            velocity.y = new ParticleSystem.MinMaxCurve(2.0f, 3.8f);
+            velocity.z = new ParticleSystem.MinMaxCurve(0f, 0f);
             velocity.radial = new ParticleSystem.MinMaxCurve(-.035f);
 
             var rotation = particles.rotationOverLifetime;
@@ -131,6 +136,9 @@ namespace AshenVale
             velocity.enabled = true;
             velocity.space = ParticleSystemSimulationSpace.Local;
             velocity.orbitalZ = new ParticleSystem.MinMaxCurve(.78f);
+            velocity.x = new ParticleSystem.MinMaxCurve(0f, 0f);
+            velocity.y = new ParticleSystem.MinMaxCurve(1.4f, 2.8f);     // glints drift upward too (see the motes above)
+            velocity.z = new ParticleSystem.MinMaxCurve(0f, 0f);
 
             var colorLife = sparkles.colorOverLifetime;
             colorLife.enabled = true;
