@@ -336,20 +336,77 @@ namespace AshenVale
 
             KeyCode key = Keys.Get(action, 0);
             if (key == KeyCode.None) key = Keys.Get(action, 1);
-            string glyph = key == KeyCode.UpArrow ? "\u2191" : key == KeyCode.DownArrow ? "\u2193" : key == KeyCode.LeftArrow ? "\u2190"
-                         : key == KeyCode.RightArrow ? "\u2192" : Keys.KeyName(key);
-            float size = 36f * (1f + wave * .025f) * Mathf.Clamp(Screen.height / 900f, .8f, 1.6f);
-            keycapText.fontSize = Mathf.RoundToInt(size * (glyph.Length > 1 ? .42f : .66f));
-            float width = Mathf.Max(size, keycapText.CalcSize(new GUIContent(glyph)).x + size * .45f);
-            Rect cap = new Rect(at.x - width / 2f, at.y - size / 2f, width, size);
+            // Everything below is in "u": the keycap is 46 u across, as in the design it follows.
+            float u = 40f / 46f * (1f + wave * .025f) * Mathf.Clamp(Screen.height / 900f, .8f, 1.6f);
+            bool arrow = key == KeyCode.UpArrow || key == KeyCode.DownArrow || key == KeyCode.LeftArrow || key == KeyCode.RightArrow;
+            string glyph = arrow ? "" : Keys.KeyName(key);
+            keycapText.fontSize = Mathf.RoundToInt((glyph.Length > 1 ? 15f : 24f) * u);
+            float extra = arrow ? 0f : Mathf.Max(0f, keycapText.CalcSize(new GUIContent(glyph)).x + 14f * u - 36f * u);     // long key names widen the cap
 
+            Rect cap = Centered(at, 46f * u + extra, 46f * u);
+            Round(Grown(cap, 6f * u), Faded(new Color(KeycapEdge.r, KeycapEdge.g, KeycapEdge.b, .18f), shown));       // warm glow
+            Round(new Rect(cap.x, cap.y + 3f * u, cap.width, cap.height), Faded(new Color(.12f, .08f, .03f, .42f), shown));   // shadow
+            Round(Grown(cap, 2f * u), Faded(KeycapEdge, shown));                                                        // orange rim
+            Round(cap, Faded(KeycapFill, shown));
+            Rect inset = Grown(cap, -5f * u);
+            Round(Grown(inset, 1f * u), Faded(new Color(.73f, .43f, .18f, .72f), shown));                               // brass bevel line
+            Round(inset, Faded(new Color(1f, .97f, .86f, .96f), shown));
+
+            if (arrow)
+            {
+                // An arrow from three strokes (stem and two barbs), turned to point the key's way.
+                float turn = key == KeyCode.DownArrow ? 180f : key == KeyCode.LeftArrow ? -90f : key == KeyCode.RightArrow ? 90f : 0f;
+                Matrix4x4 before = GUI.matrix;
+                GUIUtility.RotateAroundPivot(turn, at);
+                Color ink = Faded(KeycapGlyph, shown);
+                Stroke(new Vector2(at.x, at.y + 2f * u), 5f * u, 15f * u, 0f, ink);
+                Stroke(new Vector2(at.x - 5f * u, at.y - 5f * u), 5f * u, 11f * u, 45f, ink);
+                Stroke(new Vector2(at.x + 5f * u, at.y - 5f * u), 5f * u, 11f * u, -45f, ink);
+                GUI.matrix = before;
+            }
+            else
+            {
+                Color old = GUI.color;
+                GUI.color = new Color(1f, 1f, 1f, shown);
+                GUI.Label(inset, glyph, keycapText);
+                GUI.color = old;
+            }
+        }
+
+        static Rect Centered(Vector2 at, float width, float height) { return new Rect(at.x - width / 2f, at.y - height / 2f, width, height); }
+        static Rect Grown(Rect r, float by) { return new Rect(r.x - by, r.y - by, r.width + by * 2f, r.height + by * 2f); }
+
+        // A bar centred on `centre`, turned clockwise by `degrees`.
+        static void Stroke(Vector2 centre, float width, float height, float degrees, Color color)
+        {
+            Matrix4x4 before = GUI.matrix;
+            GUIUtility.RotateAroundPivot(degrees, centre);
+            Fill(Centered(centre, width, height), color);
+            GUI.matrix = before;
+        }
+
+        // A filled rounded rectangle (a small white nine-slice made once, tinted). Repaint only.
+        static GUIStyle roundStyle;
+        static void Round(Rect rect, Color color)
+        {
+            if (roundStyle == null || roundStyle.normal.background == null)
+            {
+                const int n = 32; const float radius = 8f;
+                var texture = new Texture2D(n, n, TextureFormat.RGBA32, false) { name = "Keycap round", hideFlags = HideFlags.HideAndDontSave, filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
+                for (int y = 0; y < n; y++)
+                    for (int x = 0; x < n; x++)
+                    {
+                        float cx = Mathf.Clamp(x + .5f, radius, n - radius), cy = Mathf.Clamp(y + .5f, radius, n - radius);
+                        float distance = Vector2.Distance(new Vector2(x + .5f, y + .5f), new Vector2(cx, cy));
+                        texture.SetPixel(x, y, new Color(1f, 1f, 1f, Mathf.Clamp01(radius + .75f - distance)));
+                    }
+                texture.Apply();
+                roundStyle = new GUIStyle { border = new RectOffset(10, 10, 10, 10) };
+                roundStyle.normal.background = texture;
+            }
             Color old = GUI.color;
-            GUI.color = new Color(1f, 1f, 1f, shown);
-            Fill(new Rect(cap.x - 2, cap.y + 2, cap.width + 4, cap.height + 4), Faded(new Color(.12f, .08f, .03f, .4f), shown));     // drop shadow
-            Fill(new Rect(cap.x - 2, cap.y - 2, cap.width + 4, cap.height + 4), Faded(KeycapEdge, shown));
-            Fill(cap, Faded(KeycapFill, shown));
-            Fill(new Rect(cap.x, cap.yMax - 4, cap.width, 4), Faded(new Color(.86f, .72f, .48f, 1f), shown));           // the key's lower lip
-            GUI.Label(new Rect(cap.x, cap.y - 2, cap.width, cap.height), glyph, keycapText);
+            GUI.color = color;
+            roundStyle.Draw(rect, false, false, false, false);
             GUI.color = old;
         }
 
