@@ -230,6 +230,7 @@ public class AshenValeGame : MonoBehaviour
     void Update()
     {
         net.Update(Time.deltaTime);
+        music.Tick(Time.unscaledDeltaTime);
         if (inMenu)
         {
             hudActions.Clear();
@@ -244,6 +245,7 @@ public class AshenValeGame : MonoBehaviour
         }
 
         var me = world.GetPlayer(localId);
+        music.SetMap(me != null ? me.map : -1);      // towns with a theme play it while you are there
         if (me != null && me.dead && me.deathClock >= Tuning.RespawnDelay && Input.GetKeyDown(KeyCode.N)) { BackToHeroes(); return; }
         bool pointerOverHud = canvasHud && canvasHud.PointerOverHud();
         hud.HandleKeys(me, pointerOverHud || hud.WindowOpen);
