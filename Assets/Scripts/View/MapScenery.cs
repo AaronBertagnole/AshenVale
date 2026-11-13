@@ -931,26 +931,44 @@ namespace AshenVale
         public static readonly Color MapPortalColor = new Color(.45f, .68f, 1f), ReturnPortalColor = new Color(1f, .78f, .38f),
                                      TownPortalColor = new Color(.7f, .55f, 1f);
 
-        // A portal standing at (x, y): the painted oval (blue for map portals, gold for a town's return portal) with the
-        // rippling shimmer over it. Placeholder blobs if the picture is missing.
+        // Ground rune portal, shared by map gates, return gates, and the temporary town portal.
         static void BuildPortal(Transform root, float x, float y, bool townReturn)
         {
             Portal(root, x, y, townReturn ? "Art/Props/return_portal" : "Art/Props/portal", townReturn ? ReturnPortalColor : MapPortalColor, PortalOrder);
         }
 
-        // Also the T town portal (WorldView, violet).
+        // Also the T town portal (WorldView, violet). The old `picture` argument is kept so existing
+        // call sites remain compatible; every portal now uses the same ground-circle art.
         public static void Portal(Transform parent, float x, float y, string picture, Color color, int order)
         {
-            var sprite = Sprites.Art(picture);
-            if (sprite != null) Sprites.Picture("Portal", sprite, order, parent, x, y);
+            var anchor = new GameObject("Ground Rune Portal").transform;
+            anchor.SetParent(parent, false);
+            anchor.localPosition = new Vector3(x, y + .52f, 0f);
+
+            var sprite = Sprites.Art("Art/Props/rune_circle_portal");
+            if (sprite != null)
+            {
+                var art = Sprites.Picture("Rune Circle", sprite, order, anchor, 0f, 0f);
+                // Centre the picture on the anchor wherever its pivot is (props are imported standing on their bottom edge).
+                float sx = 2.65f / sprite.bounds.size.x, sy = 1.04f / sprite.bounds.size.y;
+                art.transform.localScale = new Vector3(sx, sy, 1f);
+                art.transform.localPosition = new Vector3(-sprite.bounds.center.x * sx, -sprite.bounds.center.y * sy, 0f);
+                art.GetComponent<SpriteRenderer>().color = Color.white;
+            }
             else
             {
-                Color glow = color; glow.a = .45f;
-                Color core = Color.Lerp(color, Color.white, .7f); core.a = .85f;
-                Sprites.Blob("Portal glow", glow, 1.1f, 2.1f, order, parent, x, y + 1f);
-                Sprites.Blob("Portal core", core, .5f, 1.5f, order + 1, parent, x, y + 1f);
+                // Simple ground-level dotted rune fallback until the painted sprite is imported.
+                for (int i = 0; i < 24; i++)
+                {
+                    float angle = i * Mathf.PI * 2f / 24f;
+                    Color dot = Color.Lerp(color, Color.white, .35f);
+                    dot.a = i % 3 == 0 ? .9f : .48f;
+                    Sprites.Blob("Rune mote", dot, i % 3 == 0 ? .075f : .045f, i % 3 == 0 ? .075f : .045f,
+                        order, parent, x + Mathf.Cos(angle) * 1.05f, y + .52f + Mathf.Sin(angle) * .40f);
+                }
             }
-            Effect("Portal shimmer", parent, x, y + 1.15f, .8f, 1.7f, color, 0, 1f, order + 2);
+
+            anchor.gameObject.AddComponent<PortalManaVfx>().Initialize(color, order + 1);
         }
 
         // placeholder: draw stand-in shapes when there is no art (false on painted scenes, which show their own).
@@ -993,3 +1011,4 @@ namespace AshenVale
         }
     }
 }
+
