@@ -2,12 +2,13 @@ using UnityEngine;
 
 namespace AshenVale
 {
-    /// <summary>Small, slow mana motes that orbit a ground rune portal.</summary>
+    /// <summary>Slow orbiting mana and quick glints that make a ground rune portal shimmer.</summary>
     [DisallowMultipleComponent]
     public sealed class PortalManaVfx : MonoBehaviour
     {
         static Material glowMaterial;
         ParticleSystem particles;
+        ParticleSystem sparkles;
 
         public void Initialize(Color accent, int sortingOrder)
         {
@@ -84,6 +85,84 @@ namespace AshenVale
             renderer.sortingOrder = sortingOrder;
             renderer.sharedMaterial = GlowMaterial();
             particles.Play();
+
+            CreateSparkles(accent, sortingOrder + 1);
+        }
+
+        void CreateSparkles(Color accent, int sortingOrder)
+        {
+            var sparkleObject = new GameObject("Rune Shimmer Sparks");
+            sparkleObject.transform.SetParent(transform, false);
+            sparkleObject.transform.localScale = new Vector3(1f, .25f, 1f);     // flat, like the circle
+            sparkles = sparkleObject.AddComponent<ParticleSystem>();
+            sparkles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);   // see Initialize
+
+            var main = sparkles.main;
+            main.loop = true;
+            main.playOnAwake = true;
+            main.duration = 1f;
+            main.simulationSpace = ParticleSystemSimulationSpace.Local;
+            main.maxParticles = 28;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(.30f, .68f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(.015f, .08f);
+            main.startSize = new ParticleSystem.MinMaxCurve(.085f, .145f);
+            main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
+            main.startColor = Color.white;
+
+            var emission = sparkles.emission;
+            emission.rateOverTime = 0f;
+            var burst = new ParticleSystem.Burst
+            {
+                time = .04f,
+                minCount = 2,
+                maxCount = 4,
+                cycleCount = 0,
+                repeatInterval = .38f
+            };
+            emission.SetBursts(new[] { burst });
+
+            var shape = sparkles.shape;
+            shape.enabled = true;
+            shape.shapeType = ParticleSystemShapeType.Circle;
+            shape.radius = 1.08f;
+            shape.radiusThickness = .08f;
+
+            var velocity = sparkles.velocityOverLifetime;
+            velocity.enabled = true;
+            velocity.space = ParticleSystemSimulationSpace.Local;
+            velocity.orbitalZ = new ParticleSystem.MinMaxCurve(.78f);
+
+            var colorLife = sparkles.colorOverLifetime;
+            colorLife.enabled = true;
+            var mana = Color.Lerp(accent, new Color(.48f, 1f, .91f, 1f), .5f);
+            var bright = Color.Lerp(mana, new Color(1f, .91f, .61f, 1f), .55f);
+            var gradient = new Gradient();
+            gradient.SetKeys(
+                new[]
+                {
+                    new GradientColorKey(bright, 0f),
+                    new GradientColorKey(mana, .48f),
+                    new GradientColorKey(Color.white, 1f)
+                },
+                new[]
+                {
+                    new GradientAlphaKey(0f, 0f),
+                    new GradientAlphaKey(1f, .12f),
+                    new GradientAlphaKey(.82f, .42f),
+                    new GradientAlphaKey(0f, 1f)
+                });
+            colorLife.color = new ParticleSystem.MinMaxGradient(gradient);
+
+            var sizeLife = sparkles.sizeOverLifetime;
+            sizeLife.enabled = true;
+            sizeLife.size = new ParticleSystem.MinMaxCurve(1f, new AnimationCurve(
+                new Keyframe(0f, .1f), new Keyframe(.18f, 1.2f), new Keyframe(.52f, .68f), new Keyframe(1f, .08f)));
+
+            var renderer = sparkleObject.GetComponent<ParticleSystemRenderer>();
+            renderer.renderMode = ParticleSystemRenderMode.Billboard;
+            renderer.sortingOrder = sortingOrder;
+            renderer.sharedMaterial = GlowMaterial();
+            sparkles.Play();
         }
 
         static Material GlowMaterial()
