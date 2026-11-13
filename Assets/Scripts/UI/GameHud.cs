@@ -32,7 +32,7 @@ namespace AshenVale
         public void ToggleCanvasWindow(int which)
         {
             bool wasOpen = which == 0 ? inventoryOpen : which == 1 ? worldMapOpen : menuOpen;
-            inventoryOpen = shopOpen = waystoneOpen = smithyOpen = worldMapOpen = menuOpen = controlsOpen = abilitiesOpen = false;
+            inventoryOpen = shopOpen = waystoneOpen = smithyOpen = worldMapOpen = menuOpen = controlsOpen = abilitiesOpen = soundOpen = false;
             capturingAction = -1;
             if (!wasOpen) { if (which == 0) inventoryOpen = true; else if (which == 1) worldMapOpen = true; else menuOpen = true; }
         }
@@ -68,9 +68,9 @@ namespace AshenVale
             }
             GUI.skin = canvasSkin;
         }
-        public bool inventoryOpen, shopOpen, menuOpen, waystoneOpen, smithyOpen, worldMapOpen, controlsOpen, abilitiesOpen;
+        public bool inventoryOpen, shopOpen, menuOpen, waystoneOpen, smithyOpen, worldMapOpen, controlsOpen, abilitiesOpen, soundOpen;
         public bool minimapShown = true;
-        public bool WindowOpen { get { return inventoryOpen || shopOpen || menuOpen || waystoneOpen || smithyOpen || worldMapOpen || controlsOpen || abilitiesOpen; } }
+        public bool WindowOpen { get { return inventoryOpen || shopOpen || menuOpen || waystoneOpen || smithyOpen || worldMapOpen || controlsOpen || abilitiesOpen || soundOpen; } }
         // Controls window: which binding is waiting for a key (-1 none); while one is, the game ignores the keyboard.
         int capturingAction = -1, capturingSlot;
         public bool Capturing { get { return controlsOpen && capturingAction >= 0; } }
@@ -117,22 +117,23 @@ namespace AshenVale
 
         public GameHud(World world) { this.world = world; }
 
-        public void Close() { inventoryOpen = shopOpen = menuOpen = waystoneOpen = smithyOpen = worldMapOpen = controlsOpen = abilitiesOpen = false; capturingAction = -1; bannerMap = -1; }
+        public void Close() { inventoryOpen = shopOpen = menuOpen = waystoneOpen = smithyOpen = worldMapOpen = controlsOpen = abilitiesOpen = soundOpen = false; capturingAction = -1; bannerMap = -1; }
 
         // Window keys (bindings in Keys): inventory, world map, minimap, and the loot / talk key at the merchant,
         // waystone or smithy; Esc closes a window or opens the menu. The world keeps running while windows are
         // open; only attacks are blocked.
         public void HandleKeys(PlayerState me, bool ignoreMouse = false)
         {
-            if (me == null || me.dead) { inventoryOpen = shopOpen = menuOpen = waystoneOpen = smithyOpen = worldMapOpen = controlsOpen = abilitiesOpen = false; capturingAction = -1; return; }
+            if (me == null || me.dead) { inventoryOpen = shopOpen = menuOpen = waystoneOpen = smithyOpen = worldMapOpen = controlsOpen = abilitiesOpen = soundOpen = false; capturingAction = -1; return; }
             if (Capturing) return;                      // the Controls window is waiting for a key
             if (Input.GetKeyDown(KeyCode.Escape))
             {
-                if (controlsOpen) controlsOpen = false;
+                if (soundOpen) soundOpen = false;
+                else if (controlsOpen) controlsOpen = false;
                 else if (inventoryOpen || shopOpen || waystoneOpen || smithyOpen || worldMapOpen || abilitiesOpen) { inventoryOpen = shopOpen = waystoneOpen = smithyOpen = worldMapOpen = abilitiesOpen = false; }
                 else menuOpen = !menuOpen;
             }
-            if (menuOpen || controlsOpen) return;
+            if (menuOpen || controlsOpen || soundOpen) return;
             if (Keys.Pressed(GameAction.Minimap, ignoreMouse)) minimapShown = !minimapShown;
             if (Keys.Pressed(GameAction.WorldMap, ignoreMouse)) { worldMapOpen = !worldMapOpen; inventoryOpen = shopOpen = waystoneOpen = smithyOpen = false; }
             if (Keys.Pressed(GameAction.Inventory, ignoreMouse)) { inventoryOpen = !inventoryOpen; shopOpen = waystoneOpen = smithyOpen = worldMapOpen = false; }
@@ -267,6 +268,7 @@ namespace AshenVale
             if (abilitiesOpen) DrawAbilities(me);
             else if (!WindowOpen && !me.dead && me.ch.UnspentPoints > 0) DrawPointsHint(me);
             if (controlsOpen) DrawControls();
+            if (soundOpen) DrawSound();
             if (!canvasActive && me.portalCast > 0) GUI.Label(new Rect(18, 218, 500, 35), "Casting Town Portal...", bodyStyle);
             if (!canvasActive) DrawBanner(me, def);
             if (me.dead)
@@ -458,14 +460,38 @@ namespace AshenVale
 
         void DrawMenu()
         {
-            Rect r = new Rect((Screen.width - 320) / 2f, (Screen.height - 304) / 2f, 320, 304);
+            Rect r = new Rect((Screen.width - 320) / 2f, (Screen.height - 358) / 2f, 320, 358);
             GUI.Box(r, "MENU");
             if (CloseX(r)) { menuOpen = false; return; }
             GUI.Label(new Rect(r.x + 20, r.y + 30, 280, 24), "Your hero saves automatically.", smallStyle);
             if (GUI.Button(new Rect(r.x + 30, r.y + 66, 260, 44), "RESUME", menuButton)) menuOpen = false;
             if (GUI.Button(new Rect(r.x + 30, r.y + 120, 260, 44), "CONTROLS", menuButton)) { menuOpen = false; controlsOpen = true; capturingAction = -1; }
-            if (GUI.Button(new Rect(r.x + 30, r.y + 174, 260, 44), online ? "SAVE & LEAVE GAME" : "SAVE & YOUR HEROES", menuButton)) { menuOpen = false; if (onCharacterSelect != null) onCharacterSelect(); }
-            if (GUI.Button(new Rect(r.x + 30, r.y + 228, 260, 44), "SAVE & QUIT", menuButton)) { menuOpen = false; if (onQuit != null) onQuit(); }
+            if (GUI.Button(new Rect(r.x + 30, r.y + 174, 260, 44), "SOUND", menuButton)) { menuOpen = false; soundOpen = true; }
+            if (GUI.Button(new Rect(r.x + 30, r.y + 228, 260, 44), online ? "SAVE & LEAVE GAME" : "SAVE & YOUR HEROES", menuButton)) { menuOpen = false; if (onCharacterSelect != null) onCharacterSelect(); }
+            if (GUI.Button(new Rect(r.x + 30, r.y + 282, 260, 44), "SAVE & QUIT", menuButton)) { menuOpen = false; if (onQuit != null) onQuit(); }
+        }
+
+        // Sound: overall, music and effects volumes, and a mute for everything (SoundSettings; shared with the title menu).
+        void DrawSound()
+        {
+            Rect r = new Rect((Screen.width - 440) / 2f, (Screen.height - 270) / 2f, 440, 270);
+            GUI.Box(r, "SOUND");
+            if (CloseX(r)) { soundOpen = false; return; }
+            SoundSettings.SetMaster(SoundSlider(r, 0, SoundSettings.Muted ? "Master (muted)" : "Master", SoundSettings.Master));
+            SoundSettings.SetMusic(SoundSlider(r, 1, "Music", SoundSettings.Music));
+            SoundSettings.SetEffects(SoundSlider(r, 2, "Sound effects", SoundSettings.Effects));
+            GUI.Label(new Rect(r.x + 24, r.y + 168, r.width - 48, 40), "Sound effects will follow this setting as they are added.", smallStyle);
+            if (GUI.Button(new Rect(r.x + 24, r.yMax - 46, 150, 32), SoundSettings.Muted ? "UNMUTE ALL" : "MUTE ALL")) SoundSettings.ToggleMute();
+            if (GUI.Button(new Rect(r.xMax - 144, r.yMax - 46, 120, 32), "DONE")) soundOpen = false;
+        }
+
+        float SoundSlider(Rect window, int row, string label, float value)
+        {
+            float y = window.y + 48 + row * 38;
+            GUI.Label(new Rect(window.x + 24, y, 130, 24), label, smallStyle);
+            float moved = GUI.HorizontalSlider(new Rect(window.x + 160, y + 6, 200, 18), value, 0f, 1f);
+            GUI.Label(new Rect(window.x + 372, y, 50, 24), Mathf.RoundToInt(value * 100) + "%", smallStyle);
+            return Mathf.Abs(moved - value) > .001f ? Mathf.Round(moved * 20f) / 20f : value;
         }
 
         // Controls: two keys per action; click one and press the key you want (Esc keeps the old key, Backspace clears).

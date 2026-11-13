@@ -204,12 +204,16 @@ namespace AshenVale
             else if(settingsOpen)
             {
                 FrontMenuLook.Fill(new Rect(left,top,1280,720),new Color(0f,0f,0f,.35f));
-                FrontMenuLook.Box(new Rect(left+400,top+220,480,340));
-                GUI.Label(new Rect(left+434,top+245,400,52),"SETTINGS",heading);
-                DrawVolume(left+435,top+331);
-                if(GUI.Button(new Rect(left+434,top+385,180,42),"Key bindings",button)) { controlsOpen=true; capAction=-1; }
-                if(GUI.Button(new Rect(left+654,top+385,190,42),"How to play",button)) OpenHelp();
-                if(GUI.Button(new Rect(left+544,top+450,190,42),"Back  [ESC]",button)) settingsOpen=false;
+                FrontMenuLook.Box(new Rect(left+400,top+180,480,420));
+                GUI.Label(new Rect(left+434,top+205,400,52),"SETTINGS",heading);
+                // Sound: overall, music and effects volumes, and a mute for everything.
+                float master=SoundRow(left+435,top+286,SoundSettings.Muted ? "MUTED" : "MASTER",SoundSettings.Master); SoundSettings.SetMaster(master);
+                float tune=SoundRow(left+435,top+324,"MUSIC",SoundSettings.Music); music.SetVolume(tune);
+                float fx=SoundRow(left+435,top+362,"EFFECTS",SoundSettings.Effects); SoundSettings.SetEffects(fx);
+                if(GUI.Button(new Rect(left+706,top+280,138,29),SoundSettings.Muted ? "Unmute all" : "Mute all",FrontMenuLook.Button)) music.ToggleMute();
+                if(GUI.Button(new Rect(left+434,top+425,180,42),"Key bindings",button)) { controlsOpen=true; capAction=-1; }
+                if(GUI.Button(new Rect(left+654,top+425,190,42),"How to play",button)) OpenHelp();
+                if(GUI.Button(new Rect(left+544,top+490,190,42),"Back  [ESC]",button)) settingsOpen=false;
             }
         }
 
@@ -282,6 +286,14 @@ namespace AshenVale
             float y=selected*82f;
             if(y<rosterScroll.y) rosterScroll.y=y;
             if(y+76>rosterScroll.y+330) rosterScroll.y=y+76-330;
+        }
+        // One volume slider (label, slider, percentage); returns the value, in steps of 5%.
+        float SoundRow(float x,float y,string label,float value)
+        {
+            GUI.Label(new Rect(x,y-1,70,22),label,FrontMenuLook.Tiny);
+            float moved=GUI.HorizontalSlider(new Rect(x+68,y,142,20),value,0f,1f,FrontMenuLook.Track,FrontMenuLook.Thumb);
+            GUI.Label(new Rect(x+221,y-2,48,24),Mathf.RoundToInt(value*100)+"%",small);
+            return Mathf.Abs(moved-value)>.001f ? Mathf.Round(moved*20f)/20f : value;
         }
         void DrawVolume(float x,float y)
         {

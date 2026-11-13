@@ -3,11 +3,10 @@ using UnityEngine;
 namespace AshenVale
 {
     // Music: the title theme in the menus and a theme for the maps that have one (towns, so far), with a
-    // short fade between them. Volume and mute are saved in PlayerPrefs and apply to all of it.
+    // short fade between them. Its volume and the mute come from SoundSettings.
     public sealed class MusicPlayer
     {
         const string ClipPath = "Audio/BeneathTheWinterBough", FallbackPath = "Audio/WhereTheMapsEnd_Loop_v3";
-        const string VolumeKey = "AshenVale.MusicVolume", MutedKey = "AshenVale.MusicMuted";
         const float FadeTime = 1.2f;
 
         // The theme for a map (a clip under Resources), or null for none.
@@ -22,16 +21,14 @@ namespace AshenVale
         AudioClip mapClip;          // the clip loaded for mapClipId
         int mapClipId = -1;
         float fade = 1f;            // 0 silent .. 1 full, multiplied into the volume
-        public float Volume { get; private set; }
-        public bool Muted { get; private set; }
+        public float Volume { get { return SoundSettings.Music; } }
+        public bool Muted { get { return SoundSettings.Muted; } }
 
         public MusicPlayer(GameObject host)
         {
             source = host.AddComponent<AudioSource>();
             source.playOnAwake = false;
             source.loop = true;
-            Volume = Mathf.Clamp01(PlayerPrefs.GetFloat(VolumeKey, .35f));
-            Muted = PlayerPrefs.GetInt(MutedKey, 0) == 1;
             Apply();
             menuClip = Resources.Load<AudioClip>(ClipPath);
             if (menuClip == null)
@@ -91,23 +88,10 @@ namespace AshenVale
             source.Play();
         }
 
-        public void SetVolume(float volume)
-        {
-            if (Mathf.Abs(volume - Volume) < .001f) return;
-            Volume = Mathf.Clamp01(volume);
-            Save();
-        }
+        public void SetVolume(float volume) { SoundSettings.SetMusic(volume); Apply(); }
+        public void ToggleMute() { SoundSettings.ToggleMute(); Apply(); }
 
-        public void ToggleMute() { Muted = !Muted; Save(); }
-
-        void Apply() { source.volume = Volume * fade; source.mute = Muted; }
-
-        void Save()
-        {
-            Apply();
-            PlayerPrefs.SetFloat(VolumeKey, Volume);
-            PlayerPrefs.SetInt(MutedKey, Muted ? 1 : 0);
-            PlayerPrefs.Save();
-        }
+        // Overall volume and mute live on the AudioListener (SoundSettings.Apply); this is the music's own level.
+        void Apply() { SoundSettings.Apply(); source.volume = SoundSettings.Music * fade; }
     }
 }
