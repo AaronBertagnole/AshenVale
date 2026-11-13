@@ -16,7 +16,7 @@ namespace AshenVale
 
             var particleObject = new GameObject("Orbiting Mana");
             particleObject.transform.SetParent(transform, false);
-            particleObject.transform.localScale = new Vector3(1f, .25f, 1f);     // the motes follow the flattened circle
+            particleObject.transform.localScale = new Vector3(1.1f, .30f, 1f);    // the painted stone ring's centre line
             particles = particleObject.AddComponent<ParticleSystem>();
             // A new system starts playing at once, and Unity refuses changes to its duration while it plays:
             // stop and clear it, set it up, then Play() at the end.
@@ -98,7 +98,7 @@ namespace AshenVale
         {
             var sparkleObject = new GameObject("Rune Shimmer Sparks");
             sparkleObject.transform.SetParent(transform, false);
-            sparkleObject.transform.localScale = new Vector3(1f, .25f, 1f);     // flat, like the circle
+            sparkleObject.transform.localScale = new Vector3(1.1f, .30f, 1f);    // on the ring, like the motes
             sparkles = sparkleObject.AddComponent<ParticleSystem>();
             sparkles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);   // see Initialize
 
