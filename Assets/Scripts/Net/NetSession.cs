@@ -335,7 +335,8 @@ namespace AshenVale
         public void HostAfterTicks(float dt)
         {
             if (CurrentRole != Role.Host || !handlersRegistered) return;
-            foreach (var e in world.events) if (e.kind == SimEventKind.Slash || e.kind == SimEventKind.BossSlam || e.kind == SimEventKind.DragonThrust || e.kind == SimEventKind.DragonFang || e.kind == SimEventKind.DragonFissure || e.kind == SimEventKind.DragonSweep || e.kind == SimEventKind.EmbermarksPickedUp || e.kind == SimEventKind.RimeBurst || e.kind == SimEventKind.RimeStorm || e.kind == SimEventKind.RimeTeleport || e.kind == SimEventKind.RangerRelease || e.kind == SimEventKind.HeroImpact || e.kind == SimEventKind.ItemDropped) pendingEvents.Add(e);
+            foreach (var e in world.events) if (e.kind == SimEventKind.Slash || e.kind == SimEventKind.BossSlam || e.kind == SimEventKind.DragonThrust || e.kind == SimEventKind.DragonFang || e.kind == SimEventKind.DragonFissure || e.kind == SimEventKind.DragonSweep || e.kind == SimEventKind.EmbermarksPickedUp || e.kind == SimEventKind.RimeBurst || e.kind == SimEventKind.RimeStorm || e.kind == SimEventKind.RimeTeleport || e.kind == SimEventKind.RangerRelease || e.kind == SimEventKind.HeroImpact || e.kind == SimEventKind.ItemDropped
+                || e.kind == SimEventKind.BrambleWarn || e.kind == SimEventKind.ThornWalls || e.kind == SimEventKind.ThornWallsEnd || e.kind == SimEventKind.SproutHeal) pendingEvents.Add(e);
             snapshotTimer += dt;
             characterTimer += dt;
             if (snapshotTimer >= SnapshotInterval)
@@ -404,7 +405,7 @@ namespace AshenVale
                     w.WriteValueSafe((ushort)Mathf.Clamp(Mathf.RoundToInt(m.maxHp), 1, ushort.MaxValue));
                     w.WriteValueSafe((byte)Mathf.Clamp(Mathf.CeilToInt(255f * m.hp / Mathf.Max(1f, m.maxHp)), 0, 255));
                     w.WriteValueSafe((sbyte)m.facing);
-                    w.WriteValueSafe((byte)(m.windup > 0f ? 1 : m.strike > 0f ? 2 : 0));   // boss pose, for the telegraph
+                    w.WriteValueSafe((byte)m.pose);     // what it is doing (MonsterState.pose), for the view
                 }
                 w.WriteValueSafe(map.drops.Count);
                 foreach (var d in map.drops)
@@ -572,7 +573,8 @@ namespace AshenVale
                 m.maxHp = maxHp;
                 m.hp = health / 255f * m.maxHp;
                 m.facing = facing < 0 ? -1 : 1;
-                m.windup = pose == 1 ? 1f : 0f;
+                m.pose = pose;
+                m.windup = pose == 1 || pose == 3 || pose == 4 ? 1f : 0f;
                 m.strike = pose == 2 ? 1f : 0f;
                 runtime.monsters.Add(m);
             }

@@ -60,6 +60,28 @@ namespace AshenVale
         public const float BossSlamRange = 3.4f;       // slam reach on either side, on its floor
         public const float BossSlamDamage = 1.6f;      // times its touch damage
         public const float BossSlamCooldown = 5f;      // (halved while enraged)
+        // Bramble eruption: thorns burst from the floor under a hero, wherever they stand, after a warning mark.
+        public const float BossEruptEvery = 6f;        // (faster while enraged; see also BossRootErupt)
+        public const float BossEruptWindup = .7f;      // her call, before the mark appears
+        public const float BossEruptWarn = 1f;         // the mark shows this long before the thorns
+        public const float BossEruptRadius = 1.15f;
+        public const float BossEruptDamage = 1.3f;     // times her touch damage
+        // The rooted phase: at BossRootHp she roots herself and thorn walls close in from both ends of her floor
+        // until she has taken BossBreakDamage (a share of her full HP) or BossRootMax seconds pass.
+        public const float BossRootHp = .5f;
+        public const float BossRootTime = .8f;         // the rooting and the breaking-free animations
+        public const float BossRootMax = 22f;
+        public const float BossBreakDamage = .12f;
+        public const float BossRootErupt = 2.6f;       // while rooted: a mark under every hero this often
+        public const float BossWallSpeed = .45f;       // units a second, each wall
+        public const float BossWallGap = 9f;           // they stop this far apart
+        public const float BossWallTick = .6f;         // heroes in the thorns are hurt this often...
+        public const float BossWallDamage = .5f;       // ...for this share of her touch damage
+        // Sprouts within reach of their mother heal her in pulses, standing still for a moment each time.
+        public const float SproutHealRange = 3.5f;
+        public const float SproutHealEvery = 1.6f;
+        public const float SproutHealPause = .55f;
+        public const float SproutHeal = .004f;         // share of her full HP per pulse
         public const float BossSummonWindup = 1.1f;
         public const float BossSummonEvery = 12f;
         public const int BossMaxMinions = 4;           // it stops calling sprouts while this many are alive

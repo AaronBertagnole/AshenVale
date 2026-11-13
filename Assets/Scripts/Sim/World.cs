@@ -85,6 +85,7 @@ namespace AshenVale
         public void Clear()
         {
             rimeCasts.Clear();
+            brambles.Clear();
             players.Clear();
             events.Clear();
             foreach (var map in maps)
@@ -127,6 +128,7 @@ namespace AshenVale
             {
                 if (!HasLivingPlayer(map.def.id)) continue;   // nobody here: the map waits, as it always has
                 UpdateMonsters(map, dt);
+                UpdateBrambles(map, dt);
                 UpdateShots(map, dt);
                 UpdateSpawning(map, dt);
             }
@@ -581,6 +583,13 @@ namespace AshenVale
                 if (helped) GainXp(p, Tuning.XpFor(def.xp, def.level, p.ch.level));
             }
             if (def.boss) map.monsters.RemoveAll(other => other.def == def.minion && other.spawn < 0);   // its minions fall with it
+            if (def.boss)
+            {
+                // Her thorns go with her: no more marks, and the walls crumble.
+                List<BrambleMark> marks;
+                if (brambles.TryGetValue(map.def.id, out marks)) marks.Clear();
+                if (m.phase >= 1 && m.phase <= 3) events.Add(new SimEvent { kind = SimEventKind.ThornWallsEnd, map = map.def.id, x = m.x, y = m.y });
+            }
             int best = 0;
             foreach (var kv in m.damageBy)
                 if (kv.Value > best && GetPlayer(kv.Key) != null) { best = kv.Value; attacker = GetPlayer(kv.Key); }
@@ -714,6 +723,7 @@ namespace AshenVale
                 if (chaseLo > chaseHi) chaseLo = chaseHi = (m.chaseLeft + m.chaseRight) * .5f;
 
                 if (d.boss) { UpdateBoss(map, m, target, dt); m.x = Mathf.Clamp(m.x, lo, hi); continue; }
+                if (SproutHeals(map, m, dt)) continue;
                 if (m.knockbackTime > 0f)
                 {
                     float step = Mathf.Min(dt, m.knockbackTime);
@@ -754,14 +764,18 @@ namespace AshenVale
             m.strike = Mathf.Max(0f, m.strike - dt);
             m.attackCooldown = Mathf.Max(0f, m.attackCooldown - dt);
             m.summonCooldown = Mathf.Max(0f, m.summonCooldown - dt);
+            m.eruptCooldown = Mathf.Max(0f, m.eruptCooldown - dt);
+            m.pose = m.windup > 0f ? (m.attack == 1 ? 1 : m.attack == 2 ? 3 : 4) : m.strike > 0f && m.struck == 1 ? 2 : 0;
+            if (UpdateRooted(map, m, dt)) return;
             if (m.windup > 0f)
             {
                 m.windup -= dt;
                 if (m.windup > 0f) return;                      // rearing up: stands still so the tell is readable
                 m.windup = 0f;
-                m.strike = Tuning.BossStrikeVisual;
+                m.strike = Tuning.BossStrikeVisual; m.struck = m.attack;
                 if (m.attack == 1) Slam(map, m, Mathf.RoundToInt(d.damage * Tuning.BossSlamDamage));
                 else if (m.attack == 2 && d.minion >= 0) Summon(map, m, d.minion);
+                else if (m.attack == 3 && target != null) Bramble(map, m, target.x, target.currentFloor);
                 m.attack = 0;
                 return;
             }
@@ -786,7 +800,15 @@ namespace AshenVale
                     m.summonCooldown = Tuning.BossSummonEvery; m.attackCooldown = 2f;
                     return;
                 }
-                if (Mathf.Abs(dist) < Tuning.BossSlamRange - .4f)
+                // Out of slam reach, or up on a ledge: thorns come up under them instead.
+                bool reachable = Mathf.Abs(target.currentFloor - m.y) <= Tuning.MonsterFloorTolerance && Mathf.Abs(dist) < Tuning.BossSlamRange - .4f;
+                if (!reachable && m.eruptCooldown <= 0f)
+                {
+                    m.attack = 3; m.windup = Tuning.BossEruptWindup;
+                    m.eruptCooldown = enraged ? Tuning.BossEruptEvery * .6f : Tuning.BossEruptEvery; m.attackCooldown = 1.5f;
+                    return;
+                }
+                if (reachable)
                 {
                     m.attack = 1; m.windup = Tuning.BossSlamWindup;
                     m.attackCooldown = enraged ? Tuning.BossSlamCooldown * .5f : Tuning.BossSlamCooldown;
@@ -794,6 +816,110 @@ namespace AshenVale
                 }
             }
             if (Mathf.Abs(dist) > 1.2f) m.x += m.facing * d.speed * (enraged ? Tuning.BossEnrageSpeed : 1f) * dt;
+        }
+
+        // The rooted phase. True while it is going on (she does nothing else).
+        bool UpdateRooted(MapRuntime map, MonsterState m, float dt)
+        {
+            var d = m.Def;
+            if (m.phase == 0)
+            {
+                if (m.hp >= m.maxHp * Tuning.BossRootHp) return false;
+                m.phase = 1; m.phaseTime = Tuning.BossRootTime; m.windup = 0f; m.strike = 0f; m.attack = 0;
+                m.rootHp = m.hp; m.wallLeft = m.left + .6f; m.wallRight = m.right - .6f; m.wallTick = Tuning.BossWallTick; m.eruptCooldown = 1.2f;
+                events.Add(new SimEvent { kind = SimEventKind.ThornWalls, map = map.def.id, x = m.wallLeft, y = m.y, amount = Mathf.RoundToInt(m.wallRight * 100f) });
+            }
+            if (m.phase == 4) return false;
+            m.phaseTime -= dt;
+            if (m.phase == 1) { m.pose = 5; if (m.phaseTime <= 0f) { m.phase = 2; m.phaseTime = Tuning.BossRootMax; } }
+            else if (m.phase == 3) { m.pose = 7; if (m.phaseTime <= 0f) m.phase = 4; return true; }
+            else m.pose = 6;
+
+            // The walls creep in from both ends, stopping BossWallGap apart around her; heroes caught in them are torn.
+            float half = Tuning.BossWallGap * .5f;
+            m.wallLeft = Mathf.Min(m.wallLeft + Tuning.BossWallSpeed * dt, Mathf.Max(m.wallLeft, m.x - half));
+            m.wallRight = Mathf.Max(m.wallRight - Tuning.BossWallSpeed * dt, Mathf.Min(m.wallRight, m.x + half));
+            m.wallTick -= dt;
+            if (m.wallTick <= 0f)
+            {
+                m.wallTick = Tuning.BossWallTick;
+                foreach (var p in players)
+                    if (!p.dead && p.map == map.def.id && p.immunity <= 0f && p.y < m.y + 4.2f && (p.x < m.wallLeft + .4f || p.x > m.wallRight - .4f))
+                        Hurt(map, p, m, Mathf.Max(1, Mathf.RoundToInt(d.damage * Tuning.BossWallDamage)));
+            }
+            if (m.phase == 2)
+            {
+                // Rooted: marks under every hero in the glade, and she keeps calling sprouts.
+                if (m.eruptCooldown <= 0f)
+                {
+                    m.eruptCooldown = Tuning.BossRootErupt;
+                    foreach (var p in players) if (!p.dead && p.map == map.def.id) Bramble(map, m, p.x, p.currentFloor);
+                }
+                if (m.summonCooldown <= 0f && d.minion >= 0)
+                {
+                    int minions = 0;
+                    foreach (var other in map.monsters) if (other.def == d.minion) minions++;
+                    m.summonCooldown = Tuning.BossSummonEvery;
+                    if (minions < Tuning.BossMaxMinions) Summon(map, m, d.minion);
+                }
+                if (m.rootHp - m.hp >= m.maxHp * Tuning.BossBreakDamage || m.phaseTime <= 0f)
+                {
+                    m.phase = 3; m.phaseTime = Tuning.BossRootTime;
+                    events.Add(new SimEvent { kind = SimEventKind.ThornWallsEnd, map = map.def.id, x = m.x, y = m.y });
+                }
+            }
+            return true;
+        }
+
+        // Thorns about to erupt: a mark at (x, floor) now, the damage after the warning.
+        sealed class BrambleMark { public float x, y, timer; public int damage; public MonsterState from; }
+        readonly Dictionary<int, List<BrambleMark>> brambles = new Dictionary<int, List<BrambleMark>>();
+
+        void Bramble(MapRuntime map, MonsterState m, float x, float floor)
+        {
+            List<BrambleMark> list;
+            if (!brambles.TryGetValue(map.def.id, out list)) brambles[map.def.id] = list = new List<BrambleMark>();
+            list.Add(new BrambleMark { x = x, y = floor, timer = Tuning.BossEruptWarn, damage = Mathf.RoundToInt(m.Def.damage * Tuning.BossEruptDamage), from = m });
+            events.Add(new SimEvent { kind = SimEventKind.BrambleWarn, map = map.def.id, x = x, y = floor });
+        }
+
+        void UpdateBrambles(MapRuntime map, float dt)
+        {
+            List<BrambleMark> list;
+            if (!brambles.TryGetValue(map.def.id, out list)) return;
+            for (int i = list.Count - 1; i >= 0; i--)
+            {
+                var mark = list[i];
+                mark.timer -= dt;
+                if (mark.timer > 0f) continue;
+                list.RemoveAt(i);
+                foreach (var p in players)
+                {
+                    if (p.dead || p.map != map.def.id || p.immunity > 0f) continue;
+                    if (Mathf.Abs(p.x - mark.x) > Tuning.BossEruptRadius || p.y < mark.y - .5f || p.y > mark.y + 1.6f) continue;
+                    Hurt(map, p, mark.from, mark.damage);
+                }
+            }
+        }
+
+        // A sprout near its mother heals her in pulses. True while it stands still to do it.
+        bool SproutHeals(MapRuntime map, MonsterState m, float dt)
+        {
+            m.pose = 0;
+            MonsterState mother = null;
+            foreach (var other in map.monsters) if (other.Def.boss && other.Def.minion == m.def) { mother = other; break; }
+            if (mother == null || mother.hp >= mother.maxHp || Mathf.Abs(mother.x - m.x) > Tuning.SproutHealRange || m.knockbackTime > 0f)
+            { m.healClock = Mathf.Max(m.healClock, Tuning.SproutHealEvery * .5f); return false; }
+            m.healClock -= dt;
+            if (m.healClock <= 0f)
+            {
+                m.healClock = Tuning.SproutHealEvery;
+                mother.hp = Mathf.Min(mother.maxHp, mother.hp + mother.maxHp * Tuning.SproutHeal);
+                events.Add(new SimEvent { kind = SimEventKind.SproutHeal, map = map.def.id, x = m.x, y = m.y, amount = mother.id });
+            }
+            bool pausing = m.healClock > Tuning.SproutHealEvery - Tuning.SproutHealPause;
+            if (pausing) { m.pose = 8; m.facing = mother.x >= m.x ? 1 : -1; }
+            return pausing;
         }
 
         void Slam(MapRuntime map, MonsterState m, int damage)

@@ -111,6 +111,15 @@ namespace AshenVale
         // strike pose shows, and its cooldowns. Clients get windup / strike from the snapshot for the telegraph.
         public int attack;
         public float windup, strike, attackCooldown, summonCooldown;
+        // What it is doing, for the view (sent to clients): 0 nothing, 1 slam windup, 2 slam strike, 3 summoning,
+        // 4 calling an eruption, 5 rooting, 6 rooted, 7 breaking free, 8 (a sprout) healing its mother.
+        public int pose;
+        public int struck;              // the attack whose strike pose is showing
+        public float eruptCooldown;
+        // The rooted phase (bosses, once, at Tuning.BossRootHp): 0 not yet, 1 rooting, 2 rooted, 3 breaking free, 4 over.
+        public int phase;
+        public float phaseTime, rootHp, wallLeft, wallRight, wallTick;
+        public float healClock;         // sprouts: until the next heal pulse; while positive after a pulse it stands still
         public MonsterDef Def { get { return Monsters.All[def]; } }
     }
 
@@ -134,7 +143,11 @@ namespace AshenVale
         public HashSet<int> hitSet;   // monster ids already hit; shared by every arrow of one volley
     }
 
-    public enum SimEventKind { Slash, MonsterHit, LevelUp, PlayerDied, BossSlam, DragonThrust, DragonFang, DragonFissure, DragonSweep, EmbermarksPickedUp, RimeBurst, RimeStorm, RimeTeleport, RangerRelease, HeroImpact, ItemDropped }
+    public enum SimEventKind { Slash, MonsterHit, LevelUp, PlayerDied, BossSlam, DragonThrust, DragonFang, DragonFissure, DragonSweep, EmbermarksPickedUp, RimeBurst, RimeStorm, RimeTeleport, RangerRelease, HeroImpact, ItemDropped,
+        BrambleWarn,        // thorns will erupt at (x, y) after Tuning.BossEruptWarn
+        ThornWalls,         // walls rise at x (left) and amount / 100 (right) on floor y and creep inward
+        ThornWallsEnd,      // they crumble
+        SproutHeal }        // a sprout at (x, y) sends healing to the monster with id `amount`
 
     // Something that happened during a tick, for the view (effects, sounds, numbers) and later for the network.
     public struct SimEvent

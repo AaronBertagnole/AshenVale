@@ -32,12 +32,13 @@ namespace AshenVale
             public Color[] colors;
             public MonsterDef def;
             public float clock, hurt, moveTime, lastHp, lastX, dying, lastStrike;
+            public int pose; public float poseClock;      // its special pose (MonsterState.pose) and how long it has held it
             public Transform crown;             // bosses: the thorn crown, which flares while it rears up
         }
 
         public const float ViewHalfHeight = 5.4f;   // camera orthographic size: the view is 10.8 units tall
         const float HeroScale = 1.65f;
-        const float DieTime = .45f;
+        const float DieTime = .45f, BossDieTime = 1.4f;
         public const int MonsterOrder = 7, DropOrder = 9, HeroOrder = 10, SlashOrder = 12, ArrowOrder = 13;
 
         readonly World world;
@@ -103,6 +104,7 @@ namespace AshenVale
         public void Reset()
         {
             ClearRimeFx();
+            ClearThornFx();
             ClearAttackFeedback();
             ClearLandingLeaves();
             foreach (var v in heroViews.Values) Object.Destroy(v.go);
@@ -129,6 +131,7 @@ namespace AshenVale
             SyncPortals();
             UpdateSlashes(frameDt);
             UpdateAttackFeedback(frameDt);
+            UpdateThornFx(frameDt);
             UpdateLandingLeaves(frameDt);
             UpdateCamera(local, frameDt, alpha);
         }
@@ -136,6 +139,7 @@ namespace AshenVale
         void ShowMap(int map)
         {
             ClearRimeFx();
+            ClearThornFx();
             ClearAttackFeedback();
             ClearLandingLeaves();
             dropsSynced = false;
@@ -169,6 +173,10 @@ namespace AshenVale
                 if (e.kind == SimEventKind.Slash) SpawnSlash(e);
                 else if (e.kind == SimEventKind.DragonThrust || e.kind == SimEventKind.DragonFang || e.kind == SimEventKind.DragonFissure || e.kind == SimEventKind.DragonSweep) SpawnDragonFx(e);
                 else if (e.kind == SimEventKind.BossSlam) SpawnSlamRing(e);
+                else if (e.kind == SimEventKind.BrambleWarn) SpawnBramble(e);
+                else if (e.kind == SimEventKind.ThornWalls) SpawnThornWalls(e);
+                else if (e.kind == SimEventKind.ThornWallsEnd) EndThornWalls();
+                else if (e.kind == SimEventKind.SproutHeal) SpawnHealMote(e);
             }
             world.events.Clear();
             for (int i = numbers.Count - 1; i >= 0; i--) { numbers[i].age += Time.deltaTime; if (numbers[i].age >= numbers[i].life) numbers.RemoveAt(i); }
@@ -418,8 +426,10 @@ namespace AshenVale
                 bool moving = v.moveTime > 0;
                 if (v.art != null)
                 {
+                    var posed = PoseFrame(v, m, frameDt);     // a boss's attacks, a sprout healing (WorldView.Thornmother)
                     var frames = MonsterFrames(d, v.hurt > 0 ? "hurt" : moving ? "move" : "idle");
-                    if (frames.Length > 0) v.art.sprite = frames[Mathf.FloorToInt(v.clock * 8f) % frames.Length];
+                    if (posed != null) v.art.sprite = posed;
+                    else if (frames.Length > 0) v.art.sprite = frames[Mathf.FloorToInt(v.clock * (d.boss ? 5f : 8f)) % frames.Length];
                 }
                 else if (d.boss)
                 {
@@ -449,7 +459,7 @@ namespace AshenVale
             {
                 var v = dying[i];
                 v.dying += frameDt;
-                float t = Mathf.Clamp01(v.dying / DieTime);
+                float t = Mathf.Clamp01(v.dying / (v.def.boss ? BossDieTime : DieTime));     // a boss takes its time falling
                 if (t >= 1f) { Object.Destroy(v.go); dying.RemoveAt(i); continue; }
                 if (v.art != null)
                 {
@@ -460,7 +470,7 @@ namespace AshenVale
                 for (int j = 0; j < v.parts.Length; j++)
                 {
                     var c = v.colors[j];
-                    v.parts[j].color = new Color(c.r, c.g, c.b, c.a * (1f - t));
+                    v.parts[j].color = new Color(c.r, c.g, c.b, c.a * (v.def.boss ? Mathf.Clamp01((1f - t) / .25f) : 1f - t));
                 }
             }
         }
