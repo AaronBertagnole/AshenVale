@@ -609,7 +609,7 @@ namespace AshenVale
                         bool gear = d.kind == DropKind.Item;
                         go = Sprites.Picture(name, icon, DropOrder, null, 0, 0);
                         // Long thin weapons are drawn taller, or they read much smaller than the armour pieces.
-                        bool longWeapon = gear && d.item.slot == Slot.Weapon && !(d.item.name ?? "").EndsWith("Crystal");
+                        bool longWeapon = gear && d.item.slot == Slot.Weapon && (!(d.item.name ?? "").EndsWith("Crystal") || d.item.name.Contains("Thornbound"));   // the Thornbound crystal is a tall staff
                         float k = (longWeapon ? .95f : gear ? .6f : .5f) / Mathf.Max(.01f, icon.bounds.size.y);
                         go.transform.localScale = new Vector3(k, k, 1f);
                         if (gear)

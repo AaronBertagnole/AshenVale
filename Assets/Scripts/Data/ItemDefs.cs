@@ -145,6 +145,9 @@ namespace AshenVale
         {
             if (item == null) return null;
             string name = item.name ?? "";
+            // Thornmother's weapons have their own pictures, the same for Rare and Epic (Art/Items/Thornbound).
+            if (item.slot == Slot.Weapon && name.Contains("Thornbound"))
+                return "Art/Items/Thornbound/" + (name.EndsWith("Bow") ? "bow" : name.EndsWith("Crystal") ? "crystal" : "spear");
             string picture = item.slot == Slot.Helmet ? "frostguard_helmet" : item.slot == Slot.Chest ? "wayfarer_vest"
                            : item.slot == Slot.Boots ? "wayfarer_boots"
                            : name.EndsWith("Bow") ? "glimmer_bow" : name.EndsWith("Crystal") ? "sapphire_cluster" : "briar_spear";
