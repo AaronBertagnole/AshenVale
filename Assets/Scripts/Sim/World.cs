@@ -604,16 +604,20 @@ namespace AshenVale
             AddDrop(map, attacker, kind, m.x, m.y, equipment ? Loot.Roll(rng, def.level, attacker.Hero) : null, def.goldMin + rng.Next(def.goldRange));
             if (chest && kind != DropKind.Gold) AddDrop(map, attacker, DropKind.Gold, m.x + .45f, m.y, null, def.goldMin + rng.Next(def.goldRange));
 
-            // A boss's own loot: every hero who fought it and is still standing gets a piece for their own class,
-            // Rare at least, a few levels above the boss, reserved for them like any drop.
+            // A boss's loot: every hero who fought it and is still standing rolls for a piece for their own class,
+            // reserved for them like any drop. Its own marked gear (Rare at least, a few levels above it) is the prize.
             if (def.boss)
             {
                 int given = 0;
                 foreach (var p in players)
                 {
                     if (p.dead || p.map != map.def.id || p != attacker && !m.damageBy.ContainsKey(p.id)) continue;
-                    AddDrop(map, p, DropKind.Item, m.x + .9f + given * .55f, m.y,
-                            Loot.Roll(rng, def.level + Tuning.BossLootLevels, p.Hero, Tuning.BossEpicChance, def.lootMark), 0);
+                    // Not every kill: BossLootChance for her own marked piece, otherwise the ordinary roll for her level.
+                    Item prize = rng.NextDouble() < Tuning.BossLootChance
+                               ? Loot.Roll(rng, def.level + Tuning.BossLootLevels, p.Hero, Tuning.BossEpicChance, def.lootMark)
+                               : rng.NextDouble() < itemChance ? Loot.Roll(rng, def.level, p.Hero) : null;
+                    if (prize == null) continue;
+                    AddDrop(map, p, DropKind.Item, m.x + .9f + given * .55f, m.y, prize, 0);
                     given++;
                 }
             }

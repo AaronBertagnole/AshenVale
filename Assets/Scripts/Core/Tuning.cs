@@ -53,7 +53,8 @@ namespace AshenVale
         public const float PackStagger = 1.5f;              // seconds between pack members filling in
         public const float PackSpread = 2.5f;               // pack members land within this of the spawn point
         // Bosses
-        public const float BossEpicChance = .3f;       // a boss's gear is Epic this often, Rare otherwise
+        public const float BossLootChance = .5f;       // each hero's chance of the boss's own marked gear per kill
+        public const float BossEpicChance = .2f;       // that gear is Epic this often, Rare otherwise
         public const float BossWeaponDamage = 1.25f;   // a boss's weapon: this much more attack than an ordinary one of its level
         public const int BossWeaponHaste = 10, BossWeaponHasteEpic = 15;   // and % faster basic attacks (Rare, Epic)
         public const int MaxHaste = 40;                // however much gear adds
