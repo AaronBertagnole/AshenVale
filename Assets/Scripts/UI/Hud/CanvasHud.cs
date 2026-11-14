@@ -103,11 +103,13 @@ namespace AshenVale
             {
                 GameAction action = actionsList[i];
                 var button = ButtonAt(action.ToString(), actions, new Vector2(0, 1), new Vector2(0, 1), new Vector2(i * 49, -2), new Vector2(42, 42), () => Request(action));
-                // Potions show their painted icons (Art/Items); the other slots keep their glyphs.
-                var painted = action == GameAction.HpPotion ? Sprites.Art("Art/Items/hp_potion") : action == GameAction.MpPotion ? Sprites.Art("Art/Items/mp_potion") : null;
+                // Potions and the town portal show painted icons; the ability slots get theirs once the hero is known.
+                var painted = action == GameAction.HpPotion ? Sprites.Art("Art/Items/hp_potion") : action == GameAction.MpPotion ? Sprites.Art("Art/Items/mp_potion")
+                            : action == GameAction.TownPortal ? Sprites.Art("Art/Abilities/town_portal") : null;
                 if (painted != null)
                 {
-                    var image = Graphic<Image>("Icon", button.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(5, -2), new Vector2(32, 32));
+                    bool square = action == GameAction.TownPortal;      // a full square picture, like the ability icons
+                    var image = Graphic<Image>("Icon", button.transform, new Vector2(0, 1), new Vector2(0, 1), square ? new Vector2(3, -3) : new Vector2(5, -2), square ? new Vector2(36, 36) : new Vector2(32, 32));
                     image.sprite = painted; image.preserveAspect = true;
                 }
                 Image abilityArt = null; Graphic abilityGlyph = null;
