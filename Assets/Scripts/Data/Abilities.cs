@@ -49,6 +49,13 @@ namespace AshenVale
         public static string Name(Character ch, int slot) { return ch.hero < names.Length ? names[ch.hero][slot] : slotLabels[slot]; }
         public static string Blurb(Character ch, int slot) { return ch.hero < blurbs.Length ? blurbs[ch.hero][slot] : ""; }
         public static string SlotLabel(int slot) { return slotLabels[slot]; }
+
+        // The ability's painted icon under Resources (Art/Abilities/knight_skill ...); there may be none yet.
+        static readonly string[] iconHeroes = { "knight", "ranger", "rimecaller" }, iconSlots = { "basic", "skill", "move" };
+        public static string IconPath(int hero, int slot)
+        {
+            return hero >= 0 && hero < iconHeroes.Length && slot >= 0 && slot < Count ? "Art/Abilities/" + iconHeroes[hero] + "_" + iconSlots[slot] : null;
+        }
         public static GameAction Key(int slot) { return slot == Basic ? GameAction.Attack : slot == Skill ? GameAction.Skill : GameAction.Dash; }
 
         // What a rank adds, for the ability window.

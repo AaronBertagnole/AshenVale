@@ -23,10 +23,21 @@ namespace AshenVale
                 bool locked = rank < 1;
                 GUI.Box(card, "");
                 Fill(new Rect(card.x, card.y, 4, card.height), locked ? new Color(.35f, .35f, .35f) : HudTheme.Copper);
-                GUI.Label(new Rect(card.x + 16, card.y + 6, 300, 24), Abilities.Name(ch, slot), titleText);
-                GUI.Label(new Rect(card.x + 16, card.y + 29, 300, 18),
+                // The ability's picture, if it has one, with the name and key beside it.
+                var art = Sprites.Art(Abilities.IconPath(ch.hero, slot));
+                float textX = card.x + 16;
+                if (art != null)
+                {
+                    Color before = GUI.color;
+                    GUI.color = locked ? new Color(1f, 1f, 1f, .45f) : Color.white;
+                    GUI.DrawTexture(new Rect(card.x + 14, card.y + 8, 58, 58), art.texture, ScaleMode.ScaleToFit, true);
+                    GUI.color = before;
+                    textX = card.x + 82;
+                }
+                GUI.Label(new Rect(textX, card.y + 6, 300, 24), Abilities.Name(ch, slot), titleText);
+                GUI.Label(new Rect(textX, card.y + 29, 300, 18),
                           Abilities.SlotLabel(slot) + "   [" + Keys.Name(Abilities.Key(slot)) + "]", detailText);
-                GUI.Label(new Rect(card.x + 16, card.y + 49, card.width - 150, 22), Abilities.Blurb(ch, slot), smallStyle);
+                GUI.Label(new Rect(textX, card.y + 49, card.width - 150 - (textX - card.x - 16), 22), Abilities.Blurb(ch, slot), smallStyle);
                 GUI.Label(new Rect(card.x + 16, card.y + 72, card.width - 32, 20),
                           locked ? "Locked" : Abilities.Summary(me, slot), detailText);
                 GUI.Label(new Rect(card.x + 16, card.y + 93, card.width - 32, 20), Abilities.RankText(ch, slot), detailText);

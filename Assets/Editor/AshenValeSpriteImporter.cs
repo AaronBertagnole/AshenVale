@@ -40,7 +40,7 @@ public class AshenValeSpriteImporter : AssetPostprocessor
         importer.wrapMode = TextureWrapMode.Clamp;
         importer.textureCompression = TextureImporterCompression.CompressedHQ;
         importer.maxTextureSize = 8192;     // painted scenes are wider than Unity's default 2048 limit
-        if (path.StartsWith("Assets/Resources/Art/ItemIcons/"))
+        if (path.StartsWith("Assets/Resources/Art/ItemIcons/") || path.StartsWith("Assets/Resources/Art/Abilities/"))
         {
             // Small (64 px) gear icons for windows: drawn at many small sizes, so keep them exact and give them
             // mipmaps, or they turn soft and speckled when shrunk.

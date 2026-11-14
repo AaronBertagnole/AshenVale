@@ -14,6 +14,7 @@ namespace AshenVale
         sealed class ActionSlot
         {
             public GameAction action; public Button button; public Image cooldown; public Text key, value, timer;
+            public Image painted; public Graphic glyph;     // ability slots: the hero's painted icon, shown in place of the glyph when there is one
         }
         sealed class Entry { public string text; public Color color; }
         readonly List<Entry> activity = new List<Entry>();
@@ -109,7 +110,18 @@ namespace AshenVale
                     var image = Graphic<Image>("Icon", button.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(5, -2), new Vector2(32, 32));
                     image.sprite = painted; image.preserveAspect = true;
                 }
-                else { var icon = Graphic<HudGlyph>("Icon", button.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(6, -3), new Vector2(30, 30)); icon.symbol = glyphs[i]; icon.color = colors[i]; }
+                Image abilityArt = null; Graphic abilityGlyph = null;
+                if (painted == null)
+                {
+                    var icon = Graphic<HudGlyph>("Icon", button.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(6, -3), new Vector2(30, 30)); icon.symbol = glyphs[i]; icon.color = colors[i];
+                    if (i < Abilities.Count)
+                    {
+                        // Basic, Skill and Movement: room for the hero's own ability picture (set when the hero is known).
+                        abilityGlyph = icon;
+                        abilityArt = Graphic<Image>("Ability art", button.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(3, -3), new Vector2(36, 36));
+                        abilityArt.enabled = false;
+                    }
+                }
                 var mask = Graphic<Image>("Cooldown", button.transform, new Vector2(0, 1), new Vector2(0, 1), Vector2.zero, new Vector2(42, 42)); mask.sprite = theme.white; mask.type = Image.Type.Filled; mask.fillMethod = Image.FillMethod.Radial360; mask.color = new Color(.04f,.04f,.05f,.82f); mask.fillAmount = 0;
                 var timer = Label("Cooldown seconds", button.transform, 1, 10, 40, 20, 12, HudTheme.Ivory, FontStyle.Bold); timer.alignment = TextAnchor.MiddleCenter;
                 var keyFrame = Panel("Key", button.transform, new Vector2(.5f, 0), new Vector2(.5f, 0), new Vector2(0, -5), new Vector2(42, 16));
@@ -120,7 +132,7 @@ namespace AshenVale
                 var count = Label("Count", tag, 0, 0, 30, 15, 10, HudTheme.Ivory, FontStyle.Bold); count.alignment = TextAnchor.MiddleCenter;
                 count.resizeTextForBestFit = true; count.resizeTextMinSize = 7; count.resizeTextMaxSize = 10;
                 var shadow = count.gameObject.AddComponent<Shadow>(); shadow.effectColor = new Color(0, 0, 0, .8f); shadow.effectDistance = new Vector2(1, -1);
-                slots.Add(new ActionSlot { action = action, button = button, key = key, value = count, timer = timer, cooldown = mask });
+                slots.Add(new ActionSlot { action = action, button = button, key = key, value = count, timer = timer, cooldown = mask, painted = abilityArt, glyph = abilityGlyph });
             }
             xp = MeterAt(actions, 0, 55, 287, 5, new Color(.95f,.68f,.22f)); xp.text.gameObject.SetActive(false);
             xpText = Label("Experience", actions, 0, 59, 287, 12, 8, HudTheme.Muted); xpText.alignment = TextAnchor.MiddleCenter;
@@ -234,6 +246,15 @@ namespace AshenVale
             if(characterId!=ch.id){characterId=ch.id;mapId=-1;seenLevel=ch.level;portraitHero=-1;activity.Clear();AddActivity("Your adventure continues.",HudTheme.Muted);}
             if(mapId!=me.map){mapId=me.map;AddActivity("Arrived in "+def.name+".",HudTheme.Ivory);ShowMapPicture(def);}
             if(ch.level>seenLevel){AddActivity("Level "+ch.level+" reached!",HudTheme.Copper);seenLevel=ch.level;}
+            if(portraitHero!=ch.hero)
+            {
+                for(int i=0;i<slots.Count&&i<Abilities.Count;i++)
+                {
+                    if(slots[i].painted==null)continue;
+                    var art=Sprites.Art(Abilities.IconPath(ch.hero,i));
+                    slots[i].painted.sprite=art;slots[i].painted.enabled=art!=null;slots[i].glyph.enabled=art==null;
+                }
+            }
             if(portraitHero!=ch.hero){portraitHero=ch.hero;var frames=Sprites.Hero(me.Hero.folder+"/idle");portrait.sprite=frames.Length>0?frames[0]:null;portrait.enabled=portrait.sprite!=null;}
             heroName.text=string.IsNullOrEmpty(ch.name)?me.Hero.name:ch.name;heroClass.text=me.Hero.name;level.text="LEVEL "+ch.level;
             SetMeter(health,me.hp,me.MaxHp,"HP");SetMeter(mana,me.mp,me.MaxMp,"MP");SetMeter(xp,ch.xp,Tuning.XpNeeded(ch.level),"");
