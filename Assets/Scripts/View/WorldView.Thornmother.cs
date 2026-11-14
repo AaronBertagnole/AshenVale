@@ -35,6 +35,7 @@ namespace AshenVale
                 case 6: anim = "rooted"; loopRate = 5f; break;
                 case 7: anim = "break"; span = Tuning.BossRootTime; break;
                 case 8: anim = "heal"; loopRate = 8f; break;
+                case 9: anim = "attack"; span = Tuning.MonsterStrikeShow; break;      // any monster with attack frames
                 default: return null;
             }
             var frames = MonsterFrames(v.def, anim);

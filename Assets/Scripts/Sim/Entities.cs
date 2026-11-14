@@ -113,13 +113,15 @@ namespace AshenVale
         public int attack;
         public float windup, strike, attackCooldown, summonCooldown;
         // What it is doing, for the view (sent to clients): 0 nothing, 1 slam windup, 2 slam strike, 3 summoning,
-        // 4 calling an eruption, 5 rooting, 6 rooted, 7 breaking free, 8 (a sprout) healing its mother.
+        // 4 calling an eruption, 5 rooting, 6 rooted, 7 breaking free, 8 (a sprout) healing its mother,
+        // 9 (any ordinary monster) striking a hero it has just touched.
         public int pose;
         public int struck;              // the attack whose strike pose is showing
         public float eruptCooldown;
         // The rooted phase (bosses, once, at Tuning.BossRootHp): 0 not yet, 1 rooting, 2 rooted, 3 breaking free, 4 over.
         public int phase;
         public float phaseTime, rootHp, wallLeft, wallRight, wallTick;
+        public float attackShow;        // ordinary monsters: time left of the strike pose after hurting a hero
         public float healClock;         // sprouts: until the next heal pulse; while positive after a pulse it stands still
         public MonsterDef Def { get { return Monsters.All[def]; } }
     }

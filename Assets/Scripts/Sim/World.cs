@@ -912,7 +912,8 @@ namespace AshenVale
         // A sprout near its mother heals her in pulses. True while it stands still to do it.
         bool SproutHeals(MapRuntime map, MonsterState m, float dt)
         {
-            m.pose = 0;
+            m.attackShow = Mathf.Max(0f, m.attackShow - dt);
+            m.pose = m.attackShow > 0f ? 9 : 0;
             MonsterState mother = null;
             foreach (var other in map.monsters) if (other.Def.boss && other.Def.minion == m.def) { mother = other; break; }
             if (mother == null || mother.hp >= mother.maxHp || Mathf.Abs(mother.x - m.x) > Tuning.SproutHealRange || m.knockbackTime > 0f)
@@ -970,6 +971,7 @@ namespace AshenVale
                     float bottom = m.y + d.hover, top = bottom + d.height;
                     if (Mathf.Abs(p.x - m.x) >= d.width * .5f + .3f || p.y >= top - .1f || p.y + 1.4f <= bottom) continue;
                     Hurt(map, p, m);
+                    if (!d.boss) { m.attackShow = Tuning.MonsterStrikeShow; m.facing = p.x >= m.x ? 1 : -1; }    // its strike pose, for the view
                     break;
                 }
             }
