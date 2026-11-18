@@ -24,7 +24,7 @@ namespace AshenVale {
     c.wait-=dt;var map=maps[c.map];
     while(c.wait<=0 && c.remaining>0) {
      if(c.storm) {
-      events.Add(new SimEvent {kind=SimEventKind.RimeStorm,map=c.map,playerId=c.owner,x=c.x,y=c.y});
+      events.Add(new SimEvent {kind=SimEventKind.RimeStorm,heavy=c.remaining==1,map=c.map,playerId=c.owner,x=c.x,y=c.y});
       var targets=new List<MonsterState>();
       foreach(var m in map.monsters) if(Mathf.Abs(m.x-c.x)<=.85f+m.Def.width*.5f && m.y+m.Def.hover < c.y+2f && m.y+m.Def.hover+m.Def.height>c.y-.25f) targets.Add(m);
       foreach(var m in targets) HitMonster(map,m,c.damage,p);
