@@ -127,7 +127,7 @@ namespace AshenVale
             TickRimecaller(dt);
             foreach (var map in maps)
             {
-                if (!HasLivingPlayer(map.def.id)) continue;   // nobody here: the map waits, as it always has
+                if (!HasLivingPlayer(map.def.id)) { ResetBosses(map); continue; }   // nobody here: the map waits, as it always has
                 UpdateMonsters(map, dt);
                 UpdateBrambles(map, dt);
                 UpdateSpits(map, dt);
@@ -799,6 +799,28 @@ namespace AshenVale
             }
             m.x = Mathf.Clamp(m.x, d.width * .5f + .2f, map.def.columns - d.width * .5f - .2f);
             m.y = Mathf.Clamp(m.y, Tuning.Ground, map.def.Top - d.height - d.hover - .3f);
+        }
+
+        // Nobody alive on the map (everyone left, or fell): a boss forgets the fight. Full health, its phases and
+        // cooldowns as at the start, its minions, marks and poison gone, so it cannot be worn down across visits.
+        void ResetBosses(MapRuntime map)
+        {
+            bool any = false;
+            foreach (var m in map.monsters)
+            {
+                if (!m.Def.boss) continue;
+                any = true;
+                if (m.phase >= 1 && m.phase <= 3) events.Add(new SimEvent { kind = SimEventKind.ThornWallsEnd, map = map.def.id, x = m.x, y = m.y });   // for the fallen still watching
+                m.hp = m.maxHp;
+                m.phase = 0; m.phaseTime = 0f; m.attack = 0; m.struck = 0; m.pose = 0;
+                m.windup = m.strike = m.attackCooldown = m.summonCooldown = m.eruptCooldown = 0f;
+                m.target = 0; m.aggroTime = 0f; m.angry = false;
+                m.lastHitAt.Clear();
+            }
+            if (!any) return;
+            map.monsters.RemoveAll(other => other.spawn < 0 && !other.Def.boss);      // summoned minions
+            List<BrambleMark> marks;
+            if (brambles.TryGetValue(map.def.id, out marks)) marks.Clear();
         }
 
         // A boss: too heavy to knock back. It lumbers after its target; near enough it rears up (windup, which the
