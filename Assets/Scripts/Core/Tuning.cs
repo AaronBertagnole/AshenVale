@@ -93,6 +93,7 @@ namespace AshenVale
         public const float BossWallDamage = .5f;       // ...for this share of her touch damage
         // Sprouts within reach of their mother heal her in pulses, standing still for a moment each time.
         public const float SproutHealRange = 3.5f;
+        public const float SproutReturnSpeed = 1.6f;   // times its walking speed while hurrying back to a hurt mother
         public const float SproutHealEvery = 1.6f;
         public const float SproutHealPause = .55f;
         public const float SproutHeal = .004f;         // share of her full HP per pulse

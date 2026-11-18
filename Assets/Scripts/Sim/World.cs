@@ -1038,8 +1038,18 @@ namespace AshenVale
             m.pose = m.attackShow > 0f ? 9 : 0;
             MonsterState mother = null;
             foreach (var other in map.monsters) if (other.Def.boss && other.Def.minion == m.def) { mother = other; break; }
-            if (mother == null || mother.hp >= mother.maxHp || Mathf.Abs(mother.x - m.x) > Tuning.SproutHealRange || m.knockbackTime > 0f)
+            if (mother == null || mother.hp >= mother.maxHp || m.knockbackTime > 0f)
             { m.healClock = Mathf.Max(m.healClock, Tuning.SproutHealEvery * .5f); return false; }
+            // She is hurt: healing comes before anything else. Too far to reach her, it drops whoever it was after and
+            // hurries back to her side (well inside range, so it keeps healing as she moves).
+            float away = mother.x - m.x;
+            if (Mathf.Abs(away) > Tuning.SproutHealRange)
+            {
+                m.healClock = Mathf.Max(m.healClock, Tuning.SproutHealEvery * .5f);
+                m.facing = away > 0 ? 1 : -1;
+                m.x += m.facing * m.Def.speed * Tuning.SproutReturnSpeed * dt;
+                return true;
+            }
             m.healClock -= dt;
             if (m.healClock <= 0f)
             {
@@ -1049,7 +1059,12 @@ namespace AshenVale
             }
             bool pausing = m.healClock > Tuning.SproutHealEvery - Tuning.SproutHealPause;
             if (pausing) { m.pose = 8; m.facing = mother.x >= m.x ? 1 : -1; }
-            return pausing;
+            else if (Mathf.Abs(away) > Tuning.SproutHealRange * .5f)      // between pulses it closes in rather than wandering off
+            {
+                m.facing = away > 0 ? 1 : -1;
+                m.x += m.facing * m.Def.speed * dt;
+            }
+            return true;
         }
 
         void Slam(MapRuntime map, MonsterState m, int damage)
