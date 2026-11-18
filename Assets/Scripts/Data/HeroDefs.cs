@@ -16,6 +16,9 @@ namespace AshenVale
         public float leapCooldown = 1.1f, leapSpeed = 7f, leapJumpSpeed = 11.2f;   // same arc as before now that gravity is -30
         public float fissureRange = 1.65f;
         public float moveSpeed;
+        // Class balance: every hit this hero deals is multiplied by `power`, every hit it takes by `damageTaken`.
+        // The Knight fights in arm's reach of everything, so it hits harder and shrugs more off than the two who stand back.
+        public float power = 1f, damageTaken = 1f;
         public int baseDamage;          // basic attack damage at level 0 (plus DamagePerLevel per level and gear)
         public int skillBonus;          // extra damage of the skill (K)
         public int skillManaCost;
@@ -35,6 +38,7 @@ namespace AshenVale
             {
                 name = "Dragon Knight", folder = "DragonKnight", weaponName = "Spear",
                 roleLabel = "SPEAR / MELEE", tagline = "Heavy strikes  •  Durable",
+                power = 1.2f, damageTaken = .8f,
                 dragonKnight = true, style = AttackStyle.Melee, baseHp = 125, baseMp = 80, moveSpeed = 5.3f,
                 baseDamage = 25, skillBonus = 32, skillManaCost = 25,
                 attackCooldown = .46f, skillCooldown = .78f, skillRecharge = 2.5f,
@@ -45,6 +49,7 @@ namespace AshenVale
             {
                 name = "Elven Ranger", folder = "ElvenRanger", weaponName = "Bow",
                 roleLabel = "BOW / RANGED", tagline = "Agile attacks  •  Long range",
+                power = .9f,
                 style = AttackStyle.Arrows, baseHp = 95, baseMp = 100, moveSpeed = 6.1f,
                 skillBonus = 24, skillManaCost = 30,
                 attackCooldown = .4f, skillCooldown = .9f, skillRecharge = 3f,   // Quick Shot's six frames play across the cooldown (15 fps)

@@ -27,10 +27,10 @@ namespace AshenVale
             string anim; float span = 0f; int from = 0, count = 4; float loopRate = 0f;
             switch (m.pose)
             {
-                case 1: anim = "slam"; count = 2; span = Tuning.BossSlamWindup; break;              // rearing up
+                case 1: anim = "slam"; count = 2; span = Tuning.BossSlamWindup * (World.Enraged(m) ? Tuning.BossEnrageWindup : 1f); break;              // rearing up
                 case 2: anim = "slam"; from = 2; count = 2; span = Tuning.BossStrikeVisual; break;  // the blow, then recovering
                 case 3: anim = "summon"; span = Tuning.BossSummonWindup; break;
-                case 4: anim = "summon"; span = Tuning.BossEruptWindup; break;
+                case 4: anim = "summon"; span = Tuning.BossEruptWindup * (World.Enraged(m) ? Tuning.BossEnrageWindup : 1f); break;
                 case 5: anim = "root"; span = Tuning.BossRootTime; break;
                 case 6: anim = "rooted"; loopRate = 5f; break;
                 case 7: anim = "break"; span = Tuning.BossRootTime; break;
@@ -48,7 +48,14 @@ namespace AshenVale
         }
 
         sealed class Bramble { public GameObject go; public SpriteRenderer sr; public float x, y, age; public bool erupted; }
-        sealed class ThornWall { public GameObject go; public SpriteRenderer sr; public float x, y, age, falling = -1f; public int side; }
+        // A wall is a thicket: its leading clump in front of the heroes, and darker clumps behind them filling the
+        // ground it has already taken, out to where it started.
+        sealed class ThornWall
+        {
+            public GameObject go; public SpriteRenderer sr; public float x, x0, y, age, falling = -1f; public int side;
+            public readonly List<SpriteRenderer> fill = new List<SpriteRenderer>(); public readonly List<float> fillAge = new List<float>();
+        }
+        const float WallStep = 1.7f; const int WallFillMax = 14;
         sealed class HealMote { public GameObject go; public SpriteRenderer sr; public float x, y, age; public int target; }
         readonly List<Bramble> bramblesShown = new List<Bramble>();
         readonly List<ThornWall> thornWalls = new List<ThornWall>();
@@ -88,7 +95,8 @@ namespace AshenVale
                 GameObject go;
                 var sr = ThornSprite("Thorn Wall", ThornFrontOrder, out go);
                 sr.flipX = side > 0;
-                thornWalls.Add(new ThornWall { go = go, sr = sr, side = side, x = side < 0 ? e.x : e.amount / 100f, y = e.y });
+                float at = side < 0 ? e.x : e.amount / 100f;
+                thornWalls.Add(new ThornWall { go = go, sr = sr, side = side, x = at, x0 = at, y = e.y });
             }
         }
 
@@ -145,7 +153,7 @@ namespace AshenVale
                 if (wall.falling >= 0f)
                 {
                     wall.falling += dt;
-                    if (wall.falling >= WallFall || wallFrames.Length == 0) { Object.Destroy(wall.go); thornWalls.RemoveAt(i); continue; }
+                    if (wall.falling >= WallFall || wallFrames.Length == 0) { DestroyWall(wall); thornWalls.RemoveAt(i); continue; }
                 }
                 else if (mother != null)
                 {
@@ -155,12 +163,27 @@ namespace AshenVale
                                            : Mathf.Max(wall.x - Tuning.BossWallSpeed * dt, Mathf.Min(wall.x, stop));
                 }
                 if (wallFrames.Length == 0) continue;
-                // Frames: sprouting, half grown, full, crumbling.
-                Sprite frame = wall.falling >= 0f ? wallFrames[wallFrames.Length - 1]
-                             : wallFrames[Mathf.Min(wallFrames.Length - 2, Mathf.FloorToInt(wall.age / WallGrow * (wallFrames.Length - 1)))];
+                // The full-grown clump pushes up out of the ground (no frame-by-frame popping); the last frame is it crumbling.
+                Sprite frame = wall.falling >= 0f ? wallFrames[wallFrames.Length - 1] : wallFrames[Mathf.Max(0, wallFrames.Length - 2)];
                 float half = frame.bounds.size.x * WallScale * .5f;
-                StandOn(wall.sr, frame, wall.x + wall.side * (half - .4f), wall.y, WallScale);    // its inner face is where the thorns begin
-                wall.sr.color = new Color(1f, 1f, 1f, wall.falling >= 0f ? 1f - wall.falling / WallFall : 1f);
+                float lead = wall.x + wall.side * (half - .4f);     // its inner face is where the thorns begin
+                float gone = wall.falling >= 0f ? 1f - wall.falling / WallFall : 1f;
+                Rise(wall.sr, frame, lead, wall.y, WallScale, wall.age, Color.white, gone);
+                // Clumps behind it, one more each WallStep it has crept, the newest sprouting at the far end.
+                int wanted = Mathf.Min(WallFillMax, 1 + Mathf.FloorToInt(Mathf.Abs(wall.x - wall.x0) / WallStep));
+                while (wall.falling < 0f && wall.fill.Count < wanted)
+                {
+                    GameObject go;
+                    var sr = ThornSprite("Thorn Thicket", ThornGroundOrder, out go);
+                    sr.flipX = (wall.fill.Count % 2 == 0) != wall.sr.flipX;
+                    wall.fill.Add(sr); wall.fillAge.Add(0f);
+                }
+                for (int k = 0; k < wall.fill.Count; k++)
+                {
+                    wall.fillAge[k] += dt;
+                    float vary = .84f + .16f * ((k * 37 + 11) % 5) / 4f, shade = .58f + .1f * ((k * 13) % 3) / 2f;
+                    Rise(wall.fill[k], frame, lead + wall.side * (k + 1) * WallStep, wall.y, WallScale * vary, wall.fillAge[k], new Color(shade, shade * 1.04f, shade * .95f), gone);
+                }
             }
 
             var moteFrames = Sprites.Frames(ThornFx + "motes");
@@ -187,10 +210,29 @@ namespace AshenVale
             return frames.Length == 0 ? null : frames[Mathf.Clamp(Mathf.FloorToInt(t * frames.Length), 0, frames.Length - 1)];
         }
 
+        // Stands a clump at (x, floor), pushing up out of the ground over WallGrow: thin and low at first, a small
+        // overshoot as it reaches full height, its roots a little under the surface so it never floats.
+        static void Rise(SpriteRenderer sr, Sprite sprite, float x, float floor, float scale, float age, Color tint, float alpha)
+        {
+            float t = Mathf.Clamp01(age / WallGrow), ease = 1f - (1f - t) * (1f - t) * (1f - t);
+            float sy = scale * (ease + .12f * Mathf.Sin(t * Mathf.PI) * t), sx = scale * Mathf.Lerp(.72f, 1f, ease);
+            sr.sprite = sprite;
+            sr.transform.localScale = new Vector3(sx, Mathf.Max(.02f, sy), 1f);
+            sr.transform.position = new Vector3(x - sprite.bounds.center.x * sx * (sr.flipX ? -1f : 1f), floor - .1f - sprite.bounds.min.y * sy, 0f);
+            sr.color = new Color(tint.r, tint.g, tint.b, alpha * Mathf.Clamp01(age / .18f));
+        }
+
+        static void DestroyWall(ThornWall wall)
+        {
+            Object.Destroy(wall.go);
+            foreach (var sr in wall.fill) Object.Destroy(sr.gameObject);
+            wall.fill.Clear(); wall.fillAge.Clear();
+        }
+
         void ClearThornFx()
         {
             foreach (var b in bramblesShown) Object.Destroy(b.go);
-            foreach (var w in thornWalls) Object.Destroy(w.go);
+            foreach (var w in thornWalls) DestroyWall(w);
             foreach (var m in healMotes) Object.Destroy(m.go);
             bramblesShown.Clear(); thornWalls.Clear(); healMotes.Clear();
             foreach (var s in spitsShown) Object.Destroy(s.go);

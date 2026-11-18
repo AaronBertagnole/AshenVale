@@ -97,8 +97,10 @@ namespace AshenVale
         public const float BossSummonEvery = 12f;
         public const int BossMaxMinions = 4;           // it stops calling sprouts while this many are alive
         public const int BossMinionsPerCall = 2;
-        public const float BossEnrageHp = .3f;         // below this share of HP it moves and slams faster
-        public const float BossEnrageSpeed = 1.5f;
+        public const float BossEnrageHp = .3f;         // below this share of HP it is enraged: faster on its feet, quicker tells,
+        public const float BossEnrageSpeed = 1.9f;     // slams and eruptions far more often, and every slam sends thorns outward
+        public const float BossEnrageWindup = .7f;     // its tells take this share of their usual time
+        public const int BossEnrageShockMarks = 2;     // thorn marks on each side beyond an enraged slam's reach
         public const float BossStrikeVisual = .35f;    // how long the slam pose shows
         public const float ArmorBase = 6f;           // defense reduces damage by def / (def + ArmorBase + ArmorPerLevel * level)
         public const float ArmorPerLevel = 1f;       // at Lv 9: Common set ~30%, Epic ~55%, Epic +5 ~66%...

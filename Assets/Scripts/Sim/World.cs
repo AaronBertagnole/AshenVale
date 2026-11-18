@@ -671,7 +671,7 @@ namespace AshenVale
         {
             int def = victim.ch.BonusDefense;
             float reduction = Mathf.Min(Tuning.ArmorCap, def / (def + Tuning.ArmorBase + Tuning.ArmorPerLevel * victim.ch.level));
-            return Mathf.Max(1, Mathf.RoundToInt(raw * (1f - reduction)));
+            return Mathf.Max(1, Mathf.RoundToInt(raw * (1f - reduction) * victim.Hero.damageTaken));
         }
 
         // ---------------------------------------------------------------- monsters
@@ -766,10 +766,12 @@ namespace AshenVale
         // A boss: too heavy to knock back. It lumbers after its target; near enough it rears up (windup, which the
         // view shows) and slams the roots, hurting everyone on its floor within reach; now and then it calls minions
         // instead. Below BossEnrageHp it moves and slams faster. Touch still hurts like any monster.
+        public static bool Enraged(MonsterState m) { return m.Def.boss && m.hp < m.maxHp * Tuning.BossEnrageHp; }
+
         void UpdateBoss(MapRuntime map, MonsterState m, PlayerState target, float dt)
         {
             var d = m.Def;
-            bool enraged = m.hp < m.maxHp * Tuning.BossEnrageHp;
+            bool enraged = Enraged(m);
             m.knockbackTime = 0f;
             m.strike = Mathf.Max(0f, m.strike - dt);
             m.attackCooldown = Mathf.Max(0f, m.attackCooldown - dt);
@@ -783,7 +785,18 @@ namespace AshenVale
                 if (m.windup > 0f) return;                      // rearing up: stands still so the tell is readable
                 m.windup = 0f;
                 m.strike = Tuning.BossStrikeVisual; m.struck = m.attack;
-                if (m.attack == 1) Slam(map, m, Mathf.RoundToInt(d.damage * Tuning.BossSlamDamage));
+                if (m.attack == 1)
+                {
+                    Slam(map, m, Mathf.RoundToInt(d.damage * Tuning.BossSlamDamage));
+                    // Enraged, the slam drives thorns up beyond its reach on both sides: backing off is no longer safe.
+                    if (enraged)
+                        for (int k = 0; k < Tuning.BossEnrageShockMarks; k++)
+                            for (int side = -1; side <= 1; side += 2)
+                            {
+                                float at = m.x + side * (Tuning.BossSlamRange + 1.1f + k * 2.3f);
+                                if (at > m.left + .3f && at < m.right - .3f) Bramble(map, m, at, m.y);
+                            }
+                }
                 else if (m.attack == 2 && d.minion >= 0) Summon(map, m, d.minion);
                 else if (m.attack == 3 && target != null) Bramble(map, m, target.x, target.currentFloor);
                 m.attack = 0;
@@ -814,14 +827,14 @@ namespace AshenVale
                 bool reachable = Mathf.Abs(target.currentFloor - m.y) <= Tuning.MonsterFloorTolerance && Mathf.Abs(dist) < Tuning.BossSlamRange - .4f;
                 if (!reachable && m.eruptCooldown <= 0f)
                 {
-                    m.attack = 3; m.windup = Tuning.BossEruptWindup;
-                    m.eruptCooldown = enraged ? Tuning.BossEruptEvery * .6f : Tuning.BossEruptEvery; m.attackCooldown = 1.5f;
+                    m.attack = 3; m.windup = Tuning.BossEruptWindup * (enraged ? Tuning.BossEnrageWindup : 1f);
+                    m.eruptCooldown = enraged ? Tuning.BossEruptEvery * .45f : Tuning.BossEruptEvery; m.attackCooldown = enraged ? .8f : 1.5f;
                     return;
                 }
                 if (reachable)
                 {
-                    m.attack = 1; m.windup = Tuning.BossSlamWindup;
-                    m.attackCooldown = enraged ? Tuning.BossSlamCooldown * .5f : Tuning.BossSlamCooldown;
+                    m.attack = 1; m.windup = Tuning.BossSlamWindup * (enraged ? Tuning.BossEnrageWindup : 1f);
+                    m.attackCooldown = enraged ? Tuning.BossSlamCooldown * .4f : Tuning.BossSlamCooldown;
                     return;
                 }
             }

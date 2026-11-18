@@ -32,6 +32,7 @@ namespace AshenVale
             public Color[] colors;
             public MonsterDef def;
             public float clock, hurt, moveTime, lastHp, lastX, dying, lastStrike;
+            public bool enraged; public float rage;     // bosses: in their enrage, and how far the swelling has got (0..1)
             public int pose; public float poseClock;      // its special pose (MonsterState.pose) and how long it has held it
             public Transform crown;             // bosses: the thorn crown, which flares while it rears up
         }
@@ -39,6 +40,7 @@ namespace AshenVale
         public const float ViewHalfHeight = 5.4f;   // camera orthographic size: the view is 10.8 units tall
         const float HeroScale = 1.65f;
         const float DieTime = .45f, BossDieTime = 1.4f;
+        const float EnrageSwell = .1f;
         public const int MonsterOrder = 7, DropOrder = 9, HeroOrder = 10, SlashOrder = 12, ArrowOrder = 13;
 
         readonly World world;
@@ -424,14 +426,25 @@ namespace AshenVale
 
                 float bob = d.hover > 0 ? Mathf.Sin(v.clock * 3f) * .08f : 0f;
                 v.go.transform.position = new Vector3(x, y + d.hover + bob, 0);
-                v.go.transform.localScale = new Vector3(m.facing >= 0 ? 1f : -1f, 1f, 1f);
+                // Enraged: a roar as it turns (ring, sound, a shout over its head), then it stays swollen, red and restless.
+                bool enraged = World.Enraged(m);
+                if (enraged && !v.enraged)
+                {
+                    SpawnSlamRing(new SimEvent { kind = SimEventKind.BossSlam, x = m.x, y = m.y, facing = m.facing });
+                    GameSfx.Play("thorn_root"); GameSfx.Play("thorn_slam", .8f);
+                    Number(x, y + d.hover + d.height + .7f, "ENRAGED!", new Color(1f, .3f, .15f), true);
+                }
+                v.enraged = enraged;
+                v.rage = Mathf.MoveTowards(v.rage, enraged ? 1f : 0f, frameDt * 2.5f);
+                float size = 1f + EnrageSwell * v.rage * (1f + .25f * Mathf.Sin(v.clock * 9f));
+                v.go.transform.localScale = new Vector3(m.facing >= 0 ? size : -size, size, 1f);
                 bool moving = v.moveTime > 0;
                 if (v.art != null)
                 {
                     var posed = PoseFrame(v, m, frameDt);     // a boss's attacks, a sprout healing (WorldView.Thornmother)
                     var frames = MonsterFrames(d, v.hurt > 0 ? "hurt" : moving ? "move" : "idle");
                     if (posed != null) v.art.sprite = posed;
-                    else if (frames.Length > 0) v.art.sprite = frames[Mathf.FloorToInt(v.clock * (d.boss ? 5f : 8f)) % frames.Length];
+                    else if (frames.Length > 0) v.art.sprite = frames[Mathf.FloorToInt(v.clock * (d.boss ? (enraged ? 9f : 5f) : moving || v.hurt > 0 ? 8f : d.idleRate)) % frames.Length];
                 }
                 else if (d.boss)
                 {
@@ -449,6 +462,7 @@ namespace AshenVale
                 float flash = v.hurt / .25f;
                 Color tint = new Color(1f, .45f, .4f, 1f);
                 if (d.boss && m.windup > 0) { flash = Mathf.Max(flash, .55f + Mathf.Sin(v.clock * 18f) * .2f); tint = new Color(1f, .3f, .15f, 1f); }   // the tell
+                else if (v.rage > 0f && flash < .4f) { flash = Mathf.Max(flash, v.rage * (.3f + .14f * Mathf.Sin(v.clock * 7f))); tint = new Color(1f, .18f, .1f, 1f); }   // seething
                 for (int i = 0; i < v.parts.Length; i++)
                     v.parts[i].color = Color.Lerp(v.colors[i], new Color(tint.r, tint.g, tint.b, v.colors[i].a), flash * .7f);
             }

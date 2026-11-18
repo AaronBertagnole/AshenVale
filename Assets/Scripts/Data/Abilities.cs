@@ -74,7 +74,7 @@ namespace AshenVale
         // ---- Effective values (what the sim uses) ----
 
         // Damage of a basic hit before the skill / leap bonus: hero, level and gear.
-        public static int BaseDamage(PlayerState p) { return p.Hero.baseDamage + p.ch.level * Tuning.DamagePerLevel + p.ch.BonusAttack; }
+        public static int BaseDamage(PlayerState p) { return UnityEngine.Mathf.RoundToInt((p.Hero.baseDamage + p.ch.level * Tuning.DamagePerLevel + p.ch.BonusAttack) * p.Hero.power); }
         static int Scaled(int value, float perRank, int steps) { return UnityEngine.Mathf.RoundToInt(value * (1f + perRank * steps)); }
 
         public static int BasicDamage(PlayerState p) { return Scaled(BaseDamage(p), BasicDamagePerRank, Steps(p, Basic)); }
