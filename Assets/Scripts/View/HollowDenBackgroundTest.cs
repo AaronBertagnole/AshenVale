@@ -7,7 +7,7 @@ namespace AshenVale
     {
         public const bool Enabled = true;
         public const string ArtPath = "Art/MapTests/hollow_den";
-        const float WalkingRow = 558f, SourceHeight = 724f;
+        const float WalkingRow = 540f, SourceHeight = 724f;     // the painting's dirt path ("Hollow Den Beneath the Roots")
         const float ReferenceHeight = 38f / 3f;
 
         public static bool TryBuild(MapVisual visual, MapDef def, out PictureFrame front, out PictureFrame back)

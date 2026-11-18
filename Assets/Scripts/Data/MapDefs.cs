@@ -316,10 +316,11 @@ namespace AshenVale
                     new MapLayout.Spawn[0],
                     new[] { MapLayout.L('D', Kingsroad, 'D'), MapLayout.L('E', AshenMarsh, 'E') }),
                 "Art/Scenes/cinderford", 144f / 724f),     // two pictures joined into one long street, 144 px above the bottom
-            MapLayout.Build(AshenMarsh, "Ashen Marsh", "marsh", MapKind.Field, AshenMarshLayout,
+            MapLayout.WithBackdrop(MapLayout.Build(AshenMarsh, "Ashen Marsh", "marsh", MapKind.Field, AshenMarshLayout,
                 new[] { MapLayout.S('t', Monsters.MarshToad), MapLayout.S('l', Monsters.BogLurker),
                         MapLayout.S('w', Monsters.AshWisp) },
                 new[] { MapLayout.L('E', Cinderford, 'E'), MapLayout.L('P', BrackwaterShore, 'P') }),
+                "Art/Backdrops/ashen_marsh", 176f / 724f, 42f),    // the marsh at dusk: its mud path is 176 px above the bottom
             // The path from Emberfields down toward Mosswood. Until Amberleaf Trail has its own picture
             // (Art/Backdrops/amberleaf_trail.png), it shows the Emberfields forest mirrored.
             MapLayout.WithBackdrop(MapLayout.Build(AmberleafTrail, "Amberleaf Trail", "autumn", MapKind.Field, AmberleafTrailLayout,
@@ -333,9 +334,10 @@ namespace AshenVale
                 new[] { MapLayout.L('F', AmberleafTrail, 'F'), MapLayout.L('B', Mosswood, 'B'), MapLayout.L('G', ShaleCliffs, 'G') }),
             // Up the mountain from Mossgate Hollow's top ledge: a steep climb of rock shelves to a summit lookout.
             // The way on to Highspire will open from the summit later.
-            MapLayout.Build(ShaleCliffs, "Shale Cliffs", "cliffs", MapKind.Field, ShaleCliffsLayout,
+            MapLayout.WithBackdrop(MapLayout.Build(ShaleCliffs, "Shale Cliffs", "cliffs", MapKind.Field, ShaleCliffsLayout,
                 new[] { MapLayout.S('g', Monsters.CragGoat), MapLayout.S('r', Monsters.RockMite) },
                 new[] { MapLayout.L('G', MossgateHollow, 'G'), MapLayout.L('H', FrostpinePass, 'H') }),
+                "Art/Backdrops/shale_cliffs", 152f / 724f, 42f),   // the highland pass: its flagstone path is 152 px above the bottom
             // Region 1's boss glade, off the east end of Mosswood: a bramble-walled clearing with two ledges to
             // shoot from. Thornmother waits in the middle and comes back a few minutes after she falls.
             MapLayout.WithBackdrop(MapLayout.Build(ThornGlade, "Thornmother's Glade", "thornglade", MapKind.Field, ThornGladeLayout,
