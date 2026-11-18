@@ -18,6 +18,14 @@ namespace AshenVale {
    rimeFx.RemoveAll(go=>go==null);
    string name=e.kind==SimEventKind.RimeStorm?"storm":e.kind==SimEventKind.RimeTeleport?"teleport":"impact";
    if (name == "storm" && SpawnPolishedStorm(e)) return;
+   if (e.kind == SimEventKind.RimeBurst || e.kind == SimEventKind.RimeTeleport)
+   {
+       var effect = new GameObject(name == "impact" ? "Frost shatter" : "Froststep shimmer");
+       effect.transform.position = new Vector3(e.x, e.y, 0f);
+       effect.AddComponent<RimeIceAccent>().Begin(name == "teleport", ArrowOrder + 2);
+       rimeFx.Add(effect);
+       return;
+   }
    var sprite=Sprites.Art("Art/Rimecaller/"+name);if(sprite==null)return;
    float h=name=="storm"?3.8f:name=="teleport"?1.8f:1.2f;
    float y=e.y+(name=="impact"?0:h*(.5f-GroundPad));   // storm/teleport art: ground contact is ~16% above the bottom edge

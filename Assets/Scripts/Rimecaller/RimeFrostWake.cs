@@ -68,11 +68,12 @@ namespace AshenVale
         {
             if (!core) return;
             age += Time.deltaTime;
-            float pulse = Mathf.Sin(age * 31f);
-            core.transform.localRotation = Quaternion.Euler(0f, 0f, age * 610f);
-            core.transform.localScale = Vector3.one * (1f + .13f * pulse);
+            float pulse = Mathf.Sin(age * 24f);
+            float launch = Mathf.Exp(-age * 15f);
+            core.transform.localRotation = Quaternion.Euler(0f, 0f, 8f * Mathf.Sin(age * 17f));
+            core.transform.localScale = new Vector3(1f + .28f * launch, 1f - .14f * launch + .05f * pulse, 1f);
             core.color = Color.Lerp(new Color(.62f, .87f, 1f), Color.white, .5f + .5f * pulse);
-            if (wake) wake.startWidth = .14f + .035f * Mathf.Sin(age * 43f);
+            if (wake) wake.startWidth = .14f + .025f * Mathf.Sin(age * 32f);
         }
 
         public bool ShedSliver()
