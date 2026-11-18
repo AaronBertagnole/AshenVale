@@ -27,6 +27,7 @@ namespace AshenVale
         public int goldMin, goldRange;  // gold = goldMin + random(0 .. goldRange - 1)
         public bool aggressive, harmless;
         public float idleRate = 8f;     // frames a second of its standing animation (heavy, slow breathers want fewer)
+        public bool flies;              // free flight: goes anywhere in the air, straight at its target (World.Fly)
         public bool spits;              // lobs poison from range instead of only walking in (World.Spits)
         public float respawn = 8f;      // seconds before its spawn point fills again
         public float itemChance = -1f;  // chance of dropping gear (below 0: the usual Tuning.EquipmentDropChance)
@@ -109,7 +110,7 @@ namespace AshenVale
                 chestParts = new[] { Parts.MossTuft, Parts.BoarTusk, Parts.MossTuft, Parts.BoarTusk, Parts.ShadeEssence, Parts.WraithSilk } },
             new MonsterDef { key = "den_shade", name = "Den Shade", level = 9, color = new Color(.3f, .3f, .45f),
                 width = 1f, height = 1.4f, hover = .1f, hp = 250, speed = 2f, damage = 22, xp = 32, goldMin = 22, goldRange = 14,
-                aggressive = true,
+                aggressive = true, flies = true,
                 part = Parts.ShadeEssence },
             new MonsterDef { key = "marsh_toad", name = "Marsh Toad", level = 11, color = new Color(.45f, .58f, .33f),
                 width = 1f, height = .8f, hp = 290, speed = 1.2f, damage = 22, xp = 36, goldMin = 25, goldRange = 15,

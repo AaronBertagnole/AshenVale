@@ -122,6 +122,7 @@ namespace AshenVale
         public int phase;
         public float phaseTime, rootHp, wallLeft, wallRight, wallTick;
         public float attackShow;        // ordinary monsters: time left of the strike pose after hurting a hero
+        public float homeX, homeY, wanderY;     // flyers: their haunt, and the height they are drifting toward
         public float spitX;             // spitters: where the glob being readied will land
         public float healClock;         // sprouts: until the next heal pulse; while positive after a pulse it stands still
         public MonsterDef Def { get { return Monsters.All[def]; } }

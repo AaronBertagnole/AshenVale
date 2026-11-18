@@ -59,6 +59,9 @@ namespace AshenVale
         public const float SpitMinRange = 2.2f, SpitMaxRange = 7f, SpitWindup = .55f, SpitFlight = .6f, SpitRecover = .3f;
         public const float SpitEvery = 3.5f, SpitHitRadius = .65f, SpitDamage = 1f;
         public const float PuddleRadius = .9f, PuddleTime = 4f, PuddleDamage = .4f;
+        // Flyers (MonsterDef.flies): they roam FlyRoam to either side of their haunt and up to FlyRoamHeight above it,
+        // and go after anyone within FlyLeash of it sideways and FlySightHeight of them up or down.
+        public const float FlyRoam = 5f, FlyRoamHeight = 3f, FlyLeash = 12f, FlySightHeight = 7f;
         public const float MonsterStrikeShow = .4f;    // how long an ordinary monster holds its strike pose after a hit
         public const float BossLootChance = .5f;       // each hero's chance of the boss's own marked gear per kill
         public const float BossEpicChance = .2f;       // that gear is Epic this often, Rare otherwise

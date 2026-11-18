@@ -500,7 +500,7 @@ namespace AshenVale
             // Snapshot targets: deaths remove entries from the live monster list.
             var targets = new List<MonsterState>();
             foreach (var m in map.monsters)
-                if (Mathf.Abs(m.y - p.currentFloor) < .35f &&
+                if ((m.Def.flies ? m.y > p.currentFloor - .35f && m.y < p.currentFloor + 1.6f : Mathf.Abs(m.y - p.currentFloor) < .35f) &&
                     Mathf.Abs(m.x - p.x) - m.Def.width * .5f <= Abilities.FissureRange(p))
                     targets.Add(m);
             foreach (var m in targets) HitMonster(map, m, damage, p, Tuning.PushFissure);
@@ -603,8 +603,8 @@ namespace AshenVale
             int potion = !equipment && rng.NextDouble() < Tuning.PotionDropChance ? (rng.NextDouble() < .5 ? 1 : 2) : 0;
             if (!chest) equipment = potion == 0 && rng.NextDouble() < itemChance;
             var kind = potion == 1 ? DropKind.HpPotion : potion == 2 ? DropKind.MpPotion : equipment ? DropKind.Item : DropKind.Gold;
-            AddDrop(map, attacker, kind, m.x, m.y, equipment ? Loot.Roll(rng, def.level, attacker.Hero) : null, def.goldMin + rng.Next(def.goldRange));
-            if (chest && kind != DropKind.Gold) AddDrop(map, attacker, DropKind.Gold, m.x + .45f, m.y, null, def.goldMin + rng.Next(def.goldRange));
+            AddDrop(map, attacker, kind, m.x, DropFloor(map, m), equipment ? Loot.Roll(rng, def.level, attacker.Hero) : null, def.goldMin + rng.Next(def.goldRange));
+            if (chest && kind != DropKind.Gold) AddDrop(map, attacker, DropKind.Gold, m.x + .45f, DropFloor(map, m), null, def.goldMin + rng.Next(def.goldRange));
 
             // A boss's loot: every hero who fought it and is still standing rolls for a piece for their own class,
             // reserved for them like any drop. Its own marked gear (Rare at least, a few levels above it) is the prize.
@@ -619,17 +619,20 @@ namespace AshenVale
                                ? Loot.Roll(rng, def.level + Tuning.BossLootLevels, p.Hero, Tuning.BossEpicChance, def.lootMark)
                                : rng.NextDouble() < itemChance ? Loot.Roll(rng, def.level, p.Hero) : null;
                     if (prize == null) continue;
-                    AddDrop(map, p, DropKind.Item, m.x + .9f + given * .55f, m.y, prize, 0);
+                    AddDrop(map, p, DropKind.Item, m.x + .9f + given * .55f, DropFloor(map, m), prize, 0);
                     given++;
                 }
             }
 
             // Monster parts for the smithy, on top of the usual drop.
-            if (def.part >= 0 && rng.NextDouble() < def.partChance) AddDrop(map, attacker, DropKind.Part, m.x - .45f, m.y, null, def.part);
+            if (def.part >= 0 && rng.NextDouble() < def.partChance) AddDrop(map, attacker, DropKind.Part, m.x - .45f, DropFloor(map, m), null, def.part);
             if (def.chestParts != null && def.chestParts.Length > 0)
                 for (int i = 0; i < Tuning.ChestParts; i++)
-                    AddDrop(map, attacker, DropKind.Part, m.x - .4f - i * .35f, m.y, null, def.chestParts[rng.Next(def.chestParts.Length)]);
+                    AddDrop(map, attacker, DropKind.Part, m.x - .4f - i * .35f, DropFloor(map, m), null, def.chestParts[rng.Next(def.chestParts.Length)]);
         }
+
+        // Where a slain monster's loot lands: its own floor, or for a flyer the floor under it.
+        static float DropFloor(MapRuntime map, MonsterState m) { return m.Def.flies ? FloorAt(map.def, m.x, m.y + .3f) : m.y; }
 
         void AddDrop(MapRuntime map, PlayerState owner, DropKind kind, float x, float floor, Item item, int gold)
         {
@@ -680,6 +683,7 @@ namespace AshenVale
         // stood on, so a player jumping still counts as reachable.
         static bool CanReach(MonsterState m, PlayerState p)
         {
+            if (m.Def.flies) return Mathf.Abs(p.x - m.homeX) <= Tuning.FlyLeash && Mathf.Abs(p.y - m.y) <= Tuning.FlySightHeight;   // anywhere in the air near its haunt
             return Mathf.Abs(p.currentFloor - m.y) < Tuning.MonsterFloorTolerance && p.x >= m.chaseLeft - .6f && p.x <= m.chaseRight + .6f;
         }
 
@@ -734,6 +738,7 @@ namespace AshenVale
                 if (d.boss) { UpdateBoss(map, m, target, dt); m.x = Mathf.Clamp(m.x, lo, hi); continue; }
                 if (SproutHeals(map, m, dt)) continue;
                 if (d.spits && Spits(map, m, target, dt)) continue;
+                if (d.flies) { Fly(map, m, target, dt); continue; }
                 if (m.knockbackTime > 0f)
                 {
                     float step = Mathf.Min(dt, m.knockbackTime);
@@ -761,6 +766,39 @@ namespace AshenVale
                 m.x = Mathf.Clamp(m.x, chaseLo, chaseHi);
             }
             TouchDamage(map);
+        }
+
+        // Flyers ignore floors and ledges. With someone to go after they fly straight at them, up or down; otherwise
+        // they drift about their haunt (where they spawned), changing height as they go.
+        void Fly(MapRuntime map, MonsterState m, PlayerState target, float dt)
+        {
+            var d = m.Def;
+            if (m.knockbackTime > 0f)
+            {
+                m.x += m.knockbackVelocity * Mathf.Min(dt, m.knockbackTime);
+                m.knockbackTime = Mathf.Max(0f, m.knockbackTime - dt);
+                m.knockbackVelocity = Mathf.MoveTowards(m.knockbackVelocity, 0f, 20f * dt);
+            }
+            else if (target != null)
+            {
+                float dx = target.x - m.x, dy = target.y + .1f - m.y, dist = Mathf.Sqrt(dx * dx + dy * dy);
+                if (Mathf.Abs(dx) > .2f) m.facing = dx > 0 ? 1 : -1;
+                if (dist > .15f) { float step = Mathf.Min(dist, d.speed * dt); m.x += dx / dist * step; m.y += dy / dist * step; }
+            }
+            else
+            {
+                m.wanderTime -= dt;
+                if (m.wanderTime <= 0f)
+                {
+                    m.wanderDir = rng.Next(3) - 1; m.wanderTime = 1.5f + (float)rng.NextDouble() * 2.5f;
+                    m.wanderY = m.homeY + (float)rng.NextDouble() * Tuning.FlyRoamHeight;
+                }
+                if (m.x < m.homeX - Tuning.FlyRoam) m.wanderDir = 1; else if (m.x > m.homeX + Tuning.FlyRoam) m.wanderDir = -1;
+                if (m.wanderDir != 0) { m.facing = m.wanderDir; m.x += m.wanderDir * d.speed * Tuning.MonsterWanderSpeed * dt; }
+                m.y = Mathf.MoveTowards(m.y, m.wanderY, d.speed * .45f * dt);
+            }
+            m.x = Mathf.Clamp(m.x, d.width * .5f + .2f, map.def.columns - d.width * .5f - .2f);
+            m.y = Mathf.Clamp(m.y, Tuning.Ground, map.def.Top - d.height - d.hover - .3f);
         }
 
         // A boss: too heavy to knock back. It lumbers after its target; near enough it rears up (windup, which the
@@ -1114,6 +1152,7 @@ namespace AshenVale
                 left = point.left, right = point.right, chaseLeft = point.chaseLeft, chaseRight = point.chaseRight,
                 facing = rng.Next(2) == 0 ? -1 : 1,
                 wanderTime = (float)rng.NextDouble() * 2f,
+                homeX = x, homeY = point.y, wanderY = point.y,
             };
             map.monsters.Add(m);
             return m;
