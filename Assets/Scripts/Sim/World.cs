@@ -839,6 +839,15 @@ namespace AshenVale
             m.eruptCooldown = Mathf.Max(0f, m.eruptCooldown - dt);
             m.pose = m.windup > 0f ? (m.attack == 1 ? 1 : m.attack == 2 ? 3 : 4) : m.strike > 0f && m.struck == 1 ? 2 : 0;
             if (UpdateRooted(map, m, dt)) return;
+            if (target == null)
+            {
+                // Nobody on its floor: it still stalks the nearest hero on the map (a ledge above it, say), calls
+                // sprouts and sends thorns up under them, so the glade is never a free shooting gallery. (Found
+                // before the windup is resolved: the eruption it has been calling needs someone to land under.)
+                float best = float.MaxValue;
+                foreach (var p in players)
+                    if (!p.dead && p.map == map.def.id && Mathf.Abs(p.x - m.x) < best) { best = Mathf.Abs(p.x - m.x); target = p; }
+            }
             if (m.windup > 0f)
             {
                 m.windup -= dt;
@@ -862,15 +871,7 @@ namespace AshenVale
                 m.attack = 0;
                 return;
             }
-            if (target == null)
-            {
-                // Nobody on its floor: it still stalks the nearest hero on the map (a ledge above it, say) and
-                // keeps calling sprouts, so the glade is never a free shooting gallery.
-                float best = float.MaxValue;
-                foreach (var p in players)
-                    if (!p.dead && p.map == map.def.id && Mathf.Abs(p.x - m.x) < best) { best = Mathf.Abs(p.x - m.x); target = p; }
-                if (target == null) return;                     // truly nobody here: it waits in its glade
-            }
+            if (target == null) return;                         // truly nobody here: it waits in its glade
             float dist = target.x - m.x;
             if (Mathf.Abs(dist) > .3f) m.facing = dist > 0 ? 1 : -1;
             if (m.attackCooldown <= 0f)
