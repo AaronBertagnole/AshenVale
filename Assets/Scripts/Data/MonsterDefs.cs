@@ -26,6 +26,7 @@ namespace AshenVale
         public int xp;
         public int goldMin, goldRange;  // gold = goldMin + random(0 .. goldRange - 1)
         public bool aggressive, harmless;
+        public bool spits;              // lobs poison from range instead of only walking in (World.Spits)
         public float respawn = 8f;      // seconds before its spawn point fills again
         public float itemChance = -1f;  // chance of dropping gear (below 0: the usual Tuning.EquipmentDropChance)
         public int part = -1;           // the monster part it drops (Parts), -1 for none
@@ -111,6 +112,7 @@ namespace AshenVale
                 part = Parts.ShadeEssence },
             new MonsterDef { key = "marsh_toad", name = "Marsh Toad", level = 11, color = new Color(.45f, .58f, .33f),
                 width = 1f, height = .8f, hp = 290, speed = 1.2f, damage = 22, xp = 36, goldMin = 25, goldRange = 15,
+                spits = true,
                 part = Parts.ToadSlime },
             new MonsterDef { key = "bog_lurker", name = "Bog Lurker", level = 13, color = new Color(.3f, .42f, .4f),
                 width = 1.4f, height = 1.1f, hp = 360, speed = 1.6f, damage = 30, xp = 42, goldMin = 30, goldRange = 18,

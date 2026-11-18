@@ -86,6 +86,7 @@ namespace AshenVale
         {
             rimeCasts.Clear();
             brambles.Clear();
+            spits.Clear();
             players.Clear();
             events.Clear();
             foreach (var map in maps)
@@ -129,6 +130,7 @@ namespace AshenVale
                 if (!HasLivingPlayer(map.def.id)) continue;   // nobody here: the map waits, as it always has
                 UpdateMonsters(map, dt);
                 UpdateBrambles(map, dt);
+                UpdateSpits(map, dt);
                 UpdateShots(map, dt);
                 UpdateSpawning(map, dt);
             }
@@ -731,6 +733,7 @@ namespace AshenVale
 
                 if (d.boss) { UpdateBoss(map, m, target, dt); m.x = Mathf.Clamp(m.x, lo, hi); continue; }
                 if (SproutHeals(map, m, dt)) continue;
+                if (d.spits && Spits(map, m, target, dt)) continue;
                 if (m.knockbackTime > 0f)
                 {
                     float step = Mathf.Min(dt, m.knockbackTime);
@@ -905,6 +908,74 @@ namespace AshenVale
                     if (p.dead || p.map != map.def.id || p.immunity > 0f) continue;
                     if (Mathf.Abs(p.x - mark.x) > Tuning.BossEruptRadius || p.y < mark.y - .5f || p.y > mark.y + 1.6f) continue;
                     Hurt(map, p, mark.from, mark.damage);
+                }
+            }
+        }
+
+        // Poison in the air or pooled on the floor: `flight` counts down to the landing, then `life` to the puddle drying.
+        sealed class SpitGlob { public float x, y, flight, life; public int damage; public bool landed; public MonsterState from; }
+        readonly Dictionary<int, List<SpitGlob>> spits = new Dictionary<int, List<SpitGlob>>();
+
+        // A spitter with someone in range stops to gulp and lob (see Tuning.Spit*). True while it stands still for it.
+        bool Spits(MapRuntime map, MonsterState m, PlayerState target, float dt)
+        {
+            m.attackCooldown = Mathf.Max(0f, m.attackCooldown - dt);
+            if (m.windup > 0f)
+            {
+                if (m.knockbackTime > 0f) { m.windup = 0f; m.attackCooldown = Tuning.SpitEvery * .5f; return false; }   // hit mid-gulp: it swallows the shot
+                m.windup -= dt;
+                m.pose = 10;
+                if (m.windup > 0f) return true;
+                m.windup = 0f; m.strike = Tuning.SpitRecover;
+                List<SpitGlob> list;
+                if (!spits.TryGetValue(map.def.id, out list)) spits[map.def.id] = list = new List<SpitGlob>();
+                list.Add(new SpitGlob { x = m.spitX, y = m.y, flight = Tuning.SpitFlight, life = Tuning.PuddleTime, damage = m.Def.damage, from = m });
+                events.Add(new SimEvent { kind = SimEventKind.PoisonSpit, map = map.def.id, targetId = m.id, x = m.x + m.facing * m.Def.width * .5f, y = m.y,
+                    amount = Mathf.RoundToInt(m.spitX * 100f), facing = m.facing });
+                return true;
+            }
+            if (m.strike > 0f)
+            {
+                m.strike = Mathf.Max(0f, m.strike - dt);
+                if (m.knockbackTime > 0f) { m.strike = 0f; return false; }
+                m.pose = 11;
+                return true;
+            }
+            if (target == null || m.attackCooldown > 0f || m.knockbackTime > 0f) return false;
+            float dist = Mathf.Abs(target.x - m.x);
+            if (dist < Tuning.SpitMinRange || dist > Tuning.SpitMaxRange || Mathf.Abs(target.currentFloor - m.y) > Tuning.MonsterFloorTolerance) return false;
+            m.facing = target.x >= m.x ? 1 : -1;
+            m.windup = Tuning.SpitWindup; m.attackCooldown = Tuning.SpitEvery;
+            m.spitX = Mathf.Clamp(target.x, m.chaseLeft, m.chaseRight);     // aimed where they stand now: step aside and it misses
+            m.pose = 10;
+            return true;
+        }
+
+        void UpdateSpits(MapRuntime map, float dt)
+        {
+            List<SpitGlob> list;
+            if (!spits.TryGetValue(map.def.id, out list)) return;
+            for (int i = list.Count - 1; i >= 0; i--)
+            {
+                var g = list[i];
+                float radius, share;
+                if (!g.landed)
+                {
+                    g.flight -= dt;
+                    if (g.flight > 0f) continue;
+                    g.landed = true; radius = Tuning.SpitHitRadius; share = Tuning.SpitDamage;
+                }
+                else
+                {
+                    g.life -= dt;
+                    if (g.life <= 0f) { list.RemoveAt(i); continue; }
+                    radius = Tuning.PuddleRadius; share = Tuning.PuddleDamage;
+                }
+                foreach (var p in players)
+                {
+                    if (p.dead || p.map != map.def.id || p.immunity > 0f) continue;
+                    if (Mathf.Abs(p.x - g.x) > radius || p.y < g.y - .5f || p.y > g.y + (g.life < Tuning.PuddleTime ? .4f : 1.6f)) continue;
+                    Hurt(map, p, g.from, Mathf.Max(1, Mathf.RoundToInt(g.damage * share)));
                 }
             }
         }

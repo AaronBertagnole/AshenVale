@@ -53,6 +53,12 @@ namespace AshenVale
         public const float PackStagger = 1.5f;              // seconds between pack members filling in
         public const float PackSpread = 2.5f;               // pack members land within this of the spawn point
         // Bosses
+        // Spitters (Marsh Toad): once it is after someone on its floor between SpitMinRange and SpitMaxRange away, it
+        // stops, gulps (SpitWindup; a hit in that time interrupts it) and lobs a glob at where they stood. The glob
+        // hurts on landing and leaves a puddle that hurts anyone standing in it.
+        public const float SpitMinRange = 2.2f, SpitMaxRange = 7f, SpitWindup = .55f, SpitFlight = .6f, SpitRecover = .3f;
+        public const float SpitEvery = 3.5f, SpitHitRadius = .65f, SpitDamage = 1f;
+        public const float PuddleRadius = .9f, PuddleTime = 4f, PuddleDamage = .4f;
         public const float MonsterStrikeShow = .4f;    // how long an ordinary monster holds its strike pose after a hit
         public const float BossLootChance = .5f;       // each hero's chance of the boss's own marked gear per kill
         public const float BossEpicChance = .2f;       // that gear is Epic this often, Rare otherwise

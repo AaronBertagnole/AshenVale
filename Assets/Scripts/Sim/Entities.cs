@@ -114,7 +114,7 @@ namespace AshenVale
         public float windup, strike, attackCooldown, summonCooldown;
         // What it is doing, for the view (sent to clients): 0 nothing, 1 slam windup, 2 slam strike, 3 summoning,
         // 4 calling an eruption, 5 rooting, 6 rooted, 7 breaking free, 8 (a sprout) healing its mother,
-        // 9 (any ordinary monster) striking a hero it has just touched.
+        // 9 (any ordinary monster) striking a hero it has just touched, 10 (a spitter) gulping, 11 spitting.
         public int pose;
         public int struck;              // the attack whose strike pose is showing
         public float eruptCooldown;
@@ -122,6 +122,7 @@ namespace AshenVale
         public int phase;
         public float phaseTime, rootHp, wallLeft, wallRight, wallTick;
         public float attackShow;        // ordinary monsters: time left of the strike pose after hurting a hero
+        public float spitX;             // spitters: where the glob being readied will land
         public float healClock;         // sprouts: until the next heal pulse; while positive after a pulse it stands still
         public MonsterDef Def { get { return Monsters.All[def]; } }
     }
@@ -150,7 +151,8 @@ namespace AshenVale
         BrambleWarn,        // thorns will erupt at (x, y) after Tuning.BossEruptWarn
         ThornWalls,         // walls rise at x (left) and amount / 100 (right) on floor y and creep inward
         ThornWallsEnd,      // they crumble
-        SproutHeal }        // a sprout at (x, y) sends healing to the monster with id `amount`
+        SproutHeal,         // a sprout at (x, y) sends healing to the monster with id `amount`
+        PoisonSpit }        // a glob leaves (x, floor y) for amount / 100 on that floor: Tuning.SpitFlight in the air, then a puddle for Tuning.PuddleTime
 
     // Something that happened during a tick, for the view (effects, sounds, numbers) and later for the network.
     public struct SimEvent

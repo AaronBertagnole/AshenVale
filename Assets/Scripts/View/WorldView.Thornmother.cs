@@ -36,6 +36,8 @@ namespace AshenVale
                 case 7: anim = "break"; span = Tuning.BossRootTime; break;
                 case 8: anim = "heal"; loopRate = 8f; break;
                 case 9: anim = "attack"; span = Tuning.MonsterStrikeShow; break;      // any monster with attack frames
+                case 10: anim = "attack"; count = 2; span = Tuning.SpitWindup; break;            // a spitter gulping
+                case 11: anim = "attack"; from = 2; count = 2; span = Tuning.SpitRecover; break;  // mouth open, then settling
                 default: return null;
             }
             var frames = MonsterFrames(v.def, anim);
@@ -191,6 +193,60 @@ namespace AshenVale
             foreach (var w in thornWalls) Object.Destroy(w.go);
             foreach (var m in healMotes) Object.Destroy(m.go);
             bramblesShown.Clear(); thornWalls.Clear(); healMotes.Clear();
+            foreach (var s in spitsShown) Object.Destroy(s.go);
+            spitsShown.Clear();
+        }
+
+        // A spitter's poison (SimEventKind.PoisonSpit): the glob arcs from its mouth to the landing spot, then a puddle
+        // steams there until it dries. Timed from Tuning, like the sim.
+        const string SpitFx = "Art/Effects/marsh_toad/";
+        const float SpitMouth = .55f, SpitArc = 1.3f, SpitScale = 1.5f, PuddleFade = .6f;
+        sealed class Spit { public GameObject go; public SpriteRenderer sr; public float x0, x1, y, age; }
+        readonly List<Spit> spitsShown = new List<Spit>();
+
+        void SpawnSpit(SimEvent e)
+        {
+            GameObject go;
+            var sr = ThornSprite("Poison Spit", SlashOrder, out go);
+            spitsShown.Add(new Spit { go = go, sr = sr, x0 = e.x, x1 = e.amount / 100f, y = e.y });
+        }
+
+        void UpdateSpitFx(float dt)
+        {
+            var glob = Sprites.Art(SpitFx + "spit"); var puddle = Sprites.Art(SpitFx + "puddle");
+            for (int i = spitsShown.Count - 1; i >= 0; i--)
+            {
+                var s = spitsShown[i];
+                s.age += dt;
+                float pooled = s.age - Tuning.SpitFlight;
+                if (pooled >= Tuning.PuddleTime) { Object.Destroy(s.go); spitsShown.RemoveAt(i); continue; }
+                if (pooled < 0f)
+                {
+                    float t = s.age / Tuning.SpitFlight;
+                    float x = Mathf.Lerp(s.x0, s.x1, t), y = s.y + SpitMouth * (1f - t) + SpitArc * 4f * t * (1f - t);
+                    s.sr.sprite = glob;
+                    s.sr.flipX = s.x1 < s.x0;
+                    s.sr.color = Color.white;
+                    if (glob == null) continue;
+                    // Nose along its path: up off the lip, down into the mud.
+                    float rise = (SpitArc * 4f * (1f - 2f * t) - SpitMouth) / Mathf.Max(.5f, Mathf.Abs(s.x1 - s.x0));
+                    s.sr.transform.rotation = Quaternion.Euler(0f, 0f, Mathf.Atan(rise) * Mathf.Rad2Deg * (s.sr.flipX ? -1f : 1f));
+                    s.sr.transform.localScale = new Vector3(SpitScale, SpitScale, 1f);
+                    s.sr.transform.position = new Vector3(x, y, 0f) - s.sr.transform.rotation * (new Vector3(glob.bounds.center.x * (s.sr.flipX ? -1f : 1f), glob.bounds.center.y, 0f) * SpitScale);
+                }
+                else
+                {
+                    s.sr.flipX = false;
+                    s.sr.transform.rotation = Quaternion.identity;
+                    s.sr.sortingOrder = ThornGroundOrder;
+                    // Splashes out wide, then steams; thins away as it dries.
+                    float grow = Mathf.Clamp01(pooled / .15f);
+                    float scale = puddle != null ? Tuning.PuddleRadius * 2f / puddle.bounds.size.x * Mathf.Lerp(.4f, 1f, grow) : 1f;
+                    StandOn(s.sr, puddle, s.x1, s.y - .06f, scale);
+                    float fade = Mathf.Clamp01((Tuning.PuddleTime - pooled) / PuddleFade);
+                    s.sr.color = new Color(1f, 1f, 1f, fade * (.88f + .12f * Mathf.Sin(pooled * 7f)));
+                }
+            }
         }
     }
 }

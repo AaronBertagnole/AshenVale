@@ -132,6 +132,7 @@ namespace AshenVale
             UpdateSlashes(frameDt);
             UpdateAttackFeedback(frameDt);
             UpdateThornFx(frameDt);
+            UpdateSpitFx(frameDt);
             UpdateLandingLeaves(frameDt);
             UpdateCamera(local, frameDt, alpha);
         }
@@ -174,6 +175,7 @@ namespace AshenVale
                 else if (e.kind == SimEventKind.DragonThrust || e.kind == SimEventKind.DragonFang || e.kind == SimEventKind.DragonFissure || e.kind == SimEventKind.DragonSweep) SpawnDragonFx(e);
                 else if (e.kind == SimEventKind.BossSlam) { SpawnSlamRing(e); GameSfx.Play("thorn_slam"); }
                 else if (e.kind == SimEventKind.BrambleWarn) SpawnBramble(e);
+                else if (e.kind == SimEventKind.PoisonSpit) SpawnSpit(e);
                 else if (e.kind == SimEventKind.ThornWalls) SpawnThornWalls(e);
                 else if (e.kind == SimEventKind.ThornWallsEnd) EndThornWalls();
                 else if (e.kind == SimEventKind.SproutHeal) SpawnHealMote(e);

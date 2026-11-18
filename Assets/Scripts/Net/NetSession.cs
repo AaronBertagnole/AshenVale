@@ -336,7 +336,7 @@ namespace AshenVale
         {
             if (CurrentRole != Role.Host || !handlersRegistered) return;
             foreach (var e in world.events) if (e.kind == SimEventKind.Slash || e.kind == SimEventKind.BossSlam || e.kind == SimEventKind.DragonThrust || e.kind == SimEventKind.DragonFang || e.kind == SimEventKind.DragonFissure || e.kind == SimEventKind.DragonSweep || e.kind == SimEventKind.EmbermarksPickedUp || e.kind == SimEventKind.RimeBurst || e.kind == SimEventKind.RimeStorm || e.kind == SimEventKind.RimeTeleport || e.kind == SimEventKind.RangerRelease || e.kind == SimEventKind.HeroImpact || e.kind == SimEventKind.ItemDropped
-                || e.kind == SimEventKind.BrambleWarn || e.kind == SimEventKind.ThornWalls || e.kind == SimEventKind.ThornWallsEnd || e.kind == SimEventKind.SproutHeal) pendingEvents.Add(e);
+                || e.kind == SimEventKind.BrambleWarn || e.kind == SimEventKind.ThornWalls || e.kind == SimEventKind.ThornWallsEnd || e.kind == SimEventKind.SproutHeal || e.kind == SimEventKind.PoisonSpit) pendingEvents.Add(e);
             snapshotTimer += dt;
             characterTimer += dt;
             if (snapshotTimer >= SnapshotInterval)
