@@ -9,7 +9,7 @@ namespace AshenVale
             var data = Resources.Load<TextAsset>("RimePolish/" + name);
             if (!data) return null;
             var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
-            if (!texture.LoadImage(data.bytes, true))
+            if (!texture.LoadImage(data.bytes, name != "Frost"))
             {
                 Object.Destroy(texture);
                 return null;
@@ -36,8 +36,23 @@ namespace AshenVale
                 var texture = RimeEffectArt.Load("Frost");
                 if (texture)
                 {
-                    // Isolate the crystal head from the painted wake.
-                    art = Sprite.Create(texture, new Rect(312, 64, 95, 95),
+                    const int size = 96;
+                    const int centerX = 359;
+                    const int centerY = 116;
+                    var pixels = texture.GetPixels(centerX - size / 2, centerY - size / 2, size, size);
+                    Object.Destroy(texture);
+                    for (int y = 0; y < size; y++)
+                    for (int x = 0; x < size; x++)
+                    {
+                        float radius = new Vector2(x + .5f - size / 2, y + .5f - size / 2).magnitude;
+                        float edge = Mathf.InverseLerp(31f, 46f, radius);
+                        pixels[y * size + x].a *= 1f - Mathf.SmoothStep(0f, 1f, edge);
+                    }
+                    var coreTexture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+                    coreTexture.wrapMode = TextureWrapMode.Clamp;
+                    coreTexture.SetPixels(pixels);
+                    coreTexture.Apply(false, true);
+                    art = Sprite.Create(coreTexture, new Rect(0, 0, size, size),
                         new Vector2(.5f, .5f), 300f, 0, SpriteMeshType.FullRect);
                 }
             }
