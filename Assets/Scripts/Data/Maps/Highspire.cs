@@ -20,10 +20,12 @@ namespace AshenVale
                     new[] { MapLayout.L('H', ShaleCliffs, 'H'), MapLayout.L('I', Highspire, 'I') }),
                     "Art/Backdrops/frostpine_pass", 162f / 724f, 42f),
 
-                MapLayout.WithBackdrop(MapLayout.Build(Highspire, "Highspire", "hold", MapKind.Town, HighspireLayout,
+                // The town is a painted scene like Emberhaven: the picture is the whole street, stretched to the map's
+                // width, so the smith stands at the painted forge and the traders at the market stall and the shop door.
+                MapLayout.WithScene(MapLayout.Build(Highspire, "Highspire", "hold", MapKind.Town, HighspireLayout,
                     new MapLayout.Spawn[0],
                     new[] { MapLayout.L('I', FrostpinePass, 'I'), MapLayout.L('J', GlacierSteps, 'J') }),
-                    "Art/Backdrops/highspire", 149f / 724f, 42f),
+                    "Art/Scenes/highspire", 159f / 724f)       // heroes walk the plaza's front edge, 159 px above the bottom,
 
                 MapLayout.WithBackdrop(MapLayout.Build(GlacierSteps, "Glacier Steps", "snow", MapKind.Field, GlacierStepsLayout,
                     new[] { MapLayout.S('r', Monsters.RimeWisp), MapLayout.S('h', Monsters.SnowHare),
@@ -77,7 +79,8 @@ namespace AshenVale
             .H..@.....w......w.........w........w.........w...|..w....I.
             ############################################################";
 
-        // The dwarven hall: a long stone hall with two traders, the master smith and the waystone cut into the rock.
+        // Highspire's plaza, laid out to its painting (48 columns = the picture's width): the smith at the forge on the
+        // left (%), a trader at the market stall and one at the shop door on the right ($), the waystone by the brazier (^).
         const string HighspireLayout = @"
             ................................................
             ................................................
@@ -86,7 +89,7 @@ namespace AshenVale
             ................................................
             ................................................
             ................................................
-            .&..I......$.......$.......%...@.....^.......J..
+            .&..I...%.........$......^....@...........$..J..
             ################################################";
 
         // Climbing a frozen staircase of ice shelves to the ridge; trolls hold the wider ledges.
