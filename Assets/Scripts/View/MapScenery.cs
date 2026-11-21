@@ -481,7 +481,7 @@ namespace AshenVale
             if (def.kind == MapKind.Town)
             {
                 BuildPortal(root, def.returnX, def.returnY, true);
-                BuildWaystone(root, def.waystoneX, def.waystoneY, PaintedMapFraming.ShowPlaceholderProps(def, painted, front.Valid));
+                BuildWaystone(root, def, def.waystoneX, def.waystoneY, PaintedMapFraming.ShowPlaceholderProps(def, painted, front.Valid));
                 foreach (var stand in def.merchants) BuildMerchant(root, stand.x, stand.y, PaintedMapFraming.ShowPlaceholderProps(def, painted, front.Valid));
             }
             if (def.hasSmithy) BuildSmithy(root, def.smithyX, def.smithyY, PaintedMapFraming.ShowPlaceholderProps(def, painted, front.Valid));
@@ -992,9 +992,12 @@ namespace AshenVale
         }
 
         // placeholder: draw stand-in shapes when there is no art (false on painted scenes, which show their own).
-        static void BuildWaystone(Transform root, float x, float y, bool placeholder)
+        // Each town's waystone wears its region (Art/Props/waystone_<town key>: autumn leaves in Emberhaven, snow in
+        // Highspire, kelp in Saltmarrow ...); a town without its own gets the plain mossy one.
+        static void BuildWaystone(Transform root, MapDef def, float x, float y, bool placeholder)
         {
-            var sprite = Sprites.Art("Art/Props/waystone");
+            var sprite = Sprites.Art("Art/Props/waystone_" + def.key);
+            if (sprite == null) sprite = Sprites.Art("Art/Props/waystone");
             if (sprite != null) { Sprites.Picture("Waystone", sprite, PropOrder, root, x, y); return; }
             if (!placeholder) return;
             Sprites.Block("Waystone", new Color(.55f, .58f, .64f), .7f, 1.7f, PropOrder, root, x, y + .85f);
