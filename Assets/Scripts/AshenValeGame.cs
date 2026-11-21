@@ -173,6 +173,7 @@ public class AshenValeGame : MonoBehaviour
     // N on the death screen, "Save & ..." in the Esc menu, or a lost connection.
     void BackToHeroes()
     {
+        Time.timeScale = 1f; hitPauseLeft = 0f;       // never carry a hit pause into the menu
         if (!inMenu) SaveNow();
         net.Leave();
         mode = Mode.Solo;
@@ -247,6 +248,14 @@ public class AshenValeGame : MonoBehaviour
         var me = world.GetPlayer(localId);
         music.SetMap(me != null ? me.map : -1);      // towns with a theme play it while you are there
         if (me != null && me.dead && me.deathClock >= Tuning.RespawnDelay && Input.GetKeyDown(KeyCode.N)) { BackToHeroes(); return; }
+        // Hit pause: an effect asked the game to hold still for a beat (WorldView.HitPauseRequest). Solo only: slowing
+        // a hosted world would stall everyone in it, and a client's world is the host's.
+        if (hitPauseLeft > 0f) { hitPauseLeft -= Time.unscaledDeltaTime; if (hitPauseLeft <= 0f) Time.timeScale = 1f; }
+        if (WorldView.HitPauseRequest > 0f)
+        {
+            if (mode == Mode.Solo && !inMenu) { hitPauseLeft = Mathf.Min(.2f, WorldView.HitPauseRequest); Time.timeScale = .02f; }
+            WorldView.HitPauseRequest = 0f;
+        }
         // Debug mode: F8 shows a small panel of testing shortcuts (see DrawDebug); F9 is still "one level" on its own.
         if (DebugAllowed)
         {
@@ -325,6 +334,7 @@ public class AshenValeGame : MonoBehaviour
     // Debug mode: only in the Unity editor and in development builds, and only when this PC runs the world (solo or
     // hosting), so it can never reach a joined game or a release build.
     bool debugOpen;
+    float hitPauseLeft;
     bool DebugAllowed { get { return !inMenu && mode != Mode.Client && (Application.isEditor || Debug.isDebugBuild); } }
 
     void DrawDebug()

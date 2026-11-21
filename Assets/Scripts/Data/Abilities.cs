@@ -23,12 +23,14 @@ namespace AshenVale
         // ---- The mastery skill: a fourth ability on its own key, there from MasteryLevel (no ranks; see World.Mastery) ----
         public const int Mastery = 3;           // its slot for names and icons; it has no entry in abilityRanks
         public const int MasteryLevel = 30;
-        public const int Dragonfire = 0, ArrowStorm = 1, GlacialNova = 2, ArrowStormWave = 3;   // SimEvent.amount for SimEventKind.Mastery
+        public const int Dragonfire = 0, ArrowStorm = 1, GlacialNova = 2, ArrowStormWave = 3, DragonfireHit = 4;   // SimEvent.amount for SimEventKind.Mastery
         public const float MasterySwing = .6f;  // the hero is busy this long after casting
         public const float DragonfireReach = 7f, DragonfireDamage = 3f, DragonfireCooldown = 14f;
         public const float ArrowStormAhead = 4.5f, ArrowStormHalfWidth = 2.5f, ArrowStormDelay = .35f, ArrowStormEvery = .2f, ArrowStormDamage = .6f, ArrowStormCooldown = 16f;
         public const int ArrowStormWaves = 8;
         public const float NovaRadius = 4.5f, NovaDamage = 2.5f, NovaFreeze = 3f, NovaCooldown = 18f;
+        // Dragonfire's damage lands this long after the key press, on the effect's brightest frame (SkillFxTuning, editable in the Inspector).
+        public static float DragonfireHitDelay { get { return UnityEngine.Mathf.Clamp(SkillFxTuning.Get.dragonfire.hitDelay, 0f, 1f); } }
         static readonly string[] masteryNames = { "Dragonfire", "Arrow Storm", "Glacial Nova" };
         static readonly string[] masteryBlurbs =
         {

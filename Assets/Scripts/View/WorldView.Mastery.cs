@@ -9,45 +9,52 @@ namespace AshenVale
         void SpawnMastery(SimEvent e)
         {
             if (e.amount == Abilities.Dragonfire) Dragonfire(e);
+            else if (e.amount == Abilities.DragonfireHit) DragonfireHit(e);
             else if (e.amount == Abilities.ArrowStorm) ArrowVolleyUp(e);
             else if (e.amount == Abilities.ArrowStormWave) ArrowWave(e);
             else GlacialNova(e);
         }
 
-        // The painted dragon maw (Art/Effects/dragonfire, six frames): it forms around the Knight, breathes the flame
-        // out to the skill's reach and burns down to embers. A few loose embers fly with it. Without the art, embers only.
+        // Dragonfire, in three beats (numbers in SkillFxTuning, editable in the Inspector while playing):
+        //   the cast   embers gather at the spear while the painted maw rears up (Art/Effects/dragonfire, six frames)
+        //   the hit    Abilities.DragonfireHitDelay later the sim lands the damage: a flash, a camera kick, a held beat
+        //   after      the frames burn down to embers
         const string DragonfireArt = "Art/Effects/dragonfire";
         void Dragonfire(SimEvent e)
         {
-            var dragon = FlameDragonCast.Art;
-            if (dragon != null)
-            {
-                var effect = new GameObject("Dragonfire flame dragon");
-                effect.AddComponent<FlameDragonCast>().Begin(dragon, e.x, e.y, e.facing, SlashOrder + 1);
-                rimeFx.RemoveAll(fx => fx == null);
-                rimeFx.Add(effect);
-                return;
-            }
+            var tune = SkillFxTuning.Get.dragonfire;
             var frames = Sprites.Frames(DragonfireArt);
             if (frames.Length > 0)
             {
                 var go = new GameObject("Dragonfire");
-                go.AddComponent<DragonfireFx>().Begin(frames, e.x + e.facing * DragonfireFx.ForwardOffset, e.y, e.facing, SlashOrder + 1);
+                go.AddComponent<DragonfireFx>().Begin(frames, e.x, e.y, e.facing, SlashOrder + 1);
                 rimeFx.RemoveAll(fx => fx == null);
                 rimeFx.Add(go);                         // the list of passing effects that is cleared with the map
             }
-            var mouth = new Vector2(e.x + e.facing * 1.6f, e.y + 1f);
-            int embers = frames.Length > 0 ? 0 : 44;
-            for (int i = 0; i < embers; i++)
+            // Embers pulled in to the spear over the wind-up.
+            var spear = new Vector2(e.x + e.facing * .75f, e.y + .9f);
+            float gather = Mathf.Max(.08f, tune.hitDelay);
+            for (int i = 0; i < tune.gatherEmbers; i++)
             {
-                float far = Random.value, time = .32f + .3f * Random.value;
+                float angle = Random.Range(-.4f, Mathf.PI + .4f), from = 1.1f + Random.value * 1.1f;
+                var offset = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * from;
                 // A spark covers velocity * time * .68 over its life (it slows as it fades).
-                float speed = Abilities.DragonfireReach * (.25f + .75f * far) / (time * .68f);
-                var velocity = new Vector2(e.facing * speed, Random.Range(-1.6f, 1.3f) - .5f);
-                var color = Color.Lerp(new Color(1f, .93f, .5f, .95f), new Color(1f, .32f, .08f, .9f), Random.value);
-                float size = frames.Length > 0 ? .08f + .1f * Random.value : .28f + .5f * Random.value;
-                AddAttackSpark(Sprites.Disc, mouth + new Vector2(0f, Random.Range(-.45f, .35f)), velocity, color, size * 1.5f, size, time);
+                AddAttackSpark(Sprites.Disc, spear + offset, -offset / (gather * .68f), new Color(1f, .7f + .25f * Random.value, .3f, .9f), .14f, .09f, gather);
             }
+        }
+
+        void DragonfireHit(SimEvent e)
+        {
+            var tune = SkillFxTuning.Get.dragonfire;
+            if (tune.flashSize > 0f)
+            {
+                var at = new Vector2(e.x + e.facing * tune.flashForward, e.y + 1f);
+                AddAttackSpark(Sprites.Disc, at, Vector2.zero, new Color(1f, .93f, .62f, .75f), tune.flashSize * 1.5f, tune.flashSize, tune.flashSeconds);
+                AddAttackSpark(Sprites.Disc, at, Vector2.zero, new Color(1f, 1f, .92f, .8f), tune.flashSize * .7f, tune.flashSize * .5f, tune.flashSeconds * .7f);
+            }
+            // Everyone watching feels the kick, harder when it caught something; only the caster's own game holds its breath.
+            Shake(tune.shake * (e.heavy ? 1f : .5f), tune.shakeSeconds);
+            if (e.heavy && e.playerId == shownLocalId) HitPauseRequest = Mathf.Max(HitPauseRequest, tune.hitPause);
         }
 
         // The Ranger looses the volley skyward; the waves land a moment later.
@@ -90,16 +97,15 @@ namespace AshenVale
 
     // Plays the Dragonfire frames once at a fixed spot and removes itself. The frames share one canvas: the ground
     // glow the fire grows from is OriginX of the way across, and the flame runs from there to the right edge.
+    // Timing, place and size are read from SkillFxTuning every frame, so they can be tuned while it plays.
     public sealed class DragonfireFx : MonoBehaviour
     {
-        public const float ForwardOffset = .55f;
         const float OriginX = 90f / 754f, FlameShare = 1f - OriginX;
-        static readonly float[] hold = { .06f, .16f, .12f, .23f, .24f, .31f };   // seconds on each frame: a quick rear-up, the long breath, the burn-down
-        Sprite[] frames; SpriteRenderer sr; float x, floor, age; int facing;
+        Sprite[] frames; SpriteRenderer sr; float casterX, floor, age; int facing;
 
-        public void Begin(Sprite[] art, float originX, float floorY, int facingSide, int order)
+        public void Begin(Sprite[] art, float knightX, float floorY, int facingSide, int order)
         {
-            frames = art; x = originX; floor = floorY; facing = facingSide >= 0 ? 1 : -1;
+            frames = art; casterX = knightX; floor = floorY; facing = facingSide >= 0 ? 1 : -1;
             sr = gameObject.AddComponent<SpriteRenderer>();
             sr.sortingOrder = order;
             Draw();
@@ -107,23 +113,28 @@ namespace AshenVale
 
         void Update() { age += Time.deltaTime; Draw(); }
 
+        static float Hold(SkillFxTuning.DragonfireTuning tune, int index)
+        {
+            var seconds = tune.frameSeconds;
+            return seconds == null || seconds.Length == 0 ? .1f : Mathf.Max(.01f, seconds[Mathf.Min(index, seconds.Length - 1)]);
+        }
+
         void Draw()
         {
+            var tune = SkillFxTuning.Get.dragonfire;
             float t = age; int index = 0;
-            while (index < frames.Length && t >= hold[Mathf.Min(index, hold.Length - 1)]) { t -= hold[Mathf.Min(index, hold.Length - 1)]; index++; }
+            while (index < frames.Length && t >= Hold(tune, index)) { t -= Hold(tune, index); index++; }
             if (index >= frames.Length) { Destroy(gameObject); return; }
             var sprite = frames[index];
             sr.sprite = sprite;
-            float fullWidth = (Abilities.DragonfireReach - ForwardOffset) / FlameShare;
-            float scale = fullWidth / sprite.bounds.size.x;
-            float origin = sprite.bounds.min.x + sprite.bounds.size.x * OriginX;
+            // At size 1 the flame runs from the glow to the end of the skill's reach.
+            float fullWidth = (Abilities.DragonfireReach - tune.forward) / FlameShare;
+            float scale = fullWidth / sprite.bounds.size.x * tune.size;
+            float origin = sprite.bounds.min.x + sprite.bounds.size.x * OriginX;       // the glow, from the sprite's pivot
             transform.localScale = new Vector3(facing * scale, scale, 1f);
-            transform.position = new Vector3(x - facing * origin * scale,
-                floor - .04f - sprite.bounds.min.y * scale, 0f);
-
-            float opacity = index == frames.Length - 1
-                ? 1f - t / hold[Mathf.Min(index, hold.Length - 1)] : 1f;
-            sr.color = new Color(1f, 1f, 1f, opacity);
+            transform.position = new Vector3(casterX + facing * (tune.forward - origin * scale), floor + tune.lift - sprite.bounds.min.y * scale, 0f);
+            // The last frame thins away rather than blinking out.
+            sr.color = new Color(1f, 1f, 1f, index == frames.Length - 1 ? 1f - t / Hold(tune, index) : 1f);
         }
     }
 }

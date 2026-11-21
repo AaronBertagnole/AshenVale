@@ -119,8 +119,22 @@ namespace AshenVale
         }
 
         // Called once per frame. alpha (0..1) is how far we are between the last tick and the next one.
+        // ---- Impact feel, for any effect to call ----
+        // Shake: the camera kicks by up to `strength` units and settles over `seconds`.
+        float shakeStrength, shakeSeconds, shakeLeft; Vector3 shakeOffset;
+        public void Shake(float strength, float seconds)
+        {
+            if (strength <= 0f || seconds <= 0f || strength < shakeStrength * (shakeLeft / Mathf.Max(.01f, shakeSeconds))) return;   // a weaker kick never cuts a stronger one short
+            shakeStrength = strength; shakeSeconds = shakeLeft = seconds;
+        }
+        // Hit pause: seconds the game should hold still; AshenValeGame takes it (solo play only) and clears it.
+        public static float HitPauseRequest;
+        int shownLocalId = -1;
+
         public void Sync(int localId, float frameDt, float alpha)
         {
+            shownLocalId = localId;
+            cam.position -= shakeOffset; shakeOffset = Vector3.zero;       // the follow below works from the steady position
             var local = world.GetPlayer(localId);
             int map = local != null ? local.map : Maps.Emberfields;
             if (map != shownMap) ShowMap(map);
@@ -916,6 +930,13 @@ namespace AshenVale
                 // Keep some space below the hero during a long fall, within the map's limits.
                 pos.y = Mathf.Clamp(Mathf.Min(pos.y, y + 2.8f), minY, maxY);
                 cam.position = pos;
+            }
+            if (shakeLeft > 0f)
+            {
+                shakeLeft = Mathf.Max(0f, shakeLeft - Time.unscaledDeltaTime);
+                float left = shakeLeft / Mathf.Max(.01f, shakeSeconds), now = Time.unscaledTime * 55f;
+                shakeOffset = new Vector3(Mathf.Sin(now) + .5f * Mathf.Sin(now * 2.3f), Mathf.Cos(now * 1.3f) * .7f, 0f) * (shakeStrength * left * left * .67f);
+                cam.position += shakeOffset;
             }
             var visual = visuals[shownMap];
             Vector3 c = cam.position;

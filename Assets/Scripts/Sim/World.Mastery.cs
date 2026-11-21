@@ -12,6 +12,9 @@ namespace AshenVale
     {
         sealed class ArrowRain { public int owner, map, damage, remaining; public float wait, x, y; }
         readonly List<ArrowRain> arrowRains = new List<ArrowRain>();
+        // A Dragonfire that has been cast and not yet landed (the wind-up before the flame).
+        sealed class Breath { public int owner, map, facing, damage; public float wait, x, y; }
+        readonly List<Breath> breaths = new List<Breath>();
 
         void CastMastery(PlayerState p, MapRuntime map)
         {
@@ -28,9 +31,8 @@ namespace AshenVale
 
             if (kind == Abilities.Dragonfire)
             {
-                float near = p.x, far = p.x + p.facing * Abilities.DragonfireReach;
-                float lo = Mathf.Min(near, far), hi = Mathf.Max(near, far);
-                foreach (var m in MonstersIn(map, lo, hi, p.y - .3f, p.y + 2.4f)) HitMonster(map, m, damage, p);
+                // The flame is fixed where it was cast; the damage lands with its brightest frame (see TickMastery).
+                breaths.Add(new Breath { owner = p.id, map = p.map, facing = p.facing, damage = damage, wait = Abilities.DragonfireHitDelay, x = p.x, y = p.y });
             }
             else if (kind == Abilities.ArrowStorm)
             {
@@ -65,6 +67,23 @@ namespace AshenVale
 
         void TickMastery(float dt)
         {
+            for (int i = breaths.Count - 1; i >= 0; i--)
+            {
+                var b = breaths[i];
+                b.wait -= dt;
+                if (b.wait > 0f) continue;
+                breaths.RemoveAt(i);
+                var caster = GetPlayer(b.owner);
+                if (caster == null || caster.map != b.map) continue;
+                var map = maps[b.map];
+                float far = b.x + b.facing * Abilities.DragonfireReach;
+                var burned = MonstersIn(map, Mathf.Min(b.x, far), Mathf.Max(b.x, far), b.y - .3f, b.y + 2.4f);
+                // `heavy` tells the view the flame caught something (hit pause, a harder kick).
+                events.Add(new SimEvent { kind = SimEventKind.Mastery, map = b.map, playerId = b.owner, x = b.x, y = b.y, facing = b.facing,
+                                          amount = Abilities.DragonfireHit, heavy = burned.Count > 0 });
+                foreach (var m in burned) HitMonster(map, m, b.damage, caster);
+            }
+
             for (int i = arrowRains.Count - 1; i >= 0; i--)
             {
                 var rain = arrowRains[i];
