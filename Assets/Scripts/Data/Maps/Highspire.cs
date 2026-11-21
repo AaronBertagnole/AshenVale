@@ -25,7 +25,7 @@ namespace AshenVale
                 MapLayout.WithScene(MapLayout.Build(Highspire, "Highspire", "hold", MapKind.Town, HighspireLayout,
                     new MapLayout.Spawn[0],
                     new[] { MapLayout.L('I', FrostpinePass, 'I'), MapLayout.L('J', GlacierSteps, 'J') }),
-                    "Art/Scenes/highspire", 159f / 724f)       // heroes walk the plaza's front edge, 159 px above the bottom,
+                    "Art/Scenes/highspire", 159f / 724f),      // heroes walk the plaza's front edge, 159 px above the bottom
 
                 MapLayout.WithBackdrop(MapLayout.Build(GlacierSteps, "Glacier Steps", "snow", MapKind.Field, GlacierStepsLayout,
                     new[] { MapLayout.S('r', Monsters.RimeWisp), MapLayout.S('h', Monsters.SnowHare),
