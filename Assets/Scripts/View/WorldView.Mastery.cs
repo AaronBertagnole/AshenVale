@@ -23,11 +23,11 @@ namespace AshenVale
             if (frames.Length > 0)
             {
                 var go = new GameObject("Dragonfire");
-                go.AddComponent<DragonfireFx>().Begin(frames, e.x - e.facing * DragonfireFx.Behind, e.y, e.facing, SlashOrder + 1);
+                go.AddComponent<DragonfireFx>().Begin(frames, e.x + e.facing * DragonfireFx.SpearTip, e.y, e.facing, SlashOrder + 1);
                 rimeFx.RemoveAll(fx => fx == null);
                 rimeFx.Add(go);                         // the list of passing effects that is cleared with the map
             }
-            var mouth = new Vector2(e.x + e.facing * 1.6f, e.y + 1f);
+            var mouth = new Vector2(e.x + e.facing * (DragonfireFx.SpearTip + .3f), e.y + 1.3f);
             int embers = frames.Length > 0 ? 12 : 44;
             for (int i = 0; i < embers; i++)
             {
@@ -83,14 +83,16 @@ namespace AshenVale
     // glow the fire grows from is OriginX of the way across, and the flame runs from there to the right edge.
     public sealed class DragonfireFx : MonoBehaviour
     {
-        public const float Behind = .45f;                   // the glow sits this far behind the Knight, so the maw forms around him
-        const float OriginX = 90f / 754f, FlameShare = 1f - OriginX;
+        // The flame leaves the dragon's throat at the Knight's spear tip (SpearTip ahead of him in the Dragon Strike
+        // thrust), so the head forms over him and the fire pours off the spear. MouthX is the throat's place across the canvas.
+        public const float SpearTip = .75f;
+        const float MouthX = 300f / 754f, FlameShare = 1f - MouthX;
         static readonly float[] hold = { .05f, .08f, .08f, .2f, .13f, .12f };   // seconds on each frame: a quick rear-up, the long breath, the burn-down
         Sprite[] frames; SpriteRenderer sr; float x, floor, age; int facing;
 
-        public void Begin(Sprite[] art, float originX, float floorY, int facingSide, int order)
+        public void Begin(Sprite[] art, float tipX, float floorY, int facingSide, int order)
         {
-            frames = art; x = originX; floor = floorY; facing = facingSide >= 0 ? 1 : -1;
+            frames = art; x = tipX; floor = floorY; facing = facingSide >= 0 ? 1 : -1;
             sr = gameObject.AddComponent<SpriteRenderer>();
             sr.sortingOrder = order; sr.flipX = facing < 0;
             Draw();
@@ -105,9 +107,9 @@ namespace AshenVale
             if (index >= frames.Length) { Destroy(gameObject); return; }
             var sprite = frames[index];
             sr.sprite = sprite;
-            // Sized so the flame's tip lands on the skill's reach, measured from the Knight.
-            float scale = (Abilities.DragonfireReach + Behind) / (sprite.bounds.size.x * FlameShare);
-            float origin = sprite.bounds.min.x + sprite.bounds.size.x * OriginX;       // the glow, from the sprite's pivot
+            // Sized so the flame runs from the spear tip to the end of the skill's reach.
+            float scale = (Abilities.DragonfireReach - SpearTip) / (sprite.bounds.size.x * FlameShare);
+            float origin = sprite.bounds.min.x + sprite.bounds.size.x * MouthX;        // the throat, from the sprite's pivot
             transform.localScale = new Vector3(scale, scale, 1f);
             transform.position = new Vector3(x - facing * origin * scale, floor - .04f - sprite.bounds.min.y * scale, 0f);
             // The last frame thins away rather than blinking out.
