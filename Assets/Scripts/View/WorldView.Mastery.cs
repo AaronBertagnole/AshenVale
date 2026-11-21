@@ -19,6 +19,15 @@ namespace AshenVale
         const string DragonfireArt = "Art/Effects/dragonfire";
         void Dragonfire(SimEvent e)
         {
+            var dragon = FlameDragonCast.Art;
+            if (dragon != null)
+            {
+                var effect = new GameObject("Dragonfire flame dragon");
+                effect.AddComponent<FlameDragonCast>().Begin(dragon, e.x, e.y, e.facing, SlashOrder + 1);
+                rimeFx.RemoveAll(fx => fx == null);
+                rimeFx.Add(effect);
+                return;
+            }
             var frames = Sprites.Frames(DragonfireArt);
             if (frames.Length > 0)
             {
