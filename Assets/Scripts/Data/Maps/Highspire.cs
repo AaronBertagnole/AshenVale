@@ -10,44 +10,54 @@ namespace AshenVale
     {
         static MapDef[] HighspireMaps()
         {
+            // Every map here has its painting (Art/Backdrops): the number is how far its walking line is above the
+            // picture's bottom edge, in pixels of 724. Ground and ledges for each theme are cut from the same pictures.
             return new[]
             {
-                MapLayout.Build(FrostpinePass, "Frostpine Pass", "snow", MapKind.Field, FrostpinePassLayout,
+                MapLayout.WithBackdrop(MapLayout.Build(FrostpinePass, "Frostpine Pass", "snow", MapKind.Field, FrostpinePassLayout,
                     new[] { MapLayout.S('w', Monsters.FrostWolf), MapLayout.S('h', Monsters.SnowHare),
                             MapLayout.S('b', Monsters.IcicleBat) },
                     new[] { MapLayout.L('H', ShaleCliffs, 'H'), MapLayout.L('I', Highspire, 'I') }),
+                    "Art/Backdrops/frostpine_pass", 162f / 724f, 42f),
 
-                MapLayout.Build(Highspire, "Highspire", "hold", MapKind.Town, HighspireLayout,
+                MapLayout.WithBackdrop(MapLayout.Build(Highspire, "Highspire", "hold", MapKind.Town, HighspireLayout,
                     new MapLayout.Spawn[0],
                     new[] { MapLayout.L('I', FrostpinePass, 'I'), MapLayout.L('J', GlacierSteps, 'J') }),
+                    "Art/Backdrops/highspire", 149f / 724f, 42f),
 
-                MapLayout.Build(GlacierSteps, "Glacier Steps", "snow", MapKind.Field, GlacierStepsLayout,
+                MapLayout.WithBackdrop(MapLayout.Build(GlacierSteps, "Glacier Steps", "snow", MapKind.Field, GlacierStepsLayout,
                     new[] { MapLayout.S('r', Monsters.RimeWisp), MapLayout.S('h', Monsters.SnowHare),
                             MapLayout.S('t', Monsters.FrostTroll) },
                     new[] { MapLayout.L('J', Highspire, 'J'), MapLayout.L('K', WindwardRidge, 'K') }),
+                    "Art/Backdrops/glacier_steps", 132f / 724f, 42f),
 
-                MapLayout.Build(WindwardRidge, "Windward Ridge", "snow", MapKind.Field, WindwardRidgeLayout,
+                MapLayout.WithBackdrop(MapLayout.Build(WindwardRidge, "Windward Ridge", "snow", MapKind.Field, WindwardRidgeLayout,
                     new[] { MapLayout.S('b', Monsters.IcicleBat), MapLayout.S('w', Monsters.FrostWolf),
                             MapLayout.S('t', Monsters.FrostTroll) },
                     new[] { MapLayout.L('K', GlacierSteps, 'K'), MapLayout.L('L', IronveinMines, 'L') }),
+                    "Art/Backdrops/windward_ridge", 138f / 724f, 42f),
 
-                MapLayout.Build(IronveinMines, "Ironvein Mines", "mine", MapKind.Field, IronveinMinesLayout,
+                MapLayout.WithBackdrop(MapLayout.Build(IronveinMines, "Ironvein Mines", "mine", MapKind.Field, IronveinMinesLayout,
                     new[] { MapLayout.S('s', Monsters.SlagBeetle), MapLayout.S('c', Monsters.CaveTroll),
                             MapLayout.S('u', Monsters.RuneSentinel) },
                     new[] { MapLayout.L('L', WindwardRidge, 'L'), MapLayout.L('M', DeepForge, 'M'), MapLayout.L('X', CrystalHollow, 'X') }),
+                    "Art/Backdrops/ironvein_mines", 130f / 724f, 42f),
 
-                MapLayout.Build(DeepForge, "The Deep Forge", "forge", MapKind.Field, DeepForgeLayout,
+                MapLayout.WithBackdrop(MapLayout.Build(DeepForge, "The Deep Forge", "forge", MapKind.Field, DeepForgeLayout,
                     new[] { MapLayout.S('i', Monsters.ForgeImp), MapLayout.S('s', Monsters.SlagBeetle),
                             MapLayout.S('u', Monsters.RuneSentinel) },
                     new[] { MapLayout.L('M', IronveinMines, 'M'), MapLayout.L('N', ColossusVault, 'N') }),
+                    "Art/Backdrops/deep_forge", 158f / 724f, 42f),
 
-                MapLayout.Build(CrystalHollow, "Crystal Hollow", "crystal", MapKind.Field, CrystalHollowLayout,
+                MapLayout.WithBackdrop(MapLayout.Build(CrystalHollow, "Crystal Hollow", "crystal", MapKind.Field, CrystalHollowLayout,
                         new[] { MapLayout.S('r', Monsters.RimeWisp), MapLayout.S('u', Monsters.RuneSentinel) },
                         new[] { MapLayout.L('X', IronveinMines, 'X') }),
+                    "Art/Backdrops/crystal_hollow", 154f / 724f, 42f),
 
-                MapLayout.Build(ColossusVault, "The Colossus' Vault", "forge", MapKind.Field, ColossusVaultLayout,
+                MapLayout.WithBackdrop(MapLayout.Build(ColossusVault, "The Colossus' Vault", "forge", MapKind.Field, ColossusVaultLayout,
                     new[] { MapLayout.S('z', Monsters.RustedColossus) },
                     new[] { MapLayout.L('N', DeepForge, 'N') }),
+                    "Art/Backdrops/colossus_vault", 128f / 724f, 42f),
             };
         }
 

@@ -9,7 +9,25 @@ namespace AshenVale
     // Resources/Art/Effects/thornmother/{warning,eruption,wall,motes}. Anything missing is simply not drawn.
     public sealed partial class WorldView
     {
-        const string ThornFx = "Art/Effects/thornmother/";
+        // A boss's own effect art (Art/Effects/<boss key>/{warning,eruption,wall,motes}) if the map's boss has any,
+        // otherwise Thornmother's: the fights share their mechanics, so the frames mean the same things.
+        const string ThornmotherFx = "Art/Effects/thornmother/";
+        string bossFx = ThornmotherFx; int bossFxMap = -2;
+        string ThornFx
+        {
+            get
+            {
+                if (bossFxMap == shownMap) return bossFx;
+                bossFxMap = shownMap; bossFx = ThornmotherFx;
+                if (shownMap >= 0)
+                    foreach (var point in Maps.All[shownMap].spawns)
+                    {
+                        var d = Monsters.All[point.monster];
+                        if (d.boss && Sprites.Frames("Art/Effects/" + d.key + "/warning").Length > 0) { bossFx = "Art/Effects/" + d.key + "/"; break; }
+                    }
+                return bossFx;
+            }
+        }
         const int ThornGroundOrder = MonsterOrder + 1, ThornFrontOrder = HeroOrder + 1;
         const float EruptShow = .55f, WallGrow = .9f, WallFall = .45f, WallScale = 1.5f, MoteFlight = .7f;
 
@@ -41,7 +59,7 @@ namespace AshenVale
                 case 12: anim = "idle"; count = 1; span = 1f; break;                             // frozen: held on one frame
                 default: return null;
             }
-            var frames = MonsterFrames(v.def, anim);
+            var frames = MonsterFrames(v, anim);
             if (frames.Length == 0) return null;
             int index = loopRate > 0f ? Mathf.FloorToInt(v.poseClock * loopRate) % frames.Length
                                       : from + Mathf.Min(count - 1, Mathf.FloorToInt(v.poseClock / Mathf.Max(.01f, span) * count));

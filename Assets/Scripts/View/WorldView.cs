@@ -32,6 +32,7 @@ namespace AshenVale
             public Color[] colors;
             public MonsterDef def;
             public float clock, hurt, moveTime, lastHp, lastX, dying, lastStrike;
+            public bool secondLook;             // bosses: below half health (see MonsterFrames)
             public bool enraged; public float rage;     // bosses: in their enrage, and how far the swelling has got (0..1)
             public int pose; public float poseClock;      // its special pose (MonsterState.pose) and how long it has held it
             public Transform crown;             // bosses: the thorn crown, which flares while it rears up
@@ -443,6 +444,7 @@ namespace AshenVale
                 v.go.transform.position = new Vector3(x, y + d.hover + bob, 0);
                 // Enraged: a roar as it turns (ring, sound, a shout over its head), then it stays swollen, red and restless.
                 bool enraged = World.Enraged(m);
+                v.secondLook = d.boss && m.hp < m.maxHp * Tuning.BossRootHp;
                 if (enraged && !v.enraged)
                 {
                     SpawnSlamRing(new SimEvent { kind = SimEventKind.BossSlam, x = m.x, y = m.y, facing = m.facing });
@@ -457,7 +459,7 @@ namespace AshenVale
                 if (v.art != null)
                 {
                     var posed = PoseFrame(v, m, frameDt);     // a boss's attacks, a sprout healing (WorldView.Thornmother)
-                    var frames = MonsterFrames(d, v.hurt > 0 ? "hurt" : moving ? "move" : "idle");
+                    var frames = MonsterFrames(v, v.hurt > 0 ? "hurt" : moving ? "move" : "idle");
                     if (posed != null) v.art.sprite = posed;
                     else if (frames.Length > 0) v.art.sprite = frames[Mathf.FloorToInt(v.clock * (d.boss ? (enraged ? 9f : 5f) : moving || v.hurt > 0 ? 8f : d.idleRate)) % frames.Length];
                 }
@@ -499,7 +501,7 @@ namespace AshenVale
                 if (t >= 1f) { Object.Destroy(v.go); dying.RemoveAt(i); continue; }
                 if (v.art != null)
                 {
-                    var frames = MonsterFrames(v.def, "die");
+                    var frames = MonsterFrames(v, "die");
                     if (frames.Length > 0) v.art.sprite = frames[Mathf.Min(frames.Length - 1, Mathf.FloorToInt(t * frames.Length))];
                 }
                 else v.body.localScale = new Vector3(1f + t * .3f, 1f - t * .6f, 1f);
@@ -512,6 +514,17 @@ namespace AshenVale
         }
 
         static Sprite[] MonsterFrames(MonsterDef d, string anim) { return Sprites.Frames("Art/Monsters/" + d.key + "/" + anim); }
+        // A boss past half health wears its second look where it has one (Art/Monsters/<key>_phase2/<anim>), e.g. the
+        // Rusted Colossus running molten. Animations the second look lacks fall back to the first.
+        static Sprite[] MonsterFrames(MonsterView v, string anim)
+        {
+            if (v.secondLook)
+            {
+                var second = Sprites.Frames("Art/Monsters/" + v.def.key + "_phase2/" + anim);
+                if (second.Length > 0) return second;
+            }
+            return MonsterFrames(v.def, anim);
+        }
 
         // Real art if Resources/Art/Monsters/<key>/idle exists; otherwise a soft placeholder creature
         // (or a little chest for monsters that never move). Drawn facing right; the view mirrors it.
