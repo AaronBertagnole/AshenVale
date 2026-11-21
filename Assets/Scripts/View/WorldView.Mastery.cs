@@ -14,18 +14,29 @@ namespace AshenVale
             else GlacialNova(e);
         }
 
-        // Fat embers rolling out along the ground to the skill's reach, hottest at the mouth.
+        // The painted dragon maw (Art/Effects/dragonfire, six frames): it forms around the Knight, breathes the flame
+        // out to the skill's reach and burns down to embers. A few loose embers fly with it. Without the art, embers only.
+        const string DragonfireArt = "Art/Effects/dragonfire";
         void Dragonfire(SimEvent e)
         {
-            var mouth = new Vector2(e.x + e.facing * .7f, e.y + 1f);
-            for (int i = 0; i < 44; i++)
+            var frames = Sprites.Frames(DragonfireArt);
+            if (frames.Length > 0)
+            {
+                var go = new GameObject("Dragonfire");
+                go.AddComponent<DragonfireFx>().Begin(frames, e.x - e.facing * DragonfireFx.Behind, e.y, e.facing, SlashOrder + 1);
+                rimeFx.RemoveAll(fx => fx == null);
+                rimeFx.Add(go);                         // the list of passing effects that is cleared with the map
+            }
+            var mouth = new Vector2(e.x + e.facing * 1.6f, e.y + 1f);
+            int embers = frames.Length > 0 ? 12 : 44;
+            for (int i = 0; i < embers; i++)
             {
                 float far = Random.value, time = .32f + .3f * Random.value;
                 // A spark covers velocity * time * .68 over its life (it slows as it fades).
                 float speed = Abilities.DragonfireReach * (.25f + .75f * far) / (time * .68f);
                 var velocity = new Vector2(e.facing * speed, Random.Range(-1.6f, 1.3f) - .5f);
                 var color = Color.Lerp(new Color(1f, .93f, .5f, .95f), new Color(1f, .32f, .08f, .9f), Random.value);
-                float size = .28f + .5f * Random.value;
+                float size = frames.Length > 0 ? .08f + .1f * Random.value : .28f + .5f * Random.value;
                 AddAttackSpark(Sprites.Disc, mouth + new Vector2(0f, Random.Range(-.45f, .35f)), velocity, color, size * 1.5f, size, time);
             }
         }
@@ -65,6 +76,42 @@ namespace AshenVale
                 float speed = Abilities.NovaRadius * (.75f + .25f * Random.value) / (time * .68f);
                 AddAttackSpark(Sprites.Square, centre, outward * speed, new Color(.6f + .25f * (i % 2), .92f, 1f, .95f), .5f + .2f * (i % 3), .07f, time);
             }
+        }
+    }
+
+    // Plays the Dragonfire frames once at a fixed spot and removes itself. The frames share one canvas: the ground
+    // glow the fire grows from is OriginX of the way across, and the flame runs from there to the right edge.
+    public sealed class DragonfireFx : MonoBehaviour
+    {
+        public const float Behind = .45f;                   // the glow sits this far behind the Knight, so the maw forms around him
+        const float OriginX = 90f / 754f, FlameShare = 1f - OriginX;
+        static readonly float[] hold = { .05f, .08f, .08f, .2f, .13f, .12f };   // seconds on each frame: a quick rear-up, the long breath, the burn-down
+        Sprite[] frames; SpriteRenderer sr; float x, floor, age; int facing;
+
+        public void Begin(Sprite[] art, float originX, float floorY, int facingSide, int order)
+        {
+            frames = art; x = originX; floor = floorY; facing = facingSide >= 0 ? 1 : -1;
+            sr = gameObject.AddComponent<SpriteRenderer>();
+            sr.sortingOrder = order; sr.flipX = facing < 0;
+            Draw();
+        }
+
+        void Update() { age += Time.deltaTime; Draw(); }
+
+        void Draw()
+        {
+            float t = age; int index = 0;
+            while (index < frames.Length && t >= hold[Mathf.Min(index, hold.Length - 1)]) { t -= hold[Mathf.Min(index, hold.Length - 1)]; index++; }
+            if (index >= frames.Length) { Destroy(gameObject); return; }
+            var sprite = frames[index];
+            sr.sprite = sprite;
+            // Sized so the flame's tip lands on the skill's reach, measured from the Knight.
+            float scale = (Abilities.DragonfireReach + Behind) / (sprite.bounds.size.x * FlameShare);
+            float origin = sprite.bounds.min.x + sprite.bounds.size.x * OriginX;       // the glow, from the sprite's pivot
+            transform.localScale = new Vector3(scale, scale, 1f);
+            transform.position = new Vector3(x - facing * origin * scale, floor - .04f - sprite.bounds.min.y * scale, 0f);
+            // The last frame thins away rather than blinking out.
+            sr.color = new Color(1f, 1f, 1f, index == frames.Length - 1 ? 1f - t / hold[Mathf.Min(index, hold.Length - 1)] : 1f);
         }
     }
 }
