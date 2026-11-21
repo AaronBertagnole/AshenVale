@@ -7,7 +7,7 @@ namespace AshenVale
         public float moveX;     // -1 .. 1, held
         public float moveY;     // -1 .. 1, held (ladders, crouch)
         // Pressed since the last tick
-        public bool jump, attack, skill, dash, pickup, up, townPortal, hpPotion, mpPotion, respawn;
+        public bool jump, attack, skill, mastery, dash, pickup, up, townPortal, hpPotion, mpPotion, respawn;
 
         // A copy that keeps the held axes but clears the one-shot presses.
         public PlayerInput HeldOnly()

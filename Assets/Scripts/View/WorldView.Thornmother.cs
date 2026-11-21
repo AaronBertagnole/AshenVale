@@ -38,6 +38,7 @@ namespace AshenVale
                 case 9: anim = "attack"; span = Tuning.MonsterStrikeShow; break;      // any monster with attack frames
                 case 10: anim = "attack"; count = 2; span = Tuning.SpitWindup; break;            // a spitter gulping
                 case 11: anim = "attack"; from = 2; count = 2; span = Tuning.SpitRecover; break;  // mouth open, then settling
+                case 12: anim = "idle"; count = 1; span = 1f; break;                             // frozen: held on one frame
                 default: return null;
             }
             var frames = MonsterFrames(v.def, anim);

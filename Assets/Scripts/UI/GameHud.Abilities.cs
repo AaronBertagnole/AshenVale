@@ -15,10 +15,10 @@ namespace AshenVale
             GUI.Label(new Rect(r.x + 18, r.y + 27, r.width - 36, 20),
                       ch.Def.name + "   |   Level " + ch.level + "   |   Ability points to spend: " + ch.UnspentPoints, smallStyle);
 
-            const float cardH = 118f;
+            const float cardH = 104f;
             for (int slot = 0; slot < Abilities.Count; slot++)
             {
-                Rect card = new Rect(r.x + 18, r.y + 54 + slot * (cardH + 8), r.width - 36, cardH);
+                Rect card = new Rect(r.x + 18, r.y + 54 + slot * (cardH + 6), r.width - 36, cardH);
                 int rank = ch.abilityRanks[slot];
                 bool locked = rank < 1;
                 GUI.Box(card, "");
@@ -30,17 +30,17 @@ namespace AshenVale
                 {
                     Color before = GUI.color;
                     GUI.color = locked ? new Color(1f, 1f, 1f, .45f) : Color.white;
-                    GUI.DrawTexture(new Rect(card.x + 14, card.y + 8, 58, 58), art.texture, ScaleMode.ScaleToFit, true);
+                    GUI.DrawTexture(new Rect(card.x + 14, card.y + 6, 56, 56), art.texture, ScaleMode.ScaleToFit, true);
                     GUI.color = before;
                     textX = card.x + 82;
                 }
                 GUI.Label(new Rect(textX, card.y + 6, 300, 24), Abilities.Name(ch, slot), titleText);
-                GUI.Label(new Rect(textX, card.y + 29, 300, 18),
+                GUI.Label(new Rect(textX, card.y + 27, 300, 18),
                           Abilities.SlotLabel(slot) + "   [" + Keys.Name(Abilities.Key(slot)) + "]", detailText);
-                GUI.Label(new Rect(textX, card.y + 49, card.width - 150 - (textX - card.x - 16), 22), Abilities.Blurb(ch, slot), smallStyle);
-                GUI.Label(new Rect(card.x + 16, card.y + 72, card.width - 32, 20),
+                GUI.Label(new Rect(textX, card.y + 44, card.width - 150 - (textX - card.x - 16), 22), Abilities.Blurb(ch, slot), smallStyle);
+                GUI.Label(new Rect(card.x + 16, card.y + 66, card.width - 32, 20),
                           locked ? "Locked" : Abilities.Summary(me, slot), detailText);
-                GUI.Label(new Rect(card.x + 16, card.y + 93, card.width - 32, 20), Abilities.RankText(ch, slot), detailText);
+                GUI.Label(new Rect(card.x + 16, card.y + 83, card.width - 32, 20), Abilities.RankText(ch, slot), detailText);
 
                 // Rank pips and the button, right side of the card.
                 float pipX = card.xMax - 14 - Abilities.MaxRank * 13;
@@ -61,6 +61,29 @@ namespace AshenVale
                     if (GUI.Button(button, locked ? "UNLOCK  (1)" : "RANK UP  (1)")) commands.RankUp(slot);
                     GUI.enabled = was;
                 }
+            }
+
+            // The mastery skill: one strip under the three cards. No ranks; it is simply there from its level.
+            {
+                Rect card = new Rect(r.x + 18, r.y + 54 + Abilities.Count * (cardH + 6), r.width - 36, 46);
+                bool locked = !Abilities.MasteryUnlocked(ch);
+                GUI.Box(card, "");
+                Fill(new Rect(card.x, card.y, 4, card.height), locked ? new Color(.35f, .35f, .35f) : new Color(1f, .82f, .35f));
+                var art = Sprites.Art(Abilities.IconPath(ch.hero, Abilities.Mastery));
+                float textX = card.x + 16;
+                if (art != null)
+                {
+                    Color before = GUI.color;
+                    GUI.color = locked ? new Color(1f, 1f, 1f, .45f) : Color.white;
+                    GUI.DrawTexture(new Rect(card.x + 12, card.y + 4, 38, 38), art.texture, ScaleMode.ScaleToFit, true);
+                    GUI.color = before;
+                    textX = card.x + 60;
+                }
+                GUI.Label(new Rect(textX, card.y + 2, 220, 24), Abilities.MasteryName(ch), titleText);
+                GUI.Label(new Rect(textX + 190, card.y + 6, 170, 18), "MASTERY   [" + Keys.Name(GameAction.Mastery) + "]", detailText);
+                GUI.Label(new Rect(card.xMax - 214, card.y + 6, 200, 18), locked ? "Unlocks at level " + Abilities.MasteryLevel : "UNLOCKED", detailRight);
+                GUI.Label(new Rect(textX, card.y + 25, card.width - (textX - card.x) - 14, 18),
+                          locked ? Abilities.MasteryBlurb(ch) : Abilities.MasterySummary(me), detailText);
             }
 
             bool town = Maps.IsTown(me.map);

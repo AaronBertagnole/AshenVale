@@ -125,6 +125,7 @@ namespace AshenVale
             }
 
             TickRimecaller(dt);
+            TickMastery(dt);
             foreach (var map in maps)
             {
                 if (!HasLivingPlayer(map.def.id)) { ResetBosses(map); continue; }   // nobody here: the map waits, as it always has
@@ -174,6 +175,7 @@ namespace AshenVale
             p.hurtVisual = Mathf.Max(0, p.hurtVisual - dt);
             p.attackCooldown = Mathf.Max(0, p.attackCooldown - dt);
             p.skillRecharge = Mathf.Max(0, p.skillRecharge - dt);
+            p.masteryCooldown = Mathf.Max(0, p.masteryCooldown - dt);
             p.attackVisual = Mathf.Max(0, p.attackVisual - dt);
             p.dashCooldown = Mathf.Max(0, p.dashCooldown - dt);
             p.immunity = Mathf.Max(0, p.immunity - dt);
@@ -210,6 +212,7 @@ namespace AshenVale
             {
                 if (!p.crouching && input.attack) Attack(p, map, false);
                 if (!p.crouching && input.skill) Attack(p, map, true);
+                if (!p.crouching && input.mastery) CastMastery(p, map);
                 if (input.pickup) Pickup(p, map);
             }
         }
@@ -655,6 +658,13 @@ namespace AshenVale
             events.Add(new SimEvent { kind = SimEventKind.ItemDropped, map = p.map, playerId = p.id, amount = drop.id, x = p.x, y = p.y + .9f, facing = p.facing });
         }
 
+        // Testing aid (the Unity editor's F9, see AshenValeGame): one level, as if earned.
+        public void TestLevelUp(int playerId)
+        {
+            var p = GetPlayer(playerId);
+            if (p != null && !p.dead) GainXp(p, Tuning.XpNeeded(p.ch.level) - p.ch.xp);
+        }
+
         void GainXp(PlayerState p, int amount)
         {
             p.ch.xp += amount;
@@ -725,6 +735,7 @@ namespace AshenVale
             {
                 var m = map.monsters[index];
                 var d = m.Def;
+                if (m.frozen > 0f) { m.frozen -= dt; m.pose = 12; m.knockbackTime = 0f; continue; }      // frozen solid (Glacial Nova)
                 var target = PickTarget(map.def.id, m, dt);
                 if (d.speed <= 0f) { m.knockbackTime = 0f; continue; }   // chests and other things that never move
                 float inset = Mathf.Min(d.width * .5f, .5f);
@@ -1127,7 +1138,7 @@ namespace AshenVale
                 foreach (var m in map.monsters)
                 {
                     var d = m.Def;
-                    if (d.harmless) continue;
+                    if (d.harmless || m.frozen > 0f) continue;
                     float bottom = m.y + d.hover, top = bottom + d.height;
                     if (Mathf.Abs(p.x - m.x) >= d.width * .5f + .3f || p.y >= top - .1f || p.y + 1.4f <= bottom) continue;
                     Hurt(map, p, m);

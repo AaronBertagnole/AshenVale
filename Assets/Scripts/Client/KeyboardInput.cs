@@ -16,6 +16,7 @@ namespace AshenVale
             if (Keys.Pressed(GameAction.Jump, ignoreMouse)) pending.jump = true;
             if (allowAttacks && Keys.Pressed(GameAction.Attack, ignoreMouse)) pending.attack = true;
             if (allowAttacks && Keys.Pressed(GameAction.Skill, ignoreMouse)) pending.skill = true;
+            if (allowAttacks && Keys.Pressed(GameAction.Mastery, ignoreMouse)) pending.mastery = true;
             if (Keys.Pressed(GameAction.Dash, ignoreMouse)) pending.dash = true;
             if (Keys.Pressed(GameAction.Loot, ignoreMouse)) pending.pickup = true;
             if (Keys.Pressed(GameAction.Up, ignoreMouse)) pending.up = true;
@@ -33,6 +34,7 @@ namespace AshenVale
             {
                 case GameAction.Attack: pending.attack = true; break;
                 case GameAction.Skill: pending.skill = true; break;
+                case GameAction.Mastery: pending.mastery = true; break;
                 case GameAction.Dash: pending.dash = true; break;
                 case GameAction.TownPortal: pending.townPortal = true; break;
                 case GameAction.HpPotion: pending.hpPotion = true; break;

@@ -60,6 +60,7 @@ namespace AshenVale
         public int MaxHp { get { return Hero.baseHp + Tuning.HpPerLevel * (ch.level - 1) + ch.BonusHealth; } }
         public int MaxMp { get { return Hero.baseMp + Tuning.MpPerLevel * (ch.level - 1); } }
 
+        public float masteryCooldown;   // the level-30 skill's own cooldown
         public float attackCooldown, skillRecharge, attackVisual, dashCooldown, dashTime, immunity, hurtVisual;
         // Transient combat state; do not add to CharacterData/save files.
         public float attackWindup, attackDuration;
@@ -114,7 +115,7 @@ namespace AshenVale
         public float windup, strike, attackCooldown, summonCooldown;
         // What it is doing, for the view (sent to clients): 0 nothing, 1 slam windup, 2 slam strike, 3 summoning,
         // 4 calling an eruption, 5 rooting, 6 rooted, 7 breaking free, 8 (a sprout) healing its mother,
-        // 9 (any ordinary monster) striking a hero it has just touched, 10 (a spitter) gulping, 11 spitting.
+        // 9 (any ordinary monster) striking a hero it has just touched, 10 (a spitter) gulping, 11 spitting, 12 frozen.
         public int pose;
         public int struck;              // the attack whose strike pose is showing
         public float eruptCooldown;
@@ -123,6 +124,7 @@ namespace AshenVale
         public float phaseTime, rootHp, wallLeft, wallRight, wallTick;
         public float attackShow;        // ordinary monsters: time left of the strike pose after hurting a hero
         public float homeX, homeY, wanderY;     // flyers: their haunt, and the height they are drifting toward
+        public float frozen;            // seconds left frozen solid (Glacial Nova): it neither moves nor hurts
         public float spitX;             // spitters: where the glob being readied will land
         public float healClock;         // sprouts: until the next heal pulse; while positive after a pulse it stands still
         public MonsterDef Def { get { return Monsters.All[def]; } }
@@ -153,7 +155,8 @@ namespace AshenVale
         ThornWalls,         // walls rise at x (left) and amount / 100 (right) on floor y and creep inward
         ThornWallsEnd,      // they crumble
         SproutHeal,         // a sprout at (x, y) sends healing to the monster with id `amount`
-        PoisonSpit }        // a glob leaves (x, floor y) for amount / 100 on that floor: Tuning.SpitFlight in the air, then a puddle for Tuning.PuddleTime
+        PoisonSpit,         // a glob leaves (x, floor y) for amount / 100 on that floor: Tuning.SpitFlight in the air, then a puddle for Tuning.PuddleTime
+        Mastery }           // a hero's level-30 skill at (x, y), facing: amount says which (Abilities.Dragonfire ... ArrowStormWave, a wave landing at x, floor y)
 
     // Something that happened during a tick, for the view (effects, sounds, numbers) and later for the network.
     public struct SimEvent

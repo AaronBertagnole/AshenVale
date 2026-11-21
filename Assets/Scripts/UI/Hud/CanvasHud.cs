@@ -95,10 +95,10 @@ namespace AshenVale
             Label("Log heading", log, 10, 5, 200, 13, 9, HudTheme.CopperText, FontStyle.Bold).text = "ADVENTURE LOG";
             for (int i = 0; i < 3; i++) lines.Add(Label("Activity " + i, log, 10, 21 + i * 14, 200, 14, 10, HudTheme.TextMuted));
 
-            var actions = Rect("Action bar", safeRoot, new Vector2(.5f, 0), new Vector2(.5f, 0), new Vector2(0, 8), new Vector2(292, 66)); actions.pivot = new Vector2(.5f, 0);
-            GameAction[] actionsList = { GameAction.Attack, GameAction.Skill, GameAction.Dash, GameAction.TownPortal, GameAction.HpPotion, GameAction.MpPotion };
-            HudGlyph.Symbol[] glyphs = { HudGlyph.Symbol.Blade, HudGlyph.Symbol.Burst, HudGlyph.Symbol.Dash, HudGlyph.Symbol.Portal, HudGlyph.Symbol.Bottle, HudGlyph.Symbol.Bottle };
-            Color[] colors = { new Color(1,.65f,.24f), HudTheme.Teal, new Color(.7f,.89f,.8f), new Color(.65f,.8f,1), new Color(1,.4f,.35f), new Color(.3f,.75f,1) };
+            var actions = Rect("Action bar", safeRoot, new Vector2(.5f, 0), new Vector2(.5f, 0), new Vector2(0, 8), new Vector2(341, 66)); actions.pivot = new Vector2(.5f, 0);
+            GameAction[] actionsList = { GameAction.Attack, GameAction.Skill, GameAction.Dash, GameAction.Mastery, GameAction.TownPortal, GameAction.HpPotion, GameAction.MpPotion };
+            HudGlyph.Symbol[] glyphs = { HudGlyph.Symbol.Blade, HudGlyph.Symbol.Burst, HudGlyph.Symbol.Dash, HudGlyph.Symbol.Diamond, HudGlyph.Symbol.Portal, HudGlyph.Symbol.Bottle, HudGlyph.Symbol.Bottle };
+            Color[] colors = { new Color(1,.65f,.24f), HudTheme.Teal, new Color(.7f,.89f,.8f), new Color(1f,.82f,.35f), new Color(.65f,.8f,1), new Color(1,.4f,.35f), new Color(.3f,.75f,1) };
             for (int i = 0; i < actionsList.Length; i++)
             {
                 GameAction action = actionsList[i];
@@ -116,7 +116,7 @@ namespace AshenVale
                 if (painted == null)
                 {
                     var icon = Graphic<HudGlyph>("Icon", button.transform, new Vector2(0, 1), new Vector2(0, 1), new Vector2(6, -3), new Vector2(30, 30)); icon.symbol = glyphs[i]; icon.color = colors[i];
-                    if (i < Abilities.Count)
+                    if (i <= Abilities.Mastery)
                     {
                         // Basic, Skill and Movement: room for the hero's own ability picture (set when the hero is known).
                         abilityGlyph = icon;
@@ -278,6 +278,7 @@ namespace AshenVale
                     case GameAction.Attack: time=me.attackCooldown;duration=me.lastWasSkill?Abilities.SkillSwing(me):Abilities.BasicCooldown(me);break;
                     case GameAction.Skill: if(!Abilities.Unlocked(me,Abilities.Skill)){ready=false;slot.value.text="LOCKED";break;} { float recharge=me.skillRecharge,swing=me.attackCooldown;time=Mathf.Max(recharge,swing);duration=recharge>=swing?Mathf.Max(.01f,Abilities.SkillRecharge(me)):(me.lastWasSkill?Abilities.SkillSwing(me):Abilities.BasicCooldown(me)); }ready &= me.mp>=Abilities.SkillCost(me);slot.value.text=Abilities.SkillCost(me)+" MP";break;
                     case GameAction.Dash:if(!Abilities.Unlocked(me,Abilities.Movement)){ready=false;slot.value.text="LOCKED";break;}time=me.dashCooldown;if(RimecallerRules.Is(me.Hero)){duration=Abilities.MoveCooldown(me);slot.value.text=Abilities.MoveCost(me)+" MP";ready &= !me.climbing && me.mp>=Abilities.MoveCost(me) && me.attackVisual<=0;break;}duration=Abilities.MoveCooldown(me);ready &= !me.climbing;if(me.Hero.dragonKnight){slot.value.text=Abilities.MoveCost(me)+" MP";ready &= me.mp>=Abilities.MoveCost(me)&&me.grounded;}break;
+                    case GameAction.Mastery:if(!Abilities.MasteryUnlocked(ch)){ready=false;slot.value.text="LV "+Abilities.MasteryLevel;break;}time=Mathf.Max(me.masteryCooldown,me.attackCooldown);duration=me.masteryCooldown>=me.attackCooldown?Abilities.MasteryCooldown(me):Abilities.MasterySwing;slot.value.text=Abilities.MasteryCost(me)+" MP";ready &= !me.climbing && me.mp>=Abilities.MasteryCost(me);break;
                     case GameAction.TownPortal:time=me.portalCast;duration=Tuning.PortalCastTime;ready &= def.kind!=MapKind.Town&&!me.portalOpen&&me.portalCast<=0;break;
                     case GameAction.HpPotion:slot.value.text="x"+ch.hpPotions;ready &= ch.hpPotions>0&&me.hp<me.MaxHp;break;
                     case GameAction.MpPotion:slot.value.text="x"+ch.mpPotions;ready &= ch.mpPotions>0&&me.mp<me.MaxMp;break;

@@ -20,6 +20,43 @@ namespace AshenVale
         public const float SkillDamagePerRank = .05f, SkillRechargePerRank = .1f;
         public const float MoveCooldownPerRank = .04f, LeapDamagePerRank = .05f, FissurePerRank = .03f, ImmunityPerRank = .015f;
 
+        // ---- The mastery skill: a fourth ability on its own key, there from MasteryLevel (no ranks; see World.Mastery) ----
+        public const int Mastery = 3;           // its slot for names and icons; it has no entry in abilityRanks
+        public const int MasteryLevel = 30;
+        public const int Dragonfire = 0, ArrowStorm = 1, GlacialNova = 2, ArrowStormWave = 3;   // SimEvent.amount for SimEventKind.Mastery
+        public const float MasterySwing = .6f;  // the hero is busy this long after casting
+        public const float DragonfireReach = 7f, DragonfireDamage = 3f, DragonfireCooldown = 14f;
+        public const float ArrowStormAhead = 4.5f, ArrowStormHalfWidth = 2.5f, ArrowStormDelay = .35f, ArrowStormEvery = .2f, ArrowStormDamage = .6f, ArrowStormCooldown = 16f;
+        public const int ArrowStormWaves = 8;
+        public const float NovaRadius = 4.5f, NovaDamage = 2.5f, NovaFreeze = 3f, NovaCooldown = 18f;
+        static readonly string[] masteryNames = { "Dragonfire", "Arrow Storm", "Glacial Nova" };
+        static readonly string[] masteryBlurbs =
+        {
+            "A wave of flame along the ground ahead burns everything in its path.",
+            "Arrows rain on the ground ahead of you.",
+            "A burst of ice all around you. Monsters freeze solid (bosses only take the hit).",
+        };
+
+        public static bool MasteryUnlocked(Character ch) { return ch.level >= MasteryLevel; }
+        public static int MasteryKind(HeroDef hero) { return hero.dragonKnight ? Dragonfire : RimecallerRules.Is(hero) ? GlacialNova : ArrowStorm; }
+        public static string MasteryName(Character ch) { return masteryNames[MasteryKind(ch.Def)]; }
+        public static string MasteryBlurb(Character ch) { return masteryBlurbs[MasteryKind(ch.Def)]; }
+        public static int MasteryCost(PlayerState p) { int k = MasteryKind(p.Hero); return k == GlacialNova ? 35 : 30; }
+        public static float MasteryCooldown(PlayerState p) { int k = MasteryKind(p.Hero); return k == Dragonfire ? DragonfireCooldown : k == ArrowStorm ? ArrowStormCooldown : NovaCooldown; }
+        // Per hit: Dragonfire and the nova land once, Arrow Storm lands ArrowStormWaves times.
+        public static int MasteryDamage(PlayerState p)
+        {
+            int k = MasteryKind(p.Hero);
+            return UnityEngine.Mathf.RoundToInt(BasicDamage(p) * (k == Dragonfire ? DragonfireDamage : k == ArrowStorm ? ArrowStormDamage : NovaDamage));
+        }
+        public static string MasterySummary(PlayerState p)
+        {
+            int k = MasteryKind(p.Hero);
+            string text = "Damage " + MasteryDamage(p) + (k == ArrowStorm ? " x " + ArrowStormWaves : "") + "   ·   " + MasteryCost(p) + " MP   ·   " + MasteryCooldown(p).ToString("0") + "s cooldown";
+            if (k == GlacialNova) text += "   ·   freezes " + NovaFreeze.ToString("0") + "s";
+            return text;
+        }
+
         public static int StartRank(int slot) { return slot == Basic ? 1 : 0; }
         public static int Rank(PlayerState p, int slot) { return p.ch.abilityRanks[slot]; }
         public static bool Unlocked(Character ch, int slot) { return ch.abilityRanks[slot] >= 1; }
@@ -51,10 +88,10 @@ namespace AshenVale
         public static string SlotLabel(int slot) { return slotLabels[slot]; }
 
         // The ability's painted icon under Resources (Art/Abilities/knight_skill ...); there may be none yet.
-        static readonly string[] iconHeroes = { "knight", "ranger", "rimecaller" }, iconSlots = { "basic", "skill", "move" };
+        static readonly string[] iconHeroes = { "knight", "ranger", "rimecaller" }, iconSlots = { "basic", "skill", "move", "mastery" };
         public static string IconPath(int hero, int slot)
         {
-            return hero >= 0 && hero < iconHeroes.Length && slot >= 0 && slot < Count ? "Art/Abilities/" + iconHeroes[hero] + "_" + iconSlots[slot] : null;
+            return hero >= 0 && hero < iconHeroes.Length && slot >= 0 && slot < iconSlots.Length ? "Art/Abilities/" + iconHeroes[hero] + "_" + iconSlots[slot] : null;
         }
         public static GameAction Key(int slot) { return slot == Basic ? GameAction.Attack : slot == Skill ? GameAction.Skill : GameAction.Dash; }
 

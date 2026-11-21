@@ -162,6 +162,7 @@ namespace AshenVale
             {
                 if (e.map != shownMap) continue;
                 PlayAttackFeedback(e);
+                if (e.kind == SimEventKind.Mastery) { SpawnMastery(e); continue; }
                 if(e.kind==SimEventKind.RimeBurst || e.kind==SimEventKind.RimeStorm || e.kind==SimEventKind.RimeTeleport) {SpawnRimeFx(e);continue;}
                 if (e.kind == SimEventKind.ItemDropped)
                 {
@@ -462,6 +463,7 @@ namespace AshenVale
                 float flash = v.hurt / .25f;
                 Color tint = new Color(1f, .45f, .4f, 1f);
                 if (d.boss && m.windup > 0) { flash = Mathf.Max(flash, .55f + Mathf.Sin(v.clock * 18f) * .2f); tint = new Color(1f, .3f, .15f, 1f); }   // the tell
+                else if (m.pose == 12) { flash = Mathf.Max(flash, .55f); tint = new Color(.55f, .85f, 1f, 1f); }      // frozen solid
                 else if (v.rage > 0f && flash < .4f) { flash = Mathf.Max(flash, v.rage * (.3f + .14f * Mathf.Sin(v.clock * 7f))); tint = new Color(1f, .18f, .1f, 1f); }   // seething
                 for (int i = 0; i < v.parts.Length; i++)
                     v.parts[i].color = Color.Lerp(v.colors[i], new Color(tint.r, tint.g, tint.b, v.colors[i].a), flash * .7f);

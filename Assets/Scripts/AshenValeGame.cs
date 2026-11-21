@@ -247,6 +247,10 @@ public class AshenValeGame : MonoBehaviour
         var me = world.GetPlayer(localId);
         music.SetMap(me != null ? me.map : -1);      // towns with a theme play it while you are there
         if (me != null && me.dead && me.deathClock >= Tuning.RespawnDelay && Input.GetKeyDown(KeyCode.N)) { BackToHeroes(); return; }
+#if UNITY_EDITOR
+        // Testing aid, editor only: F9 gains a level (solo or hosting), to reach the level-30 mastery skills without the grind.
+        if (mode != Mode.Client && Input.GetKeyDown(KeyCode.F9)) world.TestLevelUp(localId);
+#endif
         bool pointerOverHud = canvasHud && canvasHud.PointerOverHud();
         hud.HandleKeys(me, pointerOverHud || hud.WindowOpen);
         if (hud.Capturing) keyboard.Clear(); else keyboard.Sample(!hud.WindowOpen, pointerOverHud || hud.WindowOpen);   // rebinding a key: the game doesn't hear it

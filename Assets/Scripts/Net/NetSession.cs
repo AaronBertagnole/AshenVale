@@ -288,6 +288,7 @@ namespace AshenVale
             if ((presses & 16) != 0) input.pickup = true;
             if ((presses & 32) != 0) input.up = true;
             if ((presses & 64) != 0) input.townPortal = true;
+            if ((presses & 1024) != 0) input.mastery = true;
             if ((presses & 128) != 0) input.hpPotion = true;
             if ((presses & 256) != 0) input.mpPotion = true;
             if ((presses & 512) != 0) input.respawn = true;
@@ -336,7 +337,7 @@ namespace AshenVale
         {
             if (CurrentRole != Role.Host || !handlersRegistered) return;
             foreach (var e in world.events) if (e.kind == SimEventKind.Slash || e.kind == SimEventKind.BossSlam || e.kind == SimEventKind.DragonThrust || e.kind == SimEventKind.DragonFang || e.kind == SimEventKind.DragonFissure || e.kind == SimEventKind.DragonSweep || e.kind == SimEventKind.EmbermarksPickedUp || e.kind == SimEventKind.RimeBurst || e.kind == SimEventKind.RimeStorm || e.kind == SimEventKind.RimeTeleport || e.kind == SimEventKind.RangerRelease || e.kind == SimEventKind.HeroImpact || e.kind == SimEventKind.ItemDropped
-                || e.kind == SimEventKind.BrambleWarn || e.kind == SimEventKind.ThornWalls || e.kind == SimEventKind.ThornWallsEnd || e.kind == SimEventKind.SproutHeal || e.kind == SimEventKind.PoisonSpit) pendingEvents.Add(e);
+                || e.kind == SimEventKind.BrambleWarn || e.kind == SimEventKind.ThornWalls || e.kind == SimEventKind.ThornWallsEnd || e.kind == SimEventKind.SproutHeal || e.kind == SimEventKind.PoisonSpit || e.kind == SimEventKind.Mastery) pendingEvents.Add(e);
             snapshotTimer += dt;
             characterTimer += dt;
             if (snapshotTimer >= SnapshotInterval)
@@ -445,7 +446,7 @@ namespace AshenVale
             var input = keyboard.Take();
             int presses = (input.jump ? 1 : 0) | (input.attack ? 2 : 0) | (input.skill ? 4 : 0) | (input.dash ? 8 : 0)
                         | (input.pickup ? 16 : 0) | (input.up ? 32 : 0) | (input.townPortal ? 64 : 0) | (input.hpPotion ? 128 : 0)
-                        | (input.mpPotion ? 256 : 0) | (input.respawn ? 512 : 0);
+                        | (input.mpPotion ? 256 : 0) | (input.respawn ? 512 : 0) | (input.mastery ? 1024 : 0);
             var w = new FastBufferWriter(16, Allocator.Temp);
             try
             {
