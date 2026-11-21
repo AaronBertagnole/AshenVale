@@ -23,12 +23,12 @@ namespace AshenVale
             if (frames.Length > 0)
             {
                 var go = new GameObject("Dragonfire");
-                go.AddComponent<DragonfireFx>().Begin(frames, e.x - e.facing * DragonfireFx.Behind, e.y, e.facing, SlashOrder + 1);
+                go.AddComponent<DragonfireFx>().Begin(frames, e.x + e.facing * DragonfireFx.ForwardOffset, e.y, e.facing, SlashOrder + 1);
                 rimeFx.RemoveAll(fx => fx == null);
                 rimeFx.Add(go);                         // the list of passing effects that is cleared with the map
             }
             var mouth = new Vector2(e.x + e.facing * 1.6f, e.y + 1f);
-            int embers = frames.Length > 0 ? 12 : 44;
+            int embers = frames.Length > 0 ? 0 : 44;
             for (int i = 0; i < embers; i++)
             {
                 float far = Random.value, time = .32f + .3f * Random.value;
@@ -83,16 +83,16 @@ namespace AshenVale
     // glow the fire grows from is OriginX of the way across, and the flame runs from there to the right edge.
     public sealed class DragonfireFx : MonoBehaviour
     {
-        public const float Behind = .45f;                   // the glow sits this far behind the Knight, so the maw forms around him
+        public const float ForwardOffset = .95f;
         const float OriginX = 90f / 754f, FlameShare = 1f - OriginX;
-        static readonly float[] hold = { .05f, .08f, .08f, .2f, .13f, .12f };   // seconds on each frame: a quick rear-up, the long breath, the burn-down
+        static readonly float[] hold = { .10f, .14f, .11f, .43f, .19f, .23f };   // seconds on each frame: a quick rear-up, the long breath, the burn-down
         Sprite[] frames; SpriteRenderer sr; float x, floor, age; int facing;
 
         public void Begin(Sprite[] art, float originX, float floorY, int facingSide, int order)
         {
             frames = art; x = originX; floor = floorY; facing = facingSide >= 0 ? 1 : -1;
             sr = gameObject.AddComponent<SpriteRenderer>();
-            sr.sortingOrder = order; sr.flipX = facing < 0;
+            sr.sortingOrder = order;
             Draw();
         }
 
@@ -105,13 +105,25 @@ namespace AshenVale
             if (index >= frames.Length) { Destroy(gameObject); return; }
             var sprite = frames[index];
             sr.sprite = sprite;
-            // Sized so the flame's tip lands on the skill's reach, measured from the Knight.
-            float scale = (Abilities.DragonfireReach + Behind) / (sprite.bounds.size.x * FlameShare);
-            float origin = sprite.bounds.min.x + sprite.bounds.size.x * OriginX;       // the glow, from the sprite's pivot
-            transform.localScale = new Vector3(scale, scale, 1f);
-            transform.position = new Vector3(x - facing * origin * scale, floor - .04f - sprite.bounds.min.y * scale, 0f);
-            // The last frame thins away rather than blinking out.
-            sr.color = new Color(1f, 1f, 1f, index == frames.Length - 1 ? 1f - t / hold[Mathf.Min(index, hold.Length - 1)] : 1f);
+            float fullWidth = (Abilities.DragonfireReach - ForwardOffset) / FlameShare;
+            float progress = Mathf.Clamp01(t / .15f);
+            float width = index == 3 ? Mathf.Lerp(.76f, 1f, Mathf.SmoothStep(0f, 1f, progress)) :
+                index < 3 ? .76f : 1f;
+            float scaleX = fullWidth * width / sprite.bounds.size.x;
+            float scaleY = fullWidth * .66f / sprite.bounds.size.x;
+            float origin = sprite.bounds.min.x + sprite.bounds.size.x * OriginX;
+            transform.localScale = new Vector3(facing * scaleX, scaleY, 1f);
+            transform.position = new Vector3(x - facing * origin * scaleX,
+                floor - .04f - sprite.bounds.min.y * scaleY, 0f);
+
+            float opacity = index == frames.Length - 1
+                ? 1f - t / hold[Mathf.Min(index, hold.Length - 1)] : 1f;
+            float heat = index == 3
+                ? Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((t - .18f) / .18f)) : index > 3 ? 1f : 0f;
+            sr.color = Color.Lerp(Color.white, new Color(1f, .73f, .43f), heat);
+            var color = sr.color;
+            color.a = opacity;
+            sr.color = color;
         }
     }
 }
