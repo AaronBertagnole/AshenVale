@@ -83,9 +83,9 @@ namespace AshenVale
     // glow the fire grows from is OriginX of the way across, and the flame runs from there to the right edge.
     public sealed class DragonfireFx : MonoBehaviour
     {
-        public const float ForwardOffset = .95f;
+        public const float ForwardOffset = .55f;
         const float OriginX = 90f / 754f, FlameShare = 1f - OriginX;
-        static readonly float[] hold = { .10f, .14f, .11f, .43f, .19f, .23f };   // seconds on each frame: a quick rear-up, the long breath, the burn-down
+        static readonly float[] hold = { .06f, .16f, .12f, .23f, .24f, .31f };   // seconds on each frame: a quick rear-up, the long breath, the burn-down
         Sprite[] frames; SpriteRenderer sr; float x, floor, age; int facing;
 
         public void Begin(Sprite[] art, float originX, float floorY, int facingSide, int order)
@@ -106,24 +106,15 @@ namespace AshenVale
             var sprite = frames[index];
             sr.sprite = sprite;
             float fullWidth = (Abilities.DragonfireReach - ForwardOffset) / FlameShare;
-            float progress = Mathf.Clamp01(t / .15f);
-            float width = index == 3 ? Mathf.Lerp(.76f, 1f, Mathf.SmoothStep(0f, 1f, progress)) :
-                index < 3 ? .76f : 1f;
-            float scaleX = fullWidth * width / sprite.bounds.size.x;
-            float scaleY = fullWidth * .66f / sprite.bounds.size.x;
+            float scale = fullWidth / sprite.bounds.size.x;
             float origin = sprite.bounds.min.x + sprite.bounds.size.x * OriginX;
-            transform.localScale = new Vector3(facing * scaleX, scaleY, 1f);
-            transform.position = new Vector3(x - facing * origin * scaleX,
-                floor - .04f - sprite.bounds.min.y * scaleY, 0f);
+            transform.localScale = new Vector3(facing * scale, scale, 1f);
+            transform.position = new Vector3(x - facing * origin * scale,
+                floor - .04f - sprite.bounds.min.y * scale, 0f);
 
             float opacity = index == frames.Length - 1
                 ? 1f - t / hold[Mathf.Min(index, hold.Length - 1)] : 1f;
-            float heat = index == 3
-                ? Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((t - .18f) / .18f)) : index > 3 ? 1f : 0f;
-            sr.color = Color.Lerp(Color.white, new Color(1f, .73f, .43f), heat);
-            var color = sr.color;
-            color.a = opacity;
-            sr.color = color;
+            sr.color = new Color(1f, 1f, 1f, opacity);
         }
     }
 }
