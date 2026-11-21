@@ -247,10 +247,13 @@ public class AshenValeGame : MonoBehaviour
         var me = world.GetPlayer(localId);
         music.SetMap(me != null ? me.map : -1);      // towns with a theme play it while you are there
         if (me != null && me.dead && me.deathClock >= Tuning.RespawnDelay && Input.GetKeyDown(KeyCode.N)) { BackToHeroes(); return; }
-#if UNITY_EDITOR
-        // Testing aid, editor only: F9 gains a level (solo or hosting), to reach the level-30 mastery skills without the grind.
-        if (mode != Mode.Client && Input.GetKeyDown(KeyCode.F9)) world.TestLevelUp(localId);
-#endif
+        // Debug mode: F8 shows a small panel of testing shortcuts (see DrawDebug); F9 is still "one level" on its own.
+        if (DebugAllowed)
+        {
+            if (Input.GetKeyDown(KeyCode.F8)) debugOpen = !debugOpen;
+            if (Input.GetKeyDown(KeyCode.F9)) world.TestLevelTo(localId, 0);
+        }
+        else debugOpen = false;
         bool pointerOverHud = canvasHud && canvasHud.PointerOverHud();
         hud.HandleKeys(me, pointerOverHud || hud.WindowOpen);
         if (hud.Capturing) keyboard.Clear(); else keyboard.Sample(!hud.WindowOpen, pointerOverHud || hud.WindowOpen);   // rebinding a key: the game doesn't hear it
@@ -316,7 +319,30 @@ public class AshenValeGame : MonoBehaviour
     void OnGUI()
     {
         if (inMenu) menu.Draw();
-        else hud.Draw(world.GetPlayer(localId));
+        else { hud.Draw(world.GetPlayer(localId)); if (debugOpen && DebugAllowed) DrawDebug(); }
+    }
+
+    // Debug mode: only in the Unity editor and in development builds, and only when this PC runs the world (solo or
+    // hosting), so it can never reach a joined game or a release build.
+    bool debugOpen;
+    bool DebugAllowed { get { return !inMenu && mode != Mode.Client && (Application.isEditor || Debug.isDebugBuild); } }
+
+    void DrawDebug()
+    {
+        var me = world.GetPlayer(localId);
+        if (me == null) return;
+        const float w = 170f, row = 26f;
+        Rect box = new Rect(Screen.width - w - 12f, Screen.height * .5f - 120f, w, 44f + 7 * row);
+        GUI.Box(box, "DEBUG  [F8]");
+        GUI.Label(new Rect(box.x + 10, box.y + 22, w - 20, 20), "Level " + me.ch.level + "   Gold " + me.ch.gold);
+        float y = box.y + 44f;
+        if (GUI.Button(new Rect(box.x + 8, y, w - 16, 22), "Level +1  [F9]")) world.TestLevelTo(localId, 0); y += row;
+        if (GUI.Button(new Rect(box.x + 8, y, w - 16, 22), "Level +5")) world.TestLevelTo(localId, me.ch.level + 5); y += row;
+        if (GUI.Button(new Rect(box.x + 8, y, w - 16, 22), "Jump to level 30")) world.TestLevelTo(localId, 30); y += row;
+        if (GUI.Button(new Rect(box.x + 8, y, w - 16, 22), "Refill HP, MP, cooldowns")) world.TestRefill(localId); y += row;
+        if (GUI.Button(new Rect(box.x + 8, y, w - 16, 22), "Gold +1000")) world.TestGold(localId, 1000); y += row;
+        if (GUI.Button(new Rect(box.x + 8, y, w - 16, 22), "Kill everything here")) world.TestKillAll(localId); y += row;
+        GUI.Label(new Rect(box.x + 10, y, w - 20, 20), "Editor / dev builds only");
     }
 }
 

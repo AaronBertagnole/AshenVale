@@ -658,11 +658,39 @@ namespace AshenVale
             events.Add(new SimEvent { kind = SimEventKind.ItemDropped, map = p.map, playerId = p.id, amount = drop.id, x = p.x, y = p.y + .9f, facing = p.facing });
         }
 
-        // Testing aid (the Unity editor's F9, see AshenValeGame): one level, as if earned.
-        public void TestLevelUp(int playerId)
+        // ---- Debug mode (F8 in the editor and in development builds, see AshenValeGame): skip the grind while testing ----
+
+        // Levels, as if earned, until the hero is at `level` (one level if it is already there or past it).
+        public void TestLevelTo(int playerId, int level)
         {
             var p = GetPlayer(playerId);
-            if (p != null && !p.dead) GainXp(p, Tuning.XpNeeded(p.ch.level) - p.ch.xp);
+            if (p == null || p.dead) return;
+            do GainXp(p, Tuning.XpNeeded(p.ch.level) - p.ch.xp); while (p.ch.level < level);
+            TestRefill(playerId);
+        }
+
+        // Full health and mana, every cooldown ready.
+        public void TestRefill(int playerId)
+        {
+            var p = GetPlayer(playerId);
+            if (p == null || p.dead) return;
+            p.hp = p.MaxHp; p.mp = p.MaxMp;
+            p.skillRecharge = p.masteryCooldown = p.dashCooldown = 0f;
+        }
+
+        public void TestGold(int playerId, int amount)
+        {
+            var p = GetPlayer(playerId);
+            if (p != null) p.ch.gold += amount;
+        }
+
+        // Clears the hero's map, with the usual loot and experience.
+        public void TestKillAll(int playerId)
+        {
+            var p = GetPlayer(playerId);
+            if (p == null || p.dead) return;
+            var map = maps[p.map];
+            foreach (var m in new List<MonsterState>(map.monsters)) HitMonster(map, m, Mathf.CeilToInt(m.hp) + 1, p);
         }
 
         void GainXp(PlayerState p, int amount)
