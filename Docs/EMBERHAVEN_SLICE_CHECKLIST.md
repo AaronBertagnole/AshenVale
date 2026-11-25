@@ -52,6 +52,7 @@ Ranger run, 2026-11-25, pushed and waiting for the owner to confirm:
 - [ ] Ranger arrows leave at the height of the nocked arrow (0.9 units above her feet, was 1.1).
 - [ ] Dragon Strike steps forward 1.2 units (was 0.55).
 - [ ] Holding the attack or skill key keeps attacking (all heroes). The movement ability still needs a press each time.
+- [ ] One damage number per hit (the killing-blow number was also appearing on hits the monster survived).
 
 Knight run, still open:
 - [ ] Emberhaven painting: two flaws in the front layer (a garbled hanging sign under the balcony, a mint cloth scrap at the left edge). Needs a repaint of those spots; an automatic patch looked worse.

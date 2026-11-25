@@ -181,13 +181,9 @@ namespace AshenVale
                 if (e.kind == SimEventKind.Mastery) { SpawnMastery(e); continue; }
                 if (e.kind == SimEventKind.MonsterHit)
                 {
-                    // The blow that kills: the monster is already gone, so its last number is written from the hit itself.
-                    // (Hits it survives are numbered where its health drops, below.)
-                    bool alive = false;
-                    if (shownMap >= 0)
-                        foreach (var m in world.maps[shownMap].monsters)
-                            if (Mathf.Abs(m.x - e.x) < .05f && Mathf.Abs(m.y - e.y) < .05f) { alive = true; break; }
-                    if (!alive && e.amount > 0) Number(e.x, e.y + 1.5f, e.amount.ToString(), DamageColor, e.amount >= 60);
+                    // The blow that kills (the world marks it heavy): the monster is already gone, so its last number is
+                    // written from the hit itself. Hits it survives are numbered where its health drops, below.
+                    if (e.heavy && e.amount > 0) Number(e.x, e.y + 1.5f, e.amount.ToString(), DamageColor, e.amount >= 60);
                     continue;
                 }
                 if(e.kind==SimEventKind.RimeBurst || e.kind==SimEventKind.RimeStorm || e.kind==SimEventKind.RimeTeleport) {SpawnRimeFx(e);continue;}

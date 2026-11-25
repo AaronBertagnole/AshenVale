@@ -561,7 +561,7 @@ namespace AshenVale
                 m.damageBy[attacker.id] = dealt + Mathf.Min(damage, Mathf.CeilToInt(m.hp + damage));
                 m.lastHitAt[attacker.id] = time;
             }
-            events.Add(new SimEvent { kind = SimEventKind.MonsterHit, map = map.def.id, targetId = m.id, amount = damage,
+            events.Add(new SimEvent { kind = SimEventKind.MonsterHit, map = map.def.id, targetId = m.id, amount = damage, heavy = m.hp <= 0,   // heavy: this blow killed it
                                       playerId = attacker != null ? attacker.id : 0, x = m.x, y = m.y });
             if (attacker != null && (attacker.Hero.dragonKnight || attacker.Hero.style == AttackStyle.Arrows))
             {
