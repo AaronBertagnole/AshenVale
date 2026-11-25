@@ -1099,7 +1099,7 @@ namespace AshenVale
             m.attackShow = Mathf.Max(0f, m.attackShow - dt);
             m.pose = m.attackShow > 0f ? 9 : 0;
             MonsterState mother = null;
-            foreach (var other in map.monsters) if (other.Def.boss && other.Def.minion == m.def) { mother = other; break; }
+            foreach (var other in map.monsters) if (other.Def.boss && other.Def.minionsHeal && other.Def.minion == m.def) { mother = other; break; }
             if (mother == null || mother.hp >= mother.maxHp || m.knockbackTime > 0f)
             { m.healClock = Mathf.Max(m.healClock, Tuning.SproutHealEvery * .5f); return false; }
             // She is hurt: healing comes before anything else. Too far to reach her, it drops whoever it was after and
