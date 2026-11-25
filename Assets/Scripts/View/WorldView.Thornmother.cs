@@ -132,11 +132,11 @@ namespace AshenVale
         // ground it has already taken, out to where it started.
         sealed class ThornWall
         {
-            public GameObject go; public SpriteRenderer sr; public float x, x0, y, age, falling = -1f; public int side;
+            public GameObject go; public SpriteRenderer sr, glow; public float x, x0, y, age, falling = -1f, dust; public int side;
             public readonly List<SpriteRenderer> fill = new List<SpriteRenderer>(); public readonly List<float> fillAge = new List<float>();
         }
         const float WallStep = 1.7f; const int WallFillMax = 14;
-        sealed class HealMote { public GameObject go; public SpriteRenderer sr; public float x, y, age; public int target; }
+        sealed class HealMote { public GameObject go; public SpriteRenderer sr, glow; public float x, y, age, trail; public int target; }
         readonly List<Bramble> bramblesShown = new List<Bramble>();
         readonly List<ThornWall> thornWalls = new List<ThornWall>();
         readonly List<HealMote> healMotes = new List<HealMote>();
@@ -181,14 +181,18 @@ namespace AshenVale
                 var sr = ThornSprite("Thorn Wall", ThornFrontOrder, out go);
                 sr.flipX = side > 0;
                 float at = side < 0 ? e.x : e.amount / 100f;
-                thornWalls.Add(new ThornWall { go = go, sr = sr, side = side, x = at, x0 = at, y = e.y });
+                var glow = Glow("Thorn Wall glow", ThornFrontOrder + 1);
+                if (glow != null) glow.flipX = sr.flipX;
+                thornWalls.Add(new ThornWall { go = go, sr = sr, glow = glow, side = side, x = at, x0 = at, y = e.y });
+                GroundBurst(at, e.y, BossFxTint, 12, 1.6f);      // it breaks out of the floor
             }
+            Shake(.1f, .25f);
         }
 
         void EndThornWalls()
         {
             bool any = false;
-            foreach (var wall in thornWalls) if (wall.falling < 0f) { wall.falling = 0f; any = true; }
+            foreach (var wall in thornWalls) if (wall.falling < 0f) { wall.falling = 0f; any = true; GroundBurst(wall.x, wall.y, BossFxTint, 14, 2.2f); }     // it comes apart
             if (any) PlayThornSound("thorn_break");
         }
 
@@ -196,8 +200,27 @@ namespace AshenVale
         {
             GameObject go;
             var sr = ThornSprite("Healing Mote", SlashOrder, out go);
-            healMotes.Add(new HealMote { go = go, sr = sr, x = e.x, y = e.y + .8f, target = e.amount });
+            healMotes.Add(new HealMote { go = go, sr = sr, glow = Glow("Healing Mote glow", SlashOrder + 1), x = e.x, y = e.y + .8f, target = e.amount });
             PlayThornSound("sprout_heal", .5f, .25f);
+        }
+
+        // Something heavy breaking the floor at (x, floor): grit fanned up and outward to `reach` on both sides.
+        void GroundBurst(float x, float floor, Color tint, int count, float reach)
+        {
+            for (int k = 0; k < count; k++)
+            {
+                float side = k % 2 == 0 ? -1f : 1f, life = Random.Range(.3f, .6f), size = Random.Range(.07f, .17f);
+                var colour = Color.Lerp(tint, Color.white, Random.value * .55f); colour.a = .85f;
+                // A spark covers velocity * life * .68 over its life.
+                float across = Random.Range(.3f, 1f) * reach / (life * .68f);
+                AddAttackSpark(Sprites.Disc, new Vector2(x + side * Random.Range(0f, .4f), floor + .15f), new Vector2(side * across, Random.Range(2f, 7f)), colour, size, size * 1.5f, life);
+            }
+            for (int k = 0; k < 4; k++)       // low dust rolling out
+            {
+                float side = k % 2 == 0 ? -1f : 1f, size = Random.Range(.8f, 1.4f);
+                AddAttackSpark(Sprites.Disc, new Vector2(x + side * .3f, floor + .2f), new Vector2(side * reach * Random.Range(.8f, 1.6f), Random.Range(.1f, .4f)),
+                               new Color(tint.r, tint.g, tint.b, .14f), size * 1.7f, size * .6f, Random.Range(.5f, .8f));
+            }
         }
 
         // The moment an eruption breaks the floor: spray thrown up and out, mist rolling along the ground, a small kick.
@@ -312,6 +335,27 @@ namespace AshenVale
                 float lead = wall.x + wall.side * (half - .4f);     // its inner face is where the thorns begin
                 float gone = wall.falling >= 0f ? 1f - wall.falling / WallFall : 1f;
                 Rise(wall.sr, frame, lead, wall.y, WallScale, wall.age, Color.white, gone);
+                Color wallTint = BossFxTint;
+                if (wall.glow != null)
+                {
+                    // Its own light, breathing slowly, laid exactly over it.
+                    wall.glow.sprite = frame;
+                    wall.glow.transform.position = wall.sr.transform.position; wall.glow.transform.localScale = wall.sr.transform.localScale;
+                    wall.glow.color = new Color(wallTint.r, wallTint.g, wallTint.b, gone * Mathf.Clamp01(wall.age / WallGrow) * (.26f + .12f * Mathf.Sin(wall.age * 3.5f)));
+                }
+                if (wall.falling < 0f && wall.age > WallGrow)
+                {
+                    // Grit and spray thrown off its leading foot as it grinds inward.
+                    wall.dust -= dt;
+                    if (wall.dust <= 0f)
+                    {
+                        wall.dust = .16f;
+                        var grit = Color.Lerp(wallTint, Color.white, Random.value * .5f); grit.a = .75f;
+                        float size = Random.Range(.06f, .13f);
+                        AddAttackSpark(Sprites.Disc, new Vector2(wall.x - wall.side * Random.Range(0f, .5f), wall.y + .12f),
+                                       new Vector2(-wall.side * Random.Range(1.5f, 4f), Random.Range(1.5f, 4.5f)), grit, size, size * 1.5f, Random.Range(.3f, .5f));
+                    }
+                }
                 // Clumps behind it, one more each WallStep it has crept, the newest sprouting at the far end.
                 int wanted = Mathf.Min(WallFillMax, 1 + Mathf.FloorToInt(Mathf.Abs(wall.x - wall.x0) / WallStep));
                 if (ThornFx != ThornmotherFx) wanted = 0;      // the trail is brambles spreading; a boss with its own wall art (a shipwreck, a furnace) shows just the one
@@ -336,7 +380,7 @@ namespace AshenVale
                 var mote = healMotes[i];
                 mote.age += dt;
                 float t = mote.age / MoteFlight;
-                if (t >= 1f || moteFrames.Length == 0) { Object.Destroy(mote.go); healMotes.RemoveAt(i); continue; }
+                if (t >= 1f || moteFrames.Length == 0) { Object.Destroy(mote.go); if (mote.glow != null) Object.Destroy(mote.glow.gameObject); healMotes.RemoveAt(i); continue; }
                 float tx = mote.x, ty = mote.y + 1.5f;
                 if (shownMap >= 0)
                     foreach (var m in world.maps[shownMap].monsters) if (m.id == mote.target) { tx = m.x; ty = m.y + m.Def.height * .55f; break; }
@@ -346,6 +390,20 @@ namespace AshenVale
                 mote.go.transform.localScale = new Vector3(.55f, .55f, 1f);
                 mote.go.transform.position = new Vector3(Mathf.Lerp(mote.x, tx, ease), Mathf.Lerp(mote.y, ty, ease) + Mathf.Sin(t * Mathf.PI) * .5f, 0f);
                 mote.sr.color = new Color(1f, 1f, 1f, t > .8f ? (1f - t) / .2f : 1f);
+                Color moteTint = BossFxTint;
+                if (mote.glow != null)
+                {
+                    mote.glow.sprite = mote.sr.sprite; mote.glow.flipX = mote.sr.flipX;
+                    mote.glow.transform.position = mote.go.transform.position; mote.glow.transform.localScale = mote.go.transform.localScale * 1.15f;
+                    mote.glow.color = new Color(moteTint.r, moteTint.g, moteTint.b, .6f * mote.sr.color.a);
+                }
+                mote.trail -= dt;
+                if (mote.trail <= 0f)       // a thread of sparks left along its path
+                {
+                    mote.trail = .05f;
+                    AddAttackSpark(Sprites.Disc, (Vector2)mote.go.transform.position + Random.insideUnitCircle * .08f, Random.insideUnitCircle * .4f,
+                                   new Color(moteTint.r, moteTint.g, moteTint.b, .7f), .07f, .07f, .3f);
+                }
             }
         }
 
@@ -369,6 +427,7 @@ namespace AshenVale
         static void DestroyWall(ThornWall wall)
         {
             Object.Destroy(wall.go);
+            if (wall.glow != null) Object.Destroy(wall.glow.gameObject);
             foreach (var sr in wall.fill) Object.Destroy(sr.gameObject);
             wall.fill.Clear(); wall.fillAge.Clear();
         }
@@ -377,7 +436,7 @@ namespace AshenVale
         {
             foreach (var b in bramblesShown) b.Destroy();
             foreach (var w in thornWalls) DestroyWall(w);
-            foreach (var m in healMotes) Object.Destroy(m.go);
+            foreach (var m in healMotes) { Object.Destroy(m.go); if (m.glow != null) Object.Destroy(m.glow.gameObject); }
             bramblesShown.Clear(); thornWalls.Clear(); healMotes.Clear();
             foreach (var s in spitsShown) Object.Destroy(s.go);
             spitsShown.Clear();

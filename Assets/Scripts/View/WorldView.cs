@@ -877,6 +877,9 @@ namespace AshenVale
         {
             var obj = Sprites.Blob("Slam VFX", new Color(.75f, .6f, .3f, .7f), 1f, .35f, SlashOrder, null, e.x, e.y + .15f);
             slashes.Add(new SlashFx { obj = obj, sr = obj.GetComponent<SpriteRenderer>(), life = .45f, duration = .45f, direction = 0, x = e.x, y = e.y + .15f, ring = true, reach = MapBossSlamRange() });
+            // The blow itself: the floor jumps, grit flies out to the slam's reach.
+            GroundBurst(e.x, e.y, BossFxTint, 22, MapBossSlamRange());
+            Shake(.13f, .24f);
         }
 
         public void Number(float x, float y, string text, Color color, bool big)
