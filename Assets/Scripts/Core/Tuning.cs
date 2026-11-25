@@ -19,6 +19,7 @@ namespace AshenVale
         public const float ClimbSpeed = 3.4f;        // was 4.2; a touch slower reads more natural with the stepped climb poses
         public const float CrouchSpeedFactor = .34f;
         public const float KnightFollowThrough = .1f;       // after his blow lands the Knight stays planted this long, then moving or jumping ends the swing
+        public const float ArrowHeight = .9f;               // arrows leave this far above the Ranger's feet: the nocked arrow in her release frame (was 1.1, above the bow hand)
         public const float DashSpeed = 14f;
         public const float DashTime = .18f;
         public const float DashCooldown = 1.5f;

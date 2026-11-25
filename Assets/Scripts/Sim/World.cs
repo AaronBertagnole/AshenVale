@@ -467,7 +467,7 @@ namespace AshenVale
             events.Add(new SimEvent
             {
                 kind = SimEventKind.RangerRelease, map = map.def.id, playerId = p.id,
-                x = p.x + facing * .7f, y = p.y + 1.1f + ((count - 1) * .5f - middle) * .17f,
+                x = p.x + facing * .7f, y = p.y + Tuning.ArrowHeight + ((count - 1) * .5f - middle) * .17f,
                 facing = facing, heavy = skill
             });
             var volley = new HashSet<int>();
@@ -475,7 +475,7 @@ namespace AshenVale
                 map.shots.Add(new ProjectileState
                 {
                     id = NextId(), map = map.def.id, owner = p.id, damage = damage, pierce = skill ? Abilities.SkillPierce(p) : 1,
-                    x = p.x + facing * .7f, y = p.y + 1.1f + (i - middle) * .17f, direction = facing, life = Tuning.ArrowLife, hitSet = volley,
+                    x = p.x + facing * .7f, y = p.y + Tuning.ArrowHeight + (i - middle) * .17f, direction = facing, life = Tuning.ArrowLife, hitSet = volley,
                 });
             for (int i = map.shots.Count - count; i < map.shots.Count; i++) { map.shots[i].px = map.shots[i].x; map.shots[i].py = map.shots[i].y; }
         }
