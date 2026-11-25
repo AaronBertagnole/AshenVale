@@ -293,10 +293,8 @@ namespace AshenVale
             string prompt="";
             if(!blocked)
             {
-                string key="["+Keys.Name(GameAction.Interact)+"] ";
-                if(world.NearMerchant(me,2))prompt=key+"Browse the merchant's wares";
-                else if(world.NearSmithy(me,2))prompt=key+"Visit the blacksmith";
-                else if(me.portalCast>0)prompt="Opening a town portal...";
+                // The merchant, blacksmith and waystone carry their own label with the key, so no second prompt over the hero.
+                if(me.portalCast>0)prompt="Opening a town portal...";
             }
             var camera = Camera.main;
             bool showPrompt = prompt.Length > 0 && camera != null;
