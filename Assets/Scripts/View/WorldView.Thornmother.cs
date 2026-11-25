@@ -201,6 +201,7 @@ namespace AshenVale
                 Rise(wall.sr, frame, lead, wall.y, WallScale, wall.age, Color.white, gone);
                 // Clumps behind it, one more each WallStep it has crept, the newest sprouting at the far end.
                 int wanted = Mathf.Min(WallFillMax, 1 + Mathf.FloorToInt(Mathf.Abs(wall.x - wall.x0) / WallStep));
+                if (ThornFx != ThornmotherFx) wanted = 0;      // the trail is brambles spreading; a boss with its own wall art (a shipwreck, a furnace) shows just the one
                 while (wall.falling < 0f && wall.fill.Count < wanted)
                 {
                     GameObject go;
