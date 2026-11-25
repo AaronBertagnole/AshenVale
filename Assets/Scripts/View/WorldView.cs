@@ -462,6 +462,7 @@ namespace AshenVale
                 {
                     var posed = PoseFrame(v, m, frameDt);     // a boss's attacks, a sprout healing (WorldView.Thornmother)
                     var frames = MonsterFrames(v, v.hurt > 0 ? "hurt" : moving ? "move" : "idle");
+                    if (frames.Length == 0 && moving && v.hurt <= 0) frames = MonsterFrames(v, "idle");     // no walk painted (the boss sheets): it glides on its idle
                     if (posed != null) v.art.sprite = posed;
                     else if (frames.Length > 0) v.art.sprite = frames[Mathf.FloorToInt(v.clock * (d.boss ? (enraged ? 9f : 5f) : moving || v.hurt > 0 ? 8f : d.idleRate)) % frames.Length];
                 }

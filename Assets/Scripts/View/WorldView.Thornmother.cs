@@ -61,6 +61,10 @@ namespace AshenVale
             }
             var frames = MonsterFrames(v, anim);
             if (frames.Length == 0) return null;
+            // A slam clip is the wind-up then the blow, half and half, however many frames it has (4 or 8).
+            if (m.pose == 1) { from = 0; count = Mathf.Max(1, frames.Length / 2); }
+            else if (m.pose == 2) { from = frames.Length / 2; count = Mathf.Max(1, frames.Length - from); }
+            else if (from == 0 && count == 4) count = frames.Length;      // whole clips play all their frames
             int index = loopRate > 0f ? Mathf.FloorToInt(v.poseClock * loopRate) % frames.Length
                                       : from + Mathf.Min(count - 1, Mathf.FloorToInt(v.poseClock / Mathf.Max(.01f, span) * count));
             return frames[Mathf.Clamp(index, 0, frames.Length - 1)];
