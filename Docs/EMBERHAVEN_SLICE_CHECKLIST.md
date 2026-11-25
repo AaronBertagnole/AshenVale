@@ -43,6 +43,7 @@ Knight run, 2026-11-25. Pushed in 342e025, waiting for the owner to confirm each
 - [ ] Ladder climb smooth (no resizing or stepping). Fixed without a clip; needs the owner's eye.
 - [ ] Class select: no flame icon on the highlighted choice.
 - [ ] Thornmother tougher: health 2600 to 3900, damage 26 to 33.
+- [ ] Potion prices rise with level (HP 30 at level 1, 130 at level 11; MP 37 and 157), and the merchant sells x1 / x5 / x10. (Pushed after 342e025.)
 
 Knight run, still open:
 - [ ] Emberhaven painting: two flaws in the front layer (a garbled hanging sign under the balcony, a mint cloth scrap at the left edge). Needs a repaint of those spots; an automatic patch looked worse.

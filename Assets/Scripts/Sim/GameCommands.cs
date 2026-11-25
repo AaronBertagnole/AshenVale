@@ -8,7 +8,7 @@ namespace AshenVale
     {
         void Equip(int inventoryIndex);
         void Sell(int inventoryIndex);
-        void BuyPotion(bool health);
+        void BuyPotion(bool health, int count = 1);
         void BuyGear(Slot slot);
         void Travel(int town);
         void Upgrade(int target);   // smithy: 0-3 worn slot, Smithing.InventoryTarget + i for inventory item i
@@ -27,7 +27,7 @@ namespace AshenVale
 
         public void Equip(int inventoryIndex) { world.Equip(player(), inventoryIndex); }
         public void Sell(int inventoryIndex) { world.Sell(player(), inventoryIndex); }
-        public void BuyPotion(bool health) { world.BuyPotion(player(), health); }
+        public void BuyPotion(bool health, int count = 1) { world.BuyPotion(player(), health, count); }
         public void SellPart(int part, int count) { world.SellPart(player(), part, count); }
         public void BuyGear(Slot slot) { world.BuyGear(player(), slot); }
         public void Travel(int town) { world.Travel(player(), town); }

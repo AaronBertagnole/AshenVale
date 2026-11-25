@@ -161,7 +161,14 @@ namespace AshenVale
         public const float HpPotionShare = .4f;
         public const float MpPotionShare = .4f;
         public static int PotionHeal(int flat, float share, int maximum) { return Mathf.Max(flat, Mathf.RoundToInt(maximum * share)); }
-        public const int HpPotionPrice = 25;
-        public const int MpPotionPrice = 35;
+        // What a merchant charges: it rises with the buyer's level, as the potion's worth does (it heals a share of
+        // your maximum). Level 1: 30 and 37 marks; level 11: 130 and 157.
+        public const int HpPotionPrice = 20, HpPotionPricePerLevel = 10;
+        public const int MpPotionPrice = 25, MpPotionPricePerLevel = 12;
+        public static int PotionCost(bool health, int level)
+        {
+            level = Mathf.Max(1, level);
+            return health ? HpPotionPrice + HpPotionPricePerLevel * level : MpPotionPrice + MpPotionPricePerLevel * level;
+        }
     }
 }

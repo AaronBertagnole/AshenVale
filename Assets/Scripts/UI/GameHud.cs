@@ -114,6 +114,7 @@ namespace AshenVale
         float bannerClock;
         Vector2 smithyScroll;
         bool merchantSellTab;
+        int potionBuyCount = 1;         // how many potions one click on a potion row buys (the merchant's x1 / x5 / x10)
 
         public GameHud(World world) { this.world = world; }
 
@@ -898,6 +899,15 @@ namespace AshenVale
             if (!merchantSellTab)
             {
                 GUI.Label(new Rect(r.x + pad, r.y + 162, w - pad * 2, 22), "POTIONS", economySectionText);
+                // How many a click buys.
+                int[] amounts = { 1, 5, 10 };
+                for (int a = 0; a < amounts.Length; a++)
+                {
+                    Rect pick = new Rect(r.x + w - pad - (amounts.Length - a) * 52, r.y + 161, 48, 21);
+                    if (EconomyHitButton(pick, false, potionBuyCount == amounts[a])) potionBuyCount = amounts[a];
+                    var centred = new GUIStyle(economyPriceText) { alignment = TextAnchor.MiddleCenter };
+                    GUI.Label(pick, "x" + amounts[a], centred);
+                }
                 for (int potion = 0; potion < 2; potion++)
                 {
                     bool health = potion == 0;
@@ -906,10 +916,9 @@ namespace AshenVale
                     var bottle = Sprites.Art(health ? "Art/Items/hp_potion" : "Art/Items/mp_potion");
                     if (bottle != null) { EconomySurface(new Rect(buy.x + 4, buy.y + 3, 42, 42), EconomyInset, EconomyLine, .8f); GUI.DrawTexture(new Rect(buy.x + 7, buy.y + 6, 36, 36), bottle.texture, ScaleMode.ScaleToFit, true); }
                     GUI.Label(new Rect(buy.x + 52, buy.y + 4, col - 176, 40),
-                        "Buy " + (health ? "HP" : "MP") + " Potion", economyBodyText);
-                    GUI.Label(new Rect(buy.x + col - 124, buy.y + 4, 112, 40),
-                        (health ? Tuning.HpPotionPrice : Tuning.MpPotionPrice) + " marks", economyPriceText);
-                    int cost = health ? Tuning.HpPotionPrice : Tuning.MpPotionPrice;
+                        "Buy " + (potionBuyCount > 1 ? potionBuyCount + " " : "") + (health ? "HP" : "MP") + (potionBuyCount > 1 ? " Potions" : " Potion"), economyBodyText);
+                    int cost = Tuning.PotionCost(health, ch.level) * potionBuyCount;
+                    GUI.Label(new Rect(buy.x + col - 124, buy.y + 4, 112, 40), cost + " marks", economyPriceText);
                     if (ch.gold < cost)
                     {
                         Color old = GUI.color;
@@ -917,7 +926,7 @@ namespace AshenVale
                         GUI.Label(new Rect(buy.x + col - 124, buy.y + 24, 112, 16), "NEED MORE", economyWarnText);
                         GUI.color = old;
                     }
-                    if (clicked) commands.BuyPotion(health);
+                    if (clicked) commands.BuyPotion(health, potionBuyCount);
                 }
 
                 GUI.Label(new Rect(r.x + pad, r.y + 246, w - pad * 2, 22), "COMMON EQUIPMENT", economySectionText);

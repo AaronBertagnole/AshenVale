@@ -305,7 +305,7 @@ namespace AshenVale
             {
                 case 0: world.Equip(playerId, argument); break;
                 case 1: world.Sell(playerId, argument); break;
-                case 2: world.BuyPotion(playerId, argument != 0); break;
+                case 2: world.BuyPotion(playerId, (argument & 1) != 0, argument >> 1); break;      // bit 0: health or mana; the rest: how many
                 case 3: world.BuyGear(playerId, (Slot)Mathf.Clamp(argument, 0, (int)Slot.Boots)); break;
                 case 4: world.Travel(playerId, argument); break;
                 case 5: world.Upgrade(playerId, argument); break;
@@ -640,7 +640,7 @@ namespace AshenVale
         public RemoteCommands(NetSession net) { this.net = net; }
         public void Equip(int inventoryIndex) { net.SendCommand(0, inventoryIndex); }
         public void Sell(int inventoryIndex) { net.SendCommand(1, inventoryIndex); }
-        public void BuyPotion(bool health) { net.SendCommand(2, health ? 1 : 0); }
+        public void BuyPotion(bool health, int count = 1) { net.SendCommand(2, (health ? 1 : 0) | (Mathf.Clamp(count, 1, 99) << 1)); }
         public void BuyGear(Slot slot) { net.SendCommand(3, (int)slot); }
         public void Travel(int town) { net.SendCommand(4, town); }
         public void Upgrade(int target) { net.SendCommand(5, target); }

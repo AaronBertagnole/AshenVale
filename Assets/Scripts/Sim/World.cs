@@ -1425,13 +1425,16 @@ namespace AshenVale
             return true;
         }
 
-        public bool BuyPotion(int playerId, bool health)
+        // Buys `count` potions at once, or as many of them as the purse covers.
+        public bool BuyPotion(int playerId, bool health, int count = 1)
         {
             var p = GetPlayer(playerId);
-            int price = health ? Tuning.HpPotionPrice : Tuning.MpPotionPrice;
-            if (!InTown(p) || p.ch.gold < price) return false;
-            p.ch.gold -= price;
-            if (health) p.ch.hpPotions++; else p.ch.mpPotions++;
+            if (!InTown(p)) return false;
+            int price = Tuning.PotionCost(health, p.ch.level);
+            count = Mathf.Min(Mathf.Clamp(count, 1, 99), p.ch.gold / price);
+            if (count <= 0) return false;
+            p.ch.gold -= price * count;
+            if (health) p.ch.hpPotions += count; else p.ch.mpPotions += count;
             return true;
         }
 
