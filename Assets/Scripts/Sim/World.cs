@@ -219,23 +219,37 @@ namespace AshenVale
 
         // ---------------------------------------------------------------- movement
 
+        // The Knight's swing holds him in place through the windup and a short follow-through, not the whole recovery.
+        static bool KnightCommitted(PlayerState p)
+        {
+            if (!p.Hero.dragonKnight || p.attackVisual <= 0) return false;
+            if (p.attackPending || p.fangLungeTime > 0) return true;
+            float windup = p.lastWasSkill ? p.Hero.skillWindup : p.Hero.basicWindup;
+            return p.attackDuration - p.attackVisual < windup + Tuning.KnightFollowThrough;
+        }
+
         void Move(PlayerState p, MapDef def, PlayerInput input, float dt, bool allowDash)
         {
             float axis = Mathf.Clamp(input.moveX, -1f, 1f);
             float vertical = Mathf.Clamp(input.moveY, -1f, 1f);
             bool knocked = p.knockTime > 0;
             if (knocked) { p.knockTime -= dt; axis = 0; }
-            if (p.Hero.dragonKnight && (p.attackVisual > 0 || p.leapActive))
+            // The Knight is planted only until the blow has landed (KnightCommitted); after that, moving or jumping
+            // cuts the rest of the swing short. The next attack still waits out its full cooldown.
+            bool committed = KnightCommitted(p);
+            if (p.Hero.dragonKnight && p.attackVisual > 0 && !committed && !p.leapActive && !knocked && (axis != 0 || input.jump || input.dash || vertical > .1f))
+                p.attackVisual = 0;
+            if (p.Hero.dragonKnight && (committed || p.leapActive))
             { axis = 0; vertical = 0; }
             if (axis != 0) p.facing = axis > 0 ? 1 : -1;
-            bool jump = input.jump && !knocked && !(p.Hero.dragonKnight && (p.attackVisual > 0 || p.leapActive));
+            bool jump = input.jump && !knocked && !(p.Hero.dragonKnight && (committed || p.leapActive));
             p.dropTimer = Mathf.Max(0, p.dropTimer - dt);
 
             Ladder nearby = new Ladder();
             bool atLadder = false;
             foreach (var ladder in def.ladders)
                 if (Mathf.Abs(p.x - ladder.x) < .68f && p.y >= ladder.bottom - .35f && p.y <= ladder.top + .45f) { nearby = ladder; atLadder = true; break; }
-            if (!p.climbing && atLadder && !knocked && !p.leapActive && !(p.Hero.dragonKnight && p.attackVisual > 0))
+            if (!p.climbing && atLadder && !knocked && !p.leapActive && !committed)
             {
                 // Up grabs a ladder you are below the top of; Down grabs one you are standing on top of.
                 bool climbUp = vertical > .1f && p.y < nearby.top - .05f;
@@ -268,7 +282,7 @@ namespace AshenVale
                 if(RimecallerRules.Is(p.Hero)) { Froststep(p,def,vertical); axis=0; }
                 else if (p.Hero.dragonKnight)
                 {
-                    if (p.grounded && p.attackVisual <= 0 && p.mp >= Abilities.MoveCost(p))
+                    if (p.grounded && !committed && p.mp >= Abilities.MoveCost(p))
                     {
                         p.mp -= Abilities.MoveCost(p);
                         p.dashCooldown = Abilities.MoveCooldown(p);

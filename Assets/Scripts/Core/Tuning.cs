@@ -18,6 +18,7 @@ namespace AshenVale
         public const float FlipEdge = 1.2f;          // the Ranger somersaults off a platform only this close to its end, facing out
         public const float ClimbSpeed = 3.4f;        // was 4.2; a touch slower reads more natural with the stepped climb poses
         public const float CrouchSpeedFactor = .34f;
+        public const float KnightFollowThrough = .1f;       // after his blow lands the Knight stays planted this long, then moving or jumping ends the swing
         public const float DashSpeed = 14f;
         public const float DashTime = .18f;
         public const float DashCooldown = 1.5f;
