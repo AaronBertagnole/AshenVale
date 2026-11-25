@@ -445,7 +445,7 @@ namespace AshenVale
                 v.go.transform.position = new Vector3(x, y + d.hover + bob, 0);
                 // Enraged: a roar as it turns (ring, sound, a shout over its head), then it stays swollen, red and restless.
                 bool enraged = World.Enraged(m);
-                v.secondLook = d.boss && m.hp < m.maxHp * Tuning.BossRootHp;
+                v.secondLook = d.boss && d.key != "rusted_colossus" && m.hp < m.maxHp * Tuning.BossRootHp;
                 if (enraged && !v.enraged)
                 {
                     SpawnSlamRing(new SimEvent { kind = SimEventKind.BossSlam, x = m.x, y = m.y, facing = m.facing });
