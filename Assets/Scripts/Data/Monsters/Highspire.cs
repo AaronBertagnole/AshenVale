@@ -47,7 +47,8 @@ namespace AshenVale
                     part = Parts.TrollTooth },
                 // Region 3's boss: the war golem the dwarves built and could not stop, rusting in its vault under the forge.
                 new MonsterDef { key = "rusted_colossus", name = "Rusted Colossus", level = 24, color = new Color(.5f, .32f, .2f),
-                    width = 3f, height = 3.6f, hp = 7000, speed = 1f, damage = 64, xp = 1500, goldMin = 500, goldRange = 300,
+                    width = 4.6f, height = 6.2f, hp = 7000, speed = 1f, damage = 64, xp = 1500, goldMin = 500, goldRange = 300,
+                    artScale = 1.7f, slamRange = 5.6f, noTouch = true,     // SIZE TEST: a giant you fight at the feet of (see MonsterDef)
                     aggressive = true, boss = true, minion = ForgeImp, respawn = Tuning.BossRespawn, itemChance = .9f,
                     part = Parts.DwarfRune, partChance = 1f,
                     chestParts = new[] { Parts.TrollTooth, Parts.FrostPelt, Parts.DwarfRune, Parts.TrollTooth, Parts.FrostPelt, Parts.DwarfRune } },

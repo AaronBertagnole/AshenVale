@@ -27,6 +27,11 @@ namespace AshenVale
         public int goldMin, goldRange;  // gold = goldMin + random(0 .. goldRange - 1)
         public bool aggressive, harmless;
         public float idleRate = 8f;     // frames a second of its standing animation (heavy, slow breathers want fewer)
+        // Giants: `artScale` draws the sprite larger than it was painted (width and height above are the body you can
+        // hit, so set those to match); `slamRange` is a boss's slam reach on either side; `noTouch` means walking into
+        // its body does not hurt, only its attacks do, so heroes can fight at its feet.
+        public float artScale = 1f, slamRange = Tuning.BossSlamRange;
+        public bool noTouch;
         public bool flies;              // free flight: goes anywhere in the air, straight at its target (World.Fly)
         public bool spits;              // lobs poison from range instead of only walking in (World.Spits)
         public float respawn = 8f;      // seconds before its spawn point fills again

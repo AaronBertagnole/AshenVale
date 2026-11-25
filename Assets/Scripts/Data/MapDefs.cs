@@ -59,6 +59,7 @@ namespace AshenVale
         // units wide behind everything, it slides slower than the map as the camera moves (always filling the view),
         // and at the lowest camera its painted path (backdropFloor, as for scenes) lines up with the ground.
         // As for scenes, <backdrop>_back.png (if present) is a more distant layer that slides more slowly still.
+        public float zoom = 1f;         // how far the camera pulls back here (1.3 = the view shows 30% more each way): boss halls
         public string backdrop;
         public float backdropFloor, backdropWidth;
         public bool backdropFlip;               // show it mirrored (to reuse a neighbour's picture until the map has its own)
@@ -103,6 +104,8 @@ namespace AshenVale
         public static Link L(char key, int targetMap, char targetKey) { return new Link { key = key, targetMap = targetMap, targetKey = targetKey }; }
 
         // Gives a map a painted backdrop (see MapDef.backdrop).
+        public static MapDef WithZoom(MapDef def, float zoom) { def.zoom = zoom; return def; }
+
         public static MapDef WithBackdrop(MapDef def, string backdrop, float floor, float width, bool flip = false)
         {
             def.backdrop = backdrop;

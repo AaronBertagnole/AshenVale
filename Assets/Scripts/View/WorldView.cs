@@ -9,7 +9,7 @@ namespace AshenVale
     public sealed partial class WorldView
     {
         sealed partial class HeroView { public GameObject go; public SpriteRenderer sr; public string anim = ""; public float clock, lastHp = -1; public int attackSerial = -1; public float climbOffset, climbXOffset; public Vector3 climbScale; public bool fittedClimb; public readonly PronePosePlayer prone = new PronePosePlayer(); }
-        sealed class SlashFx { public GameObject obj; public SpriteRenderer sr; public float life, duration, x, y; public int direction; public bool ring; public int dragon; }
+        sealed class SlashFx { public GameObject obj; public SpriteRenderer sr; public float life, duration, x, y; public int direction; public bool ring; public int dragon; public float reach = Tuning.BossSlamRange; }
 
         // A number that pops up where something was hurt or healed and drifts upward (GameHud draws them).
         public sealed class FloatingNumber
@@ -38,6 +38,7 @@ namespace AshenVale
             public Transform crown;             // bosses: the thorn crown, which flares while it rears up
         }
 
+        float viewHalf = 5.4f;                      // the half height in use now (ViewHalfHeight times the map's zoom)
         public const float ViewHalfHeight = 5.4f;   // camera orthographic size: the view is 10.8 units tall
         const float HeroScale = 1.65f;
         const float DieTime = .45f, BossDieTime = 1.4f;
@@ -98,8 +99,8 @@ namespace AshenVale
             minX = halfWidth; maxX = def.columns - halfWidth;
             if (minX > maxX) minX = maxX = def.columns * .5f;
             // A strip of ground under your feet at the lowest; painted scenes keep it thin to show more of the picture.
-            minY = def.Bottom - (string.IsNullOrEmpty(def.scene) ? 1.3f : .9f) + ViewHalfHeight;
-            maxY = def.Top + 1f - ViewHalfHeight;
+            minY = def.Bottom - (string.IsNullOrEmpty(def.scene) ? 1.3f : .9f) + ViewHalfHeight * def.zoom;
+            maxY = def.Top + 1f - ViewHalfHeight * def.zoom;
             if (maxY < minY) maxY = minY;
         }
 
@@ -454,6 +455,7 @@ namespace AshenVale
                 v.enraged = enraged;
                 v.rage = Mathf.MoveTowards(v.rage, enraged ? 1f : 0f, frameDt * 2.5f);
                 float size = 1f + EnrageSwell * v.rage * (1f + .25f * Mathf.Sin(v.clock * 9f));
+                size *= d.artScale;
                 v.go.transform.localScale = new Vector3(m.facing >= 0 ? size : -size, size, 1f);
                 bool moving = v.moveTime > 0;
                 if (v.art != null)
@@ -861,10 +863,19 @@ namespace AshenVale
         }
 
         // The root slam: a shockwave ring spreading along the ground from the boss's feet.
+        // The slam reach of the boss that lives on the shown map (the ring is drawn out to it).
+        float MapBossSlamRange()
+        {
+            if (shownMap >= 0)
+                foreach (var point in Maps.All[shownMap].spawns)
+                    if (Monsters.All[point.monster].boss) return Monsters.All[point.monster].slamRange;
+            return Tuning.BossSlamRange;
+        }
+
         void SpawnSlamRing(SimEvent e)
         {
             var obj = Sprites.Blob("Slam VFX", new Color(.75f, .6f, .3f, .7f), 1f, .35f, SlashOrder, null, e.x, e.y + .15f);
-            slashes.Add(new SlashFx { obj = obj, sr = obj.GetComponent<SpriteRenderer>(), life = .45f, duration = .45f, direction = 0, x = e.x, y = e.y + .15f, ring = true });
+            slashes.Add(new SlashFx { obj = obj, sr = obj.GetComponent<SpriteRenderer>(), life = .45f, duration = .45f, direction = 0, x = e.x, y = e.y + .15f, ring = true, reach = MapBossSlamRange() });
         }
 
         public void Number(float x, float y, string text, Color color, bool big)
@@ -902,7 +913,7 @@ namespace AshenVale
                 if (fx.ring)
                 {
                     float grow = 1f - t;
-                    fx.obj.transform.localScale = new Vector3(1f + grow * 2f * Tuning.BossSlamRange, .35f + grow * .25f, 1f);
+                    fx.obj.transform.localScale = new Vector3(1f + grow * 2f * fx.reach, .35f + grow * .25f, 1f);
                     fx.sr.color = new Color(.75f, .6f, .3f, t * .7f);
                     continue;
                 }
@@ -918,7 +929,11 @@ namespace AshenVale
         {
             var def = Maps.All[shownMap];
             float minX, maxX, minY, maxY;
-            CameraRange(def, ViewHalfHeight * camera.aspect, out minX, out maxX, out minY, out maxY);
+            // The view's half height on this map (boss halls pull back): eased, so walking in opens the room up.
+            float wantHalf = ViewHalfHeight * def.zoom;
+            viewHalf = snapCamera || local == null ? wantHalf : Mathf.MoveTowards(viewHalf, wantHalf, frameDt * 2.5f);
+            camera.orthographicSize = viewHalf;
+            CameraRange(def, wantHalf * camera.aspect, out minX, out maxX, out minY, out maxY);
             float x = local != null ? Mathf.Lerp(local.px, local.x, alpha) : def.startX;
             float y = (local != null ? Mathf.Lerp(local.py, local.y, alpha) : def.startY) + 1.2f;
             var target = new Vector3(Mathf.Clamp(x, minX, maxX), Mathf.Clamp(y, minY, maxY), -10);
@@ -953,7 +968,7 @@ namespace AshenVale
             }
             var visual = visuals[shownMap];
             Vector3 c = cam.position;
-            float halfWidth = ViewHalfHeight * camera.aspect;
+            float halfWidth = viewHalf * camera.aspect;
             foreach (var layer in visual.layers)
             {
                 if (!layer.panorama)
@@ -969,10 +984,10 @@ namespace AshenVale
                 float spare = layer.width - 2f * halfWidth;
                 float left = spare > 0f ? c.x - halfWidth - (.5f + (tx - .5f) * layer.travel) * spare : c.x - layer.width * .5f;
                 float low = Tuning.Ground - layer.floor * layer.height;
-                float high = layer.floorAnchored ? low : Mathf.Max(low, maxY + ViewHalfHeight - layer.height);
+                float high = layer.floorAnchored ? low : Mathf.Max(low, maxY + viewHalf - layer.height);
                 layer.transform.position = new Vector3(left, Mathf.Lerp(low, high, ty), 0);
             }
-            visual.Animate(Time.time, c, halfWidth, ViewHalfHeight);     // motes, leaves, sparks, smoke
+            visual.Animate(Time.time, c, halfWidth, viewHalf);     // motes, leaves, sparks, smoke
         }
     }
 }

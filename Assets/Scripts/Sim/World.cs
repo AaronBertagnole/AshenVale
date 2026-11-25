@@ -901,7 +901,7 @@ namespace AshenVale
                         for (int k = 0; k < Tuning.BossEnrageShockMarks; k++)
                             for (int side = -1; side <= 1; side += 2)
                             {
-                                float at = m.x + side * (Tuning.BossSlamRange + 1.1f + k * 2.3f);
+                                float at = m.x + side * (d.slamRange + 1.1f + k * 2.3f);
                                 if (at > m.left + .3f && at < m.right - .3f) Bramble(map, m, at, m.y);
                             }
                 }
@@ -924,7 +924,7 @@ namespace AshenVale
                     return;
                 }
                 // Out of slam reach, or up on a ledge: thorns come up under them instead.
-                bool reachable = Mathf.Abs(target.currentFloor - m.y) <= Tuning.MonsterFloorTolerance && Mathf.Abs(dist) < Tuning.BossSlamRange - .4f;
+                bool reachable = Mathf.Abs(target.currentFloor - m.y) <= Tuning.MonsterFloorTolerance && Mathf.Abs(dist) < d.slamRange - .4f;
                 if (!reachable && m.eruptCooldown <= 0f)
                 {
                     m.attack = 3; m.windup = Tuning.BossEruptWindup * (enraged ? Tuning.BossEnrageWindup : 1f);
@@ -1135,7 +1135,7 @@ namespace AshenVale
             foreach (var p in players)
             {
                 if (p.dead || p.map != map.def.id || p.immunity > 0f) continue;
-                if (Mathf.Abs(p.x - m.x) > Tuning.BossSlamRange || Mathf.Abs(p.currentFloor - m.y) > Tuning.MonsterFloorTolerance || !p.grounded && p.y > m.y + 1.5f) continue;
+                if (Mathf.Abs(p.x - m.x) > m.Def.slamRange || Mathf.Abs(p.currentFloor - m.y) > Tuning.MonsterFloorTolerance || !p.grounded && p.y > m.y + 1.5f) continue;
                 Hurt(map, p, m, damage);
             }
         }
@@ -1166,7 +1166,7 @@ namespace AshenVale
                 foreach (var m in map.monsters)
                 {
                     var d = m.Def;
-                    if (d.harmless || m.frozen > 0f) continue;
+                    if (d.harmless || d.noTouch || m.frozen > 0f) continue;
                     float bottom = m.y + d.hover, top = bottom + d.height;
                     if (Mathf.Abs(p.x - m.x) >= d.width * .5f + .3f || p.y >= top - .1f || p.y + 1.4f <= bottom) continue;
                     Hurt(map, p, m);
