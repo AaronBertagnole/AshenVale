@@ -684,6 +684,17 @@ namespace AshenVale
             if (p != null) p.ch.gold += amount;
         }
 
+        // Straight to a map's entrance (the debug panel's boss doors), healed and ready.
+        public void TestGoToMap(int playerId, int mapId)
+        {
+            var p = GetPlayer(playerId);
+            if (p == null || p.dead || mapId < 0 || mapId >= maps.Length) return;
+            p.portalOpen = false; p.portalCast = 0; p.returnReady = false;
+            var def = maps[mapId].def;
+            Teleport(p, def.id, def.startX, def.startY);
+            TestRefill(playerId);
+        }
+
         // Clears the hero's map, with the usual loot and experience.
         public void TestKillAll(int playerId)
         {

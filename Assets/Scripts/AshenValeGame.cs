@@ -334,6 +334,7 @@ public class AshenValeGame : MonoBehaviour
     // Debug mode: only in the Unity editor and in development builds, and only when this PC runs the world (solo or
     // hosting), so it can never reach a joined game or a release build.
     bool debugOpen;
+    System.Collections.Generic.List<KeyValuePair<int, string>> bossDoors;
     float hitPauseLeft;
     bool DebugAllowed { get { return !inMenu && mode != Mode.Client && (Application.isEditor || Debug.isDebugBuild); } }
 
@@ -342,7 +343,15 @@ public class AshenValeGame : MonoBehaviour
         var me = world.GetPlayer(localId);
         if (me == null) return;
         const float w = 170f, row = 26f;
-        Rect box = new Rect(Screen.width - w - 12f, Screen.height * .5f - 120f, w, 44f + 7 * row);
+        if (bossDoors == null)
+        {
+            // Every map a boss lives on, with the boss's name, in map order.
+            bossDoors = new System.Collections.Generic.List<KeyValuePair<int, string>>();
+            foreach (var def in Maps.All)
+                foreach (var point in def.spawns)
+                    if (Monsters.All[point.monster].boss) { bossDoors.Add(new KeyValuePair<int, string>(def.id, Monsters.All[point.monster].name)); break; }
+        }
+        Rect box = new Rect(Screen.width - w - 12f, Screen.height * .5f - 190f, w, 44f + (8 + bossDoors.Count) * row);
         GUI.Box(box, "DEBUG  [F8]");
         GUI.Label(new Rect(box.x + 10, box.y + 22, w - 20, 20), "Level " + me.ch.level + "   Gold " + me.ch.gold);
         float y = box.y + 44f;
@@ -352,6 +361,12 @@ public class AshenValeGame : MonoBehaviour
         if (GUI.Button(new Rect(box.x + 8, y, w - 16, 22), "Refill HP, MP, cooldowns")) world.TestRefill(localId); y += row;
         if (GUI.Button(new Rect(box.x + 8, y, w - 16, 22), "Gold +1000")) world.TestGold(localId, 1000); y += row;
         if (GUI.Button(new Rect(box.x + 8, y, w - 16, 22), "Kill everything here")) world.TestKillAll(localId); y += row;
+        GUI.Label(new Rect(box.x + 10, y + 2, w - 20, 20), "Go to boss:"); y += row - 4f;
+        foreach (var door in bossDoors)
+        {
+            if (GUI.Button(new Rect(box.x + 8, y, w - 16, 22), door.Value)) world.TestGoToMap(localId, door.Key);
+            y += row;
+        }
         GUI.Label(new Rect(box.x + 10, y, w - 20, 20), "Editor / dev builds only");
     }
 }
