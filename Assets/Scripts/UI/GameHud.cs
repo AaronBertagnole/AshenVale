@@ -325,8 +325,6 @@ namespace AshenVale
             if (def.kind != MapKind.Town) return;
             if (me.returnReady && me.returnMap >= 0 && me.returnMap < Maps.All.Length)
                 Label(cam, def.returnX, def.returnY + 2.75f, "BACK TO " + Maps.All[me.returnMap].name.ToUpperInvariant() + "  [" + Keys.Name(GameAction.Up) + "]", new Color(1f, .88f, .6f));
-            else
-                Label(cam, def.returnX, def.returnY + 2.75f, "RETURN PORTAL (OPENS WHEN YOU USE " + Keys.Name(GameAction.TownPortal) + " IN THE FIELD)", new Color(.75f, .72f, .66f));
             foreach (var stand in def.merchants) Label(cam, stand.x, stand.y + 2.5f, "MERCHANT  [" + Keys.Name(GameAction.Interact) + "]", new Color(1f, .85f, .55f));
             Label(cam, def.waystoneX, def.waystoneY + 2.35f, "WAYSTONE  [" + Keys.Name(GameAction.Interact) + "]", new Color(.7f, .95f, 1f));
             if (def.hasSmithy) Label(cam, def.smithyX, def.smithyY + 2.5f, "BLACKSMITH  [" + Keys.Name(GameAction.Interact) + "]", new Color(1f, .7f, .45f));
@@ -680,7 +678,7 @@ namespace AshenVale
             GUI.Label(new Rect(170, 19, 191, 22), me.Hero.name.ToUpperInvariant() + "   LV " + ch.level, detailRight);
             Bar(23, 49, 338, "HP", me.hp, me.MaxHp, new Color(.82f, .20f, .25f));
             Bar(23, 80, 338, "MP", me.mp, me.MaxMp, new Color(.19f, .46f, .88f));
-            Bar(23, 111, 338, "XP", ch.xp, Tuning.XpNeeded(ch.level), new Color(.88f, .68f, .24f));
+            Bar(23, 111, 338, "EXP", ch.xp, Tuning.XpNeeded(ch.level), new Color(.88f, .68f, .24f));
             Fill(new Rect(23, 144, 338, 1), new Color(.45f, .45f, .48f, .55f));
             GUI.Label(new Rect(23, 152, 220, 20), "EMBERMARKS  " + ch.gold + "     KILLS  " + ch.kills, detailText);
             GUI.Label(new Rect(23, 175, 338, 19), "HP POTIONS [" + Keys.Name(GameAction.HpPotion) + "]  " + ch.hpPotions + "       MP POTIONS [" + Keys.Name(GameAction.MpPotion) + "]  " + ch.mpPotions, detailText);

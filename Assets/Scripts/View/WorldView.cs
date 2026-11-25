@@ -179,6 +179,17 @@ namespace AshenVale
                 if (e.map != shownMap) continue;
                 PlayAttackFeedback(e);
                 if (e.kind == SimEventKind.Mastery) { SpawnMastery(e); continue; }
+                if (e.kind == SimEventKind.MonsterHit)
+                {
+                    // The blow that kills: the monster is already gone, so its last number is written from the hit itself.
+                    // (Hits it survives are numbered where its health drops, below.)
+                    bool alive = false;
+                    if (shownMap >= 0)
+                        foreach (var m in world.maps[shownMap].monsters)
+                            if (Mathf.Abs(m.x - e.x) < .05f && Mathf.Abs(m.y - e.y) < .05f) { alive = true; break; }
+                    if (!alive && e.amount > 0) Number(e.x, e.y + 1.5f, e.amount.ToString(), DamageColor, e.amount >= 60);
+                    continue;
+                }
                 if(e.kind==SimEventKind.RimeBurst || e.kind==SimEventKind.RimeStorm || e.kind==SimEventKind.RimeTeleport) {SpawnRimeFx(e);continue;}
                 if (e.kind == SimEventKind.ItemDropped)
                 {
@@ -293,6 +304,10 @@ namespace AshenVale
             int step = Mathf.FloorToInt((y - origin) / spacing);
             int pose = (step % 2 + 2) % 2;
             int index = Mathf.Min(pose, frames.Length - 1);
+            // The hands change with each rung passed, and that is all: the hero keeps its own size and moves smoothly up
+            // the ladder. (Snapping the hands onto the rungs resized the hero and made the climb step and jitter.)
+            v.fittedClimb = false; v.climbXOffset = 0f; v.climbOffset = 0f;
+            if (index >= 0) return index;
             Sprite sprite = frames[index];
             var hands = p.Hero.dragonKnight ? KnightClimbHands : RangerClimbHands;
             Vector2 high = hands[pose * 2], low = hands[pose * 2 + 1];
@@ -971,6 +986,13 @@ namespace AshenVale
                 cam.position += shakeOffset;
             }
             var visual = visuals[shownMap];
+            // The town's return portal stands only while this hero has a way back open (after a town portal from the field).
+            if (visual.returnPortal != null)
+            {
+                var me = world.GetPlayer(shownLocalId);
+                bool open = me != null && me.returnReady;
+                if (visual.returnPortal.activeSelf != open) visual.returnPortal.SetActive(open);
+            }
             Vector3 c = cam.position;
             float halfWidth = viewHalf * camera.aspect;
             foreach (var layer in visual.layers)

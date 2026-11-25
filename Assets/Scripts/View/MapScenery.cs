@@ -53,6 +53,7 @@ namespace AshenVale
     public sealed class MapVisual
     {
         public GameObject root;
+        public GameObject returnPortal;     // a town's way back to the field: shown only while the local hero has one open (WorldView)
         public readonly List<ParallaxLayer> layers = new List<ParallaxLayer>();
         public readonly List<SpeckGroup> ambient = new List<SpeckGroup>();
         public float cameraLowY;    // backdrop layers are laid out as seen with the camera at its lowest point
@@ -480,7 +481,7 @@ namespace AshenVale
             foreach (var portal in def.portals) BuildPortal(root, portal.x, portal.y, false);
             if (def.kind == MapKind.Town)
             {
-                BuildPortal(root, def.returnX, def.returnY, true);
+                visual.returnPortal = BuildPortal(root, def.returnX, def.returnY, true);
                 BuildWaystone(root, def, def.waystoneX, def.waystoneY, PaintedMapFraming.ShowPlaceholderProps(def, painted, front.Valid));
                 foreach (var stand in def.merchants) BuildMerchant(root, stand.x, stand.y, PaintedMapFraming.ShowPlaceholderProps(def, painted, front.Valid));
             }
@@ -950,15 +951,15 @@ namespace AshenVale
         const float SealUp = 194f / 1214f, SwirlUp = 614f / 1214f, SealHalfWidth = 272f / 1295f;
 
         // Map gates and a town's return gate.
-        static void BuildPortal(Transform root, float x, float y, bool townReturn)
+        static GameObject BuildPortal(Transform root, float x, float y, bool townReturn)
         {
-            Portal(root, x, y, townReturn ? "Art/Props/return_portal" : "Art/Props/portal", townReturn ? ReturnPortalColor : MapPortalColor, PortalOrder);
+            return Portal(root, x, y, townReturn ? "Art/Props/return_portal" : "Art/Props/portal", townReturn ? ReturnPortalColor : MapPortalColor, PortalOrder);
         }
 
         // A portal standing at (x, y) on the floor. Also the T town portal (WorldView, violet). The old `picture`
         // argument is kept so existing call sites remain compatible; every portal uses the same swirl art, and
         // `color` tints its particles.
-        public static void Portal(Transform parent, float x, float y, string picture, Color color, int order)
+        public static GameObject Portal(Transform parent, float x, float y, string picture, Color color, int order)
         {
             var anchor = new GameObject("Swirl Portal").transform;      // sits at the middle of the seal
             anchor.SetParent(parent, false);
@@ -989,6 +990,7 @@ namespace AshenVale
             }
 
             anchor.gameObject.AddComponent<PortalManaVfx>().Initialize(color, order + 1, art, sealRadius, swirlHeight, swirlHeight * .6f);
+            return anchor.gameObject;
         }
 
         // placeholder: draw stand-in shapes when there is no art (false on painted scenes, which show their own).

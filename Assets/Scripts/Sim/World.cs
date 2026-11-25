@@ -291,7 +291,7 @@ namespace AshenVale
             }
             else if (p.leapActive) p.vx = p.leapDirection * Abilities.LeapSpeed(p);
             else if (p.dashTime > 0) { p.dashTime -= dt; p.vx = p.facing * Abilities.DashSpeed(p); }
-            else p.vx = axis * p.Hero.moveSpeed * (p.crouching ? Tuning.CrouchSpeedFactor : p.grounded || p.climbing ? 1f : Tuning.AirSpeedFactor);
+            else p.vx = p.crouching ? 0f : axis * p.Hero.moveSpeed * (p.grounded || p.climbing ? 1f : Tuning.AirSpeedFactor);      // prone: you stay put (you can still turn)
             if (!p.grounded) p.fangLungeTime = 0;
             p.x = Mathf.Clamp(p.x + (p.climbing ? 0 : p.vx * dt), def.minX, def.maxX);
 
@@ -789,6 +789,7 @@ namespace AshenVale
                 if (SproutHeals(map, m, dt)) continue;
                 if (d.spits && Spits(map, m, target, dt)) continue;
                 if (d.flies) { Fly(map, m, target, dt); continue; }
+                PlayerState watched;
                 if (m.knockbackTime > 0f)
                 {
                     float step = Mathf.Min(dt, m.knockbackTime);
@@ -799,7 +800,17 @@ namespace AshenVale
                 else if (target != null)
                 {
                     float dist = target.x - m.x;
-                    if (Mathf.Abs(dist) > .2f) { m.facing = dist > 0 ? 1 : -1; m.x += m.facing * d.speed * dt; }
+                    bool overhead = target.y > m.y + d.hover + d.height + .2f;      // on a ladder or a jump above it: out of its reach
+                    if (overhead && Mathf.Abs(dist) < Tuning.ProwlReach + .3f) Prowl(m, dist, d.speed, dt);
+                    else if (Mathf.Abs(dist) > .2f) { m.facing = dist > 0 ? 1 : -1; m.x += m.facing * d.speed * dt; }
+                }
+                else if ((watched = Watched(map.def.id, m)) != null)
+                {
+                    // Someone it wants but cannot get to (a ledge above, a ladder): it keeps under them, pacing, inside its own stretch.
+                    float dist = Mathf.Clamp(watched.x, lo, hi) - m.x;
+                    if (Mathf.Abs(dist) < Tuning.ProwlReach + .3f) Prowl(m, dist, d.speed, dt);
+                    else { m.facing = dist > 0 ? 1 : -1; m.x += m.facing * d.speed * Tuning.ProwlSpeed * dt; }
+                    if (m.x <= lo) m.wanderDir = 1; else if (m.x >= hi) m.wanderDir = -1;
                 }
                 else
                 {
@@ -816,6 +827,30 @@ namespace AshenVale
                 m.x = Mathf.Clamp(m.x, chaseLo, chaseHi);
             }
             TouchDamage(map);
+        }
+
+        // Pacing beneath someone it cannot reach: back and forth across ProwlReach either side of them, never standing still.
+        static void Prowl(MonsterState m, float dist, float speed, float dt)
+        {
+            if (m.wanderDir == 0) m.wanderDir = dist >= 0 ? 1 : -1;
+            if (dist > Tuning.ProwlReach) m.wanderDir = 1; else if (dist < -Tuning.ProwlReach) m.wanderDir = -1;
+            m.facing = m.wanderDir;
+            m.x += m.wanderDir * speed * Tuning.ProwlSpeed * dt;
+        }
+
+        // The hero an aggressive (or angered) monster is fixed on though it cannot reach them: the nearest one in sight on
+        // another floor of its map. Null for placid monsters, which go on wandering.
+        PlayerState Watched(int mapId, MonsterState m)
+        {
+            if (!m.Def.aggressive && !m.angry || m.Def.harmless) return null;
+            PlayerState best = null; float bestDist = Tuning.MonsterSight;
+            foreach (var p in players)
+            {
+                if (p.dead || p.map != mapId || Mathf.Abs(p.y - m.y) > Tuning.ProwlHeight) continue;
+                float dist = Mathf.Abs(p.x - m.x);
+                if (dist < bestDist) { bestDist = dist; best = p; }
+            }
+            return best;
         }
 
         // Flyers ignore floors and ledges. With someone to go after they fly straight at them, up or down; otherwise

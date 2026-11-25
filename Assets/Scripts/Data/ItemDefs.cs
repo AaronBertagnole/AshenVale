@@ -166,15 +166,19 @@ namespace AshenVale
             return slot == Slot.Weapon ? hero.weaponName : SlotNames[(int)slot];
         }
 
-        // Drop roll: 75% Common, 20% Rare, 5% Epic. Stats grow every 3 levels; Rare doubles them, Epic triples.
+        // Drop roll: mostly Common; Rare and Epic start scarce and grow with level (Tuning.RareChance*, EpicChance*:
+        // 5% and 1% at level 1, 20% and 5% from about level 30). Stats grow every 3 levels; Rare doubles them, Epic triples.
         // bossEpicChance >= 0 is a boss's own drop: never Common (Epic with that chance, else Rare), and it carries
         // the boss's mark in its name (bossMark, e.g. "Thornbound").
+        public static float RareChance(int level) { return Mathf.Min(Tuning.RareChanceMax, Tuning.RareChanceBase + Tuning.RareChancePerLevel * (level - 1)); }
+        public static float EpicChance(int level) { return Mathf.Min(Tuning.EpicChanceMax, Tuning.EpicChanceBase + Tuning.EpicChancePerLevel * (level - 1)); }
+
         public static Item Roll(System.Random rng, int level, HeroDef hero, float bossEpicChance = -1f, string bossMark = null)
         {
             Slot slot = (Slot)rng.Next(4);
             double roll = rng.NextDouble();
             Rarity rarity = bossEpicChance >= 0f ? (roll < bossEpicChance ? Rarity.Epic : Rarity.Rare)
-                          : roll < .05 ? Rarity.Epic : roll < .25 ? Rarity.Rare : Rarity.Common;
+                          : roll < EpicChance(level) ? Rarity.Epic : roll < EpicChance(level) + RareChance(level) ? Rarity.Rare : Rarity.Common;
             int mult = rarity == Rarity.Epic ? 3 : rarity == Rarity.Rare ? 2 : 1;
             int power = 1 + level / 3;
             var item = new Item

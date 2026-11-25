@@ -152,7 +152,7 @@ namespace AshenVale
                 part = Parts.ShadeEssence, partChance = .25f },   // a second source of Shade Essence outside the den
             // Region 1's boss, in Thornmother's Glade off Mosswood. Her bark is thick: a party job, or a well-geared solo.
             new MonsterDef { key = "thornmother", name = "Thornmother", level = 9, color = new Color(.36f, .30f, .22f),
-                width = 2.6f, height = 3.3f, hp = 2600, speed = 1.1f, damage = 26, xp = 420, goldMin = 160, goldRange = 120,
+                width = 2.6f, height = 3.3f, hp = 3900, speed = 1.1f, damage = 33, xp = 420, goldMin = 160, goldRange = 120,
                 aggressive = true, boss = true, minion = ThornSprout, minionsHeal = true, respawn = Tuning.BossRespawn, itemChance = .9f, lootMark = "Thornbound",
                 part = Parts.WraithSilk, partChance = 1f,
                 chestParts = new[] { Parts.BoarTusk, Parts.MossTuft, Parts.ShadeEssence, Parts.WraithSilk, Parts.BoarTusk, Parts.MossTuft } },

@@ -62,6 +62,13 @@ namespace AshenVale
         // Flyers (MonsterDef.flies): they roam FlyRoam to either side of their haunt and up to FlyRoamHeight above it,
         // and go after anyone within FlyLeash of it sideways and FlySightHeight of them up or down.
         public const float FlyRoam = 5f, FlyRoamHeight = 3f, FlyLeash = 12f, FlySightHeight = 7f;
+        // A monster fixed on a hero it cannot reach paces under them: ProwlReach either side, at ProwlSpeed of its pace,
+        // for heroes up to ProwlHeight above or below it.
+        public const float ProwlReach = .9f, ProwlSpeed = .7f, ProwlHeight = 6f;
+        // Gear rarity by the level of what dropped it: rare things are rare early and come more often deeper in.
+        // Level 1: 5% Rare, 1% Epic. They climb each level to 20% and 5% (reached around level 30).
+        public const float RareChanceBase = .05f, RareChancePerLevel = .005f, RareChanceMax = .2f;
+        public const float EpicChanceBase = .01f, EpicChancePerLevel = .0014f, EpicChanceMax = .05f;
         public const float MonsterStrikeShow = .4f;    // how long an ordinary monster holds its strike pose after a hit
         public const float BossLootChance = .5f;       // each hero's chance of the boss's own marked gear per kill
         public const float BossEpicChance = .2f;       // that gear is Epic this often, Rare otherwise

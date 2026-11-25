@@ -95,7 +95,7 @@ namespace AshenVale
             Label("Log heading", log, 10, 5, 200, 13, 9, HudTheme.CopperText, FontStyle.Bold).text = "ADVENTURE LOG";
             for (int i = 0; i < 3; i++) lines.Add(Label("Activity " + i, log, 10, 21 + i * 14, 200, 14, 10, HudTheme.TextMuted));
 
-            var actions = Rect("Action bar", safeRoot, new Vector2(.5f, 0), new Vector2(.5f, 0), new Vector2(0, 8), new Vector2(341, 66)); actions.pivot = new Vector2(.5f, 0);
+            var actions = Rect("Action bar", safeRoot, new Vector2(.5f, 0), new Vector2(.5f, 0), new Vector2(0, 8), new Vector2(341, 72)); actions.pivot = new Vector2(.5f, 0);
             GameAction[] actionsList = { GameAction.Attack, GameAction.Skill, GameAction.Dash, GameAction.Mastery, GameAction.TownPortal, GameAction.HpPotion, GameAction.MpPotion };
             HudGlyph.Symbol[] glyphs = { HudGlyph.Symbol.Blade, HudGlyph.Symbol.Burst, HudGlyph.Symbol.Dash, HudGlyph.Symbol.Diamond, HudGlyph.Symbol.Portal, HudGlyph.Symbol.Bottle, HudGlyph.Symbol.Bottle };
             Color[] colors = { new Color(1,.65f,.24f), HudTheme.Teal, new Color(.7f,.89f,.8f), new Color(1f,.82f,.35f), new Color(.65f,.8f,1), new Color(1,.4f,.35f), new Color(.3f,.75f,1) };
@@ -136,8 +136,10 @@ namespace AshenVale
                 var shadow = count.gameObject.AddComponent<Shadow>(); shadow.effectColor = new Color(0, 0, 0, .8f); shadow.effectDistance = new Vector2(1, -1);
                 slots.Add(new ActionSlot { action = action, button = button, key = key, value = count, timer = timer, cooldown = mask, painted = abilityArt, glyph = abilityGlyph });
             }
-            xp = MeterAt(actions, 0, 55, 287, 5, new Color(.95f,.68f,.22f)); xp.text.gameObject.SetActive(false);
-            xpText = Label("Experience", actions, 0, 59, 287, 12, 8, HudTheme.Muted); xpText.alignment = TextAnchor.MiddleCenter;
+            // Experience: a proper bar under the action slots, with the numbers written on it.
+            xp = MeterAt(actions, 0, 54, 341, 16, new Color(.93f,.62f,.16f)); xp.text.gameObject.SetActive(false);
+            xpText = Label("Experience", actions, 0, 54, 341, 16, 11, Color.white, FontStyle.Bold); xpText.alignment = TextAnchor.MiddleCenter;
+            var xpShadow = xpText.gameObject.AddComponent<Shadow>(); xpShadow.effectColor = new Color(0, 0, 0, .9f); xpShadow.effectDistance = new Vector2(1, -1);
 
             var shortcuts = Rect("Shortcuts", safeRoot, new Vector2(1,0), new Vector2(1,0), new Vector2(-20,8), new Vector2(164,58)); shortcuts.pivot = new Vector2(1,0);
             string[] labels = { "Bag", "World", "Menu" };
@@ -260,7 +262,8 @@ namespace AshenVale
             if(portraitHero!=ch.hero){portraitHero=ch.hero;var frames=Sprites.Hero(me.Hero.folder+"/idle");portrait.sprite=frames.Length>0?frames[0]:null;portrait.enabled=portrait.sprite!=null;}
             heroName.text=string.IsNullOrEmpty(ch.name)?me.Hero.name:ch.name;heroClass.text=me.Hero.name;level.text="LEVEL "+ch.level;
             SetMeter(health,me.hp,me.MaxHp,"HP");SetMeter(mana,me.mp,me.MaxMp,"MP");SetMeter(xp,ch.xp,Tuning.XpNeeded(ch.level),"");
-            xpText.text="LEVEL "+ch.level+"  /  "+ch.xp+" of "+Tuning.XpNeeded(ch.level)+" XP";
+            int expNeed=Tuning.XpNeeded(ch.level);
+            xpText.text="LV "+ch.level+"    EXP "+ch.xp.ToString("N0")+" / "+expNeed.ToString("N0")+"    "+(expNeed>0?ch.xp*100f/expNeed:0f).ToString("0.0")+"%";
             location.text=def.name.ToUpperInvariant();region.text=def.kind==MapKind.Town?"A HAVEN ON THE ROAD":def.LevelText.ToUpperInvariant();
             gold.text=ch.gold.ToString("N0")+" EMBERMARKS";
             network.text=legacy.status??"";copyCode.gameObject.SetActive(!string.IsNullOrEmpty(legacy.joinCode));
@@ -292,7 +295,6 @@ namespace AshenVale
             {
                 string key="["+Keys.Name(GameAction.Interact)+"] ";
                 if(world.NearMerchant(me,2))prompt=key+"Browse the merchant's wares";
-                else if(world.NearWaystone(me,2))prompt=key+"Open waystone travel";
                 else if(world.NearSmithy(me,2))prompt=key+"Visit the blacksmith";
                 else if(me.portalCast>0)prompt="Opening a town portal...";
             }

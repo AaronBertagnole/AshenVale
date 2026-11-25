@@ -351,7 +351,6 @@ namespace AshenVale
                 var d=saved[i]; var hero=Heroes.All[Mathf.Clamp(d.hero,0,Heroes.All.Length-1)];
                 Rect row=new Rect(0,i*82,252,76);
                 if(GUI.Button(row,GUIContent.none,i==selected ? FrontMenuLook.Primary : button)) { selected=i; pendingDelete=null; }
-                if(i==selected) FrontMenuLook.Flame(new Rect(10,row.y+27,13,22));
                 var nameStyle=new GUIStyle(subtitle) { fontSize=18 }; nameStyle.normal.textColor=i==selected ? new Color(.10f,.09f,.065f) : FrontMenuLook.Ivory;
                 while(nameStyle.fontSize>12 && nameStyle.CalcSize(new GUIContent(d.name)).x>205) nameStyle.fontSize--;
                 GUI.Label(new Rect(35,row.y+12,205,26),d.name,nameStyle);
@@ -480,7 +479,6 @@ namespace AshenVale
             GUI.Label(new Rect(r.x+36,r.y+8,r.width-48,30),h.name,label);
             var detail=new GUIStyle(small); detail.normal.textColor=chosen ? new Color(.16f,.17f,.12f) : FrontMenuLook.Quiet;
             GUI.Label(new Rect(r.x+36,r.y+39,r.width-48,28),h.roleLabel,detail);
-            if(chosen) FrontMenuLook.Flame(new Rect(r.x+11,r.y+33,15,25));
         }
 
         static void DrawSprite(Rect target, Sprite sprite)
