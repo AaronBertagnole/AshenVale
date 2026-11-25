@@ -210,8 +210,9 @@ namespace AshenVale
 
             if (!town)
             {
-                if (!p.crouching && input.attack) Attack(p, map, false);
+                // Skill first: with both keys held, the skill goes whenever it has recharged and basic attacks fill the gaps.
                 if (!p.crouching && input.skill) Attack(p, map, true);
+                if (!p.crouching && input.attack) Attack(p, map, false);
                 if (!p.crouching && input.mastery) CastMastery(p, map);
                 if (input.pickup) Pickup(p, map);
             }

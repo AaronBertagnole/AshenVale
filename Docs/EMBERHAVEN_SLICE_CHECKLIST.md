@@ -50,6 +50,8 @@ Ranger run, 2026-11-25, pushed and waiting for the owner to confirm:
 - [ ] Ground monsters chase across the whole floor (they used to stop 10 units from where they spawned), then walk home.
 - [ ] Knight less stiff: planted only until the blow lands plus 0.1s (was the whole swing: 0.46s basic, 0.78s Dragon Strike); moving, jumping or leaping then cuts the swing short. Attack rate unchanged.
 - [ ] Ranger arrows leave at the height of the nocked arrow (0.9 units above her feet, was 1.1).
+- [ ] Dragon Strike steps forward 1.2 units (was 0.55).
+- [ ] Holding the attack or skill key keeps attacking (all heroes). The movement ability still needs a press each time.
 
 Knight run, still open:
 - [ ] Emberhaven painting: two flaws in the front layer (a garbled hanging sign under the balcony, a mint cloth scrap at the left edge). Needs a repaint of those spots; an automatic patch looked worse.

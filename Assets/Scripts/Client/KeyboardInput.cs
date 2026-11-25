@@ -14,8 +14,9 @@ namespace AshenVale
             pending.moveX = (Keys.Held(GameAction.Right, ignoreMouse) ? 1 : 0) - (Keys.Held(GameAction.Left, ignoreMouse) ? 1 : 0);
             pending.moveY = (Keys.Held(GameAction.Up, ignoreMouse) ? 1 : 0) - (Keys.Held(GameAction.Down, ignoreMouse) ? 1 : 0);
             if (Keys.Pressed(GameAction.Jump, ignoreMouse)) pending.jump = true;
-            if (allowAttacks && Keys.Pressed(GameAction.Attack, ignoreMouse)) pending.attack = true;
-            if (allowAttacks && Keys.Pressed(GameAction.Skill, ignoreMouse)) pending.skill = true;
+            // Attack and skill repeat while their key is held (the world lets each through when its cooldown is up).
+            if (allowAttacks && Keys.Held(GameAction.Attack, ignoreMouse)) pending.attack = true;
+            if (allowAttacks && Keys.Held(GameAction.Skill, ignoreMouse)) pending.skill = true;
             if (allowAttacks && Keys.Pressed(GameAction.Mastery, ignoreMouse)) pending.mastery = true;
             if (Keys.Pressed(GameAction.Dash, ignoreMouse)) pending.dash = true;
             if (Keys.Pressed(GameAction.Loot, ignoreMouse)) pending.pickup = true;
