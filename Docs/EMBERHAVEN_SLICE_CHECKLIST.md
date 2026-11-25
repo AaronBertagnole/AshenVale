@@ -46,6 +46,9 @@ Knight run, 2026-11-25. Pushed in 342e025, waiting for the owner to confirm each
 - [ ] Potion prices rise with level (HP 30 at level 1, 130 at level 11; MP 37 and 157), and the merchant sells x1 / x5 / x10. (Pushed after 342e025.)
 - [ ] No second prompt over the hero at the merchant or blacksmith; the label over each stand is enough.
 
+Ranger run, 2026-11-25, pushed and waiting for the owner to confirm:
+- [ ] Ground monsters chase across the whole floor (they used to stop 10 units from where they spawned), then walk home.
+
 Knight run, still open:
 - [ ] Emberhaven painting: two flaws in the front layer (a garbled hanging sign under the balcony, a mint cloth scrap at the left edge). Needs a repaint of those spots; an automatic patch looked worse.
 - [ ] Merchants and the blacksmith as characters, not only labels. Needs art (see 4).

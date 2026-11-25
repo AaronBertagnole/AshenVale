@@ -233,7 +233,11 @@ namespace AshenVale
             {
                 var point = spawns[i];
                 point.chaseLeft = point.left; point.chaseRight = point.right;
+                // Going after someone on the ground, it has the whole floor: no invisible line it stops at while the
+                // hero stands just past it. It walks back to its own stretch once it loses interest.
+                if (point.y <= G + .01f) { point.chaseLeft = def.minX; point.chaseRight = def.maxX; }
                 spawns[i] = point;
+                float roamLeft = point.left, roamRight = point.right;
                 if (point.y > G + .01f || Monsters.All[point.monster].boss) continue;
                 foreach (var portal in portals)
                 {
@@ -243,7 +247,7 @@ namespace AshenVale
                 }
                 // Boxed in between two portals (Mosswood's east boar): a stretch that narrow pins the monster to one
                 // spot forever, so it gets its whole stretch back instead.
-                if (point.right - point.left < 3f) { point.left = point.chaseLeft; point.right = point.chaseRight; }
+                if (point.right - point.left < 3f) { point.left = roamLeft; point.right = roamRight; }
                 spawns[i] = point;
             }
             def.portals = portals.ToArray();
