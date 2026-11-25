@@ -36,7 +36,7 @@ namespace AshenVale
         bool CaptainEffects => ThornFx == "Art/Effects/captain_marrow/";
 
         const int ThornGroundOrder = MonsterOrder + 1, ThornFrontOrder = HeroOrder + 1;
-        const float EruptShow = .55f, WallGrow = .9f, WallFall = .45f, WallScale = 1.5f, MoteFlight = .7f;
+        const float EruptShow = .75f, WallGrow = .9f, WallFall = .45f, WallScale = 1.5f, MoteFlight = .7f;
 
         // The frame for a monster's special pose, or null when it is just standing or walking.
         Sprite PoseFrame(MonsterView v, MonsterState m, float dt)
@@ -77,7 +77,57 @@ namespace AshenVale
             return frames[Mathf.Clamp(index, 0, frames.Length - 1)];
         }
 
-        sealed class Bramble { public GameObject go; public SpriteRenderer sr; public float x, y, age; public bool erupted; }
+        // An eruption mark, then the eruption. `sr` is the picture; `next` cross-fades the following frame over it so a
+        // few painted frames read as motion; `glow` and `light` add light (the same picture, and a pool on the floor).
+        sealed class Bramble
+        {
+            public GameObject go; public SpriteRenderer sr, next, glow, light; public float x, y, age; public bool erupted;
+            public void Destroy()
+            {
+                Object.Destroy(go);
+                if (next != null) Object.Destroy(next.gameObject);
+                if (glow != null) Object.Destroy(glow.gameObject);
+                if (light != null) Object.Destroy(light.gameObject);
+            }
+        }
+
+        // ---- Effect polish shared by the bosses' effects ----
+        // The colour of the light this map's boss throws: sea-green for Captain Marrow, forge-orange for the Colossus, briar-green otherwise.
+        Color BossFxTint
+        {
+            get
+            {
+                string fx = ThornFx;
+                return fx.Contains("captain_marrow") ? new Color(.45f, 1f, .86f) : fx.Contains("rusted_colossus") ? new Color(1f, .6f, .25f) : new Color(.62f, .88f, .42f);
+            }
+        }
+
+        static Material additive; static bool additiveLooked;
+        // A renderer that adds light (Resources/Shaders/SpriteAdditive); null if the shader is not available, and the effect simply goes without.
+        static SpriteRenderer Glow(string name, int order)
+        {
+            if (!additiveLooked)
+            {
+                additiveLooked = true;
+                var shader = Resources.Load<Shader>("Shaders/SpriteAdditive");
+                if (shader != null && shader.isSupported) additive = new Material(shader);
+                else Debug.LogWarning("Effect glows are off: shader Resources/Shaders/SpriteAdditive " + (shader == null ? "was not found" : "is not supported here"));
+            }
+            if (additive == null) return null;
+            GameObject go;
+            var sr = ThornSprite(name, order, out go);
+            sr.sharedMaterial = additive;
+            return sr;
+        }
+
+        // StandOn with separate width and height scales, for squash and stretch.
+        static void StandOn(SpriteRenderer sr, Sprite sprite, float x, float floor, float scaleX, float scaleY)
+        {
+            sr.sprite = sprite;
+            if (sprite == null) return;
+            sr.transform.localScale = new Vector3(scaleX, scaleY, 1f);
+            sr.transform.position = new Vector3(x - sprite.bounds.center.x * scaleX * (sr.flipX ? -1f : 1f), floor - sprite.bounds.min.y * scaleY, 0f);
+        }
         // A wall is a thicket: its leading clump in front of the heroes, and darker clumps behind them filling the
         // ground it has already taken, out to where it started.
         sealed class ThornWall
@@ -112,7 +162,12 @@ namespace AshenVale
         {
             GameObject go;
             var sr = ThornSprite("Bramble", ThornGroundOrder, out go);
-            bramblesShown.Add(new Bramble { go = go, sr = sr, x = e.x, y = e.y });
+            GameObject nextGo;
+            var next = ThornSprite("Bramble next frame", ThornFrontOrder, out nextGo);
+            next.color = Color.clear;
+            var light = Glow("Bramble floor light", ThornGroundOrder);
+            if (light != null) { light.sprite = Sprites.Disc; light.color = Color.clear; }
+            bramblesShown.Add(new Bramble { go = go, sr = sr, next = next, glow = Glow("Bramble glow", ThornFrontOrder + 1), light = light, x = e.x, y = e.y });
             PlayThornSound("thorn_warn", .8f);
         }
 
@@ -145,6 +200,24 @@ namespace AshenVale
             PlayThornSound("sprout_heal", .5f, .25f);
         }
 
+        // The moment an eruption breaks the floor: spray thrown up and out, mist rolling along the ground, a small kick.
+        void EruptBurst(float x, float floor, Color tint)
+        {
+            for (int k = 0; k < 16; k++)
+            {
+                float angle = Random.Range(.25f, Mathf.PI - .25f), speed = Random.Range(4.5f, 10f), life = Random.Range(.3f, .55f), size = Random.Range(.07f, .16f);
+                var colour = Color.Lerp(tint, Color.white, Random.value * .6f); colour.a = .9f;
+                AddAttackSpark(Sprites.Disc, new Vector2(x + Random.Range(-.7f, .7f), floor + .2f), new Vector2(Mathf.Cos(angle) * speed * .6f, Mathf.Sin(angle) * speed), colour, size, size * 1.6f, life);
+            }
+            for (int k = 0; k < 6; k++)
+            {
+                float side = k % 2 == 0 ? -1f : 1f, size = Random.Range(.8f, 1.5f);
+                AddAttackSpark(Sprites.Disc, new Vector2(x + side * Random.Range(.2f, .9f), floor + .25f), new Vector2(side * Random.Range(1.5f, 3.5f), Random.Range(.1f, .5f)),
+                               new Color(tint.r, tint.g, tint.b, .16f), size * 1.6f, size * .7f, Random.Range(.5f, .8f));
+            }
+            Shake(.07f, .16f);
+        }
+
         void UpdateThornFx(float dt)
         {
             var warning = Sprites.Frames(ThornFx + "warning"); var eruption = Sprites.Frames(ThornFx + "eruption");
@@ -152,23 +225,63 @@ namespace AshenVale
             {
                 var b = bramblesShown[i];
                 b.age += dt;
-                if (b.age >= Tuning.BossEruptWarn + EruptShow) { Object.Destroy(b.go); bramblesShown.RemoveAt(i); continue; }
+                if (b.age >= Tuning.BossEruptWarn + EruptShow) { b.Destroy(); bramblesShown.RemoveAt(i); continue; }
+                Color tint = BossFxTint;
                 if (b.age < Tuning.BossEruptWarn)
                 {
-                    // The mark brightens through its frames, and pulses faster as the thorns come.
+                    // The mark brightens through its frames, and pulses faster as the eruption comes. A mark painted as
+                    // a tall oval (seen from above) is pressed flat so it lies on the floor instead of standing on edge.
                     float t = b.age / Tuning.BossEruptWarn;
+                    var mark = Frame(warning, t);
+                    float scale = Tuning.BossEruptRadius * 2f / 2.5f, flat = 1f;
+                    if (mark != null && mark.bounds.size.y > mark.bounds.size.x * .34f) flat = mark.bounds.size.x * .34f / mark.bounds.size.y;
                     b.sr.sortingOrder = ThornGroundOrder;
-                    StandOn(b.sr, Frame(warning, t), b.x, b.y - .05f, Tuning.BossEruptRadius * 2f / 2.5f);
+                    StandOn(b.sr, mark, b.x, b.y - .05f, scale, scale * flat);
                     float pulse = .75f + .25f * Mathf.Sin(b.age * (10f + 20f * t));
                     b.sr.color = new Color(1f, 1f, 1f, Mathf.Clamp01(.55f + t * .45f) * pulse);
+                    if (b.glow != null)
+                    {
+                        b.glow.sortingOrder = ThornGroundOrder;
+                        StandOn(b.glow, mark, b.x, b.y - .05f, scale * 1.05f, scale * flat * 1.05f);
+                        b.glow.color = new Color(tint.r, tint.g, tint.b, t * t * .55f * pulse);       // the light gathers as the moment nears
+                    }
                 }
                 else
                 {
-                    if (!b.erupted) { b.erupted = true; PlayThornSound("thorn_erupt"); }
+                    if (!b.erupted)
+                    {
+                        b.erupted = true; PlayThornSound("thorn_erupt");
+                        EruptBurst(b.x, b.y, tint);
+                    }
                     float t = (b.age - Tuning.BossEruptWarn) / EruptShow;
+                    // Bursts up fast with a little overshoot, holds, then sinks away. The next frame fades in over the
+                    // current one, so the painted frames blend instead of cutting.
+                    float at = t * eruption.Length; int index = Mathf.Clamp(Mathf.FloorToInt(at), 0, Mathf.Max(0, eruption.Length - 1));
+                    float blend = Mathf.Clamp01(at - index);
+                    float rise = Mathf.Clamp01(t / .12f), punch = 1f + .14f * Mathf.Sin(Mathf.Clamp01(t / .3f) * Mathf.PI);
+                    float sy = Mathf.Lerp(.5f, 1f, rise) * punch, sx = Mathf.Lerp(1.15f, 1f, rise);
+                    float fade = t > .72f ? (1f - t) / .28f : 1f;
+                    var now = eruption.Length > 0 ? eruption[index] : null;
+                    var then = eruption.Length > 0 ? eruption[Mathf.Min(index + 1, eruption.Length - 1)] : null;
                     b.sr.sortingOrder = ThornFrontOrder;
-                    StandOn(b.sr, Frame(eruption, t), b.x, b.y - .05f);
-                    b.sr.color = new Color(1f, 1f, 1f, t > .8f ? (1f - t) / .2f : 1f);
+                    StandOn(b.sr, now, b.x, b.y - .05f, sx, sy);
+                    b.sr.color = new Color(1f, 1f, 1f, fade);
+                    StandOn(b.next, then, b.x, b.y - .05f, sx, sy);
+                    b.next.color = new Color(1f, 1f, 1f, fade * blend);
+                    if (b.glow != null)
+                    {
+                        b.glow.sortingOrder = ThornFrontOrder + 1;
+                        StandOn(b.glow, now, b.x, b.y - .05f, sx * 1.04f, sy * 1.04f);
+                        b.glow.color = new Color(tint.r, tint.g, tint.b, fade * (.6f - .35f * t));
+                    }
+                    if (b.light != null)
+                    {
+                        // A pool of light on the floor: flares with the burst and dies with it.
+                        float flare = Mathf.Sin(Mathf.Clamp01(t / .6f) * Mathf.PI);
+                        b.light.transform.position = new Vector3(b.x, b.y + .08f, 0f);
+                        b.light.transform.localScale = new Vector3(4.2f, .8f, 1f);
+                        b.light.color = new Color(tint.r, tint.g, tint.b, flare * .5f);
+                    }
                 }
             }
 
@@ -262,7 +375,7 @@ namespace AshenVale
 
         void ClearThornFx()
         {
-            foreach (var b in bramblesShown) Object.Destroy(b.go);
+            foreach (var b in bramblesShown) b.Destroy();
             foreach (var w in thornWalls) DestroyWall(w);
             foreach (var m in healMotes) Object.Destroy(m.go);
             bramblesShown.Clear(); thornWalls.Clear(); healMotes.Clear();
