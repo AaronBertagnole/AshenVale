@@ -25,12 +25,31 @@ The owner asked to be told **no** when he drifts from this list, because he has 
 ## The list
 
 ### 1. Play it through (owner) — OPEN
-- [ ] New Dragon Knight, no debug panel, Emberhaven to Thornmother's death. Note everything that is wrong, ugly, confusing or boring.
+- [x] New Dragon Knight, no debug panel, Emberhaven to Thornmother's death. Note everything that is wrong, ugly, confusing or boring. (Done 2026-11-25; notes below.)
 - [ ] Same with the Ranger.
 - [ ] Same with the Rimecaller.
 - [ ] Send the notes (a list or clips). Claude sorts them into: bug, feel, balance, art, missing.
 
 ### 2. Fix what the play-through found
+
+Knight run, 2026-11-25. Pushed in 342e025, waiting for the owner to confirm each in Unity:
+- [ ] Return portal shows only while one is open, labelled with the map it leads back to.
+- [ ] Waystone: no extra "[E] Open waystone travel" prompt.
+- [ ] Damage number on the killing blow.
+- [ ] EXP bar: taller, numbers and percent on it; "XP" renamed "EXP".
+- [ ] Monsters pace under a hero on a ladder or ledge instead of standing still.
+- [ ] Fewer Rare and Epic drops early (5% / 1% at level 1, rising to 20% / 5% by about level 30).
+- [ ] No moving while prone.
+- [ ] Ladder climb smooth (no resizing or stepping). Fixed without a clip; needs the owner's eye.
+- [ ] Class select: no flame icon on the highlighted choice.
+- [ ] Thornmother tougher: health 2600 to 3900, damage 26 to 33.
+
+Knight run, still open:
+- [ ] Emberhaven painting: two flaws in the front layer (a garbled hanging sign under the balcony, a mint cloth scrap at the left edge). Needs a repaint of those spots; an automatic patch looked worse.
+- [ ] Merchants and the blacksmith as characters, not only labels. Needs art (see 4).
+- [ ] Hero strength against Thornmother: wait for the Ranger and Rimecaller runs, then tune in 5.
+- [ ] Class-select screen redesign beyond the flame icon: parked (title menu restyle).
+
 - [ ] Every bug.
 - [ ] Every "feel" note that is a code change.
 - [ ] Known loose ends inside the region:
