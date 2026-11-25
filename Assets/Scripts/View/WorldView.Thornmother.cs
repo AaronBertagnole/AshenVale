@@ -28,6 +28,13 @@ namespace AshenVale
                 return bossFx;
             }
         }
+        void PlayThornSound(string cue, float volume = 1f, float cooldown = 0f)
+        {
+            if (!CaptainEffects) GameSfx.Play(cue, volume, cooldown);
+        }
+
+        bool CaptainEffects => ThornFx == "Art/Effects/captain_marrow/";
+
         const int ThornGroundOrder = MonsterOrder + 1, ThornFrontOrder = HeroOrder + 1;
         const float EruptShow = .55f, WallGrow = .9f, WallFall = .45f, WallScale = 1.5f, MoteFlight = .7f;
 
@@ -38,8 +45,8 @@ namespace AshenVale
             {
                 v.pose = m.pose; v.poseClock = 0f;
                 // Her calls and her rooting are heard as the pose begins (the slam, marks and walls sound from their events).
-                if (m.pose == 3 || m.pose == 4) GameSfx.Play("thorn_summon", .8f);
-                else if (m.pose == 5) GameSfx.Play("thorn_root");
+                if (m.pose == 3 || m.pose == 4) PlayThornSound("thorn_summon", .8f);
+                else if (m.pose == 5) PlayThornSound("thorn_root");
             }
             else v.poseClock += dt;
             string anim; float span = 0f; int from = 0, count = 4; float loopRate = 0f;
@@ -106,13 +113,13 @@ namespace AshenVale
             GameObject go;
             var sr = ThornSprite("Bramble", ThornGroundOrder, out go);
             bramblesShown.Add(new Bramble { go = go, sr = sr, x = e.x, y = e.y });
-            GameSfx.Play("thorn_warn", .8f);
+            PlayThornSound("thorn_warn", .8f);
         }
 
         void SpawnThornWalls(SimEvent e)
         {
             EndThornWalls();
-            GameSfx.Play("thorn_walls");
+            PlayThornSound("thorn_walls");
             for (int side = -1; side <= 1; side += 2)
             {
                 GameObject go;
@@ -127,7 +134,7 @@ namespace AshenVale
         {
             bool any = false;
             foreach (var wall in thornWalls) if (wall.falling < 0f) { wall.falling = 0f; any = true; }
-            if (any) GameSfx.Play("thorn_break");
+            if (any) PlayThornSound("thorn_break");
         }
 
         void SpawnHealMote(SimEvent e)
@@ -135,7 +142,7 @@ namespace AshenVale
             GameObject go;
             var sr = ThornSprite("Healing Mote", SlashOrder, out go);
             healMotes.Add(new HealMote { go = go, sr = sr, x = e.x, y = e.y + .8f, target = e.amount });
-            GameSfx.Play("sprout_heal", .5f, .25f);
+            PlayThornSound("sprout_heal", .5f, .25f);
         }
 
         void UpdateThornFx(float dt)
@@ -157,7 +164,7 @@ namespace AshenVale
                 }
                 else
                 {
-                    if (!b.erupted) { b.erupted = true; GameSfx.Play("thorn_erupt"); }
+                    if (!b.erupted) { b.erupted = true; PlayThornSound("thorn_erupt"); }
                     float t = (b.age - Tuning.BossEruptWarn) / EruptShow;
                     b.sr.sortingOrder = ThornFrontOrder;
                     StandOn(b.sr, Frame(eruption, t), b.x, b.y - .05f);

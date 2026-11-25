@@ -192,7 +192,7 @@ namespace AshenVale
                 if (e.kind == SimEventKind.EmbermarksPickedUp) continue;   // the bottom-left pickup note covers it (owner: no floating text)
                 if (e.kind == SimEventKind.Slash) SpawnSlash(e);
                 else if (e.kind == SimEventKind.DragonThrust || e.kind == SimEventKind.DragonFang || e.kind == SimEventKind.DragonFissure || e.kind == SimEventKind.DragonSweep) SpawnDragonFx(e);
-                else if (e.kind == SimEventKind.BossSlam) { SpawnSlamRing(e); GameSfx.Play("thorn_slam"); }
+                else if (e.kind == SimEventKind.BossSlam) { SpawnSlamRing(e); if (!CaptainEffects) GameSfx.Play("thorn_slam"); }
                 else if (e.kind == SimEventKind.BrambleWarn) SpawnBramble(e);
                 else if (e.kind == SimEventKind.PoisonSpit) SpawnSpit(e);
                 else if (e.kind == SimEventKind.ThornWalls) SpawnThornWalls(e);
@@ -449,7 +449,7 @@ namespace AshenVale
                 if (enraged && !v.enraged)
                 {
                     SpawnSlamRing(new SimEvent { kind = SimEventKind.BossSlam, x = m.x, y = m.y, facing = m.facing });
-                    GameSfx.Play("thorn_root"); GameSfx.Play("thorn_slam", .8f);
+                    if (!CaptainEffects) { GameSfx.Play("thorn_root"); GameSfx.Play("thorn_slam", .8f); }
                     Number(x, y + d.hover + d.height + .7f, "ENRAGED!", new Color(1f, .3f, .15f), true);
                 }
                 v.enraged = enraged;
@@ -492,7 +492,7 @@ namespace AshenVale
             foreach (var kv in monsterViews) if (!seen.Contains(kv.Key)) stale.Add(kv.Key);
             foreach (var id in stale)
             {
-                if (monsterViews[id].def.boss && dropsSynced) GameSfx.Play("thorn_death");      // not when the map is merely being left
+                if (monsterViews[id].def.boss && dropsSynced && !CaptainEffects) GameSfx.Play("thorn_death");      // not when the map is merely being left
                 dying.Add(monsterViews[id]); monsterViews.Remove(id);
             }   // killed, or a chest moving on: fade out
 
@@ -915,7 +915,7 @@ namespace AshenVale
                 {
                     float grow = 1f - t;
                     fx.obj.transform.localScale = new Vector3(1f + grow * 2f * fx.reach, .35f + grow * .25f, 1f);
-                    fx.sr.color = new Color(.75f, .6f, .3f, t * .7f);
+                    fx.sr.color = CaptainEffects ? new Color(.42f, .88f, .84f, t * .7f) : new Color(.75f, .6f, .3f, t * .7f);
                     continue;
                 }
                 fx.sr.color = new Color(1, .12f, .18f, t * .8f);
