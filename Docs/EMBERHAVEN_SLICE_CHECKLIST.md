@@ -66,11 +66,12 @@ Knight run, still open:
 - [x] Every bug reported in the three runs.
 - [x] Every "feel" note that is a code change.
 - [ ] Known loose ends inside the region:
-  - [ ] Den Shade: owner's decision 2026-11-25 is the earlier wraith art, still flying. Restored and pushed; waiting for the owner to confirm.
-  - [ ] Hollow Den off the test-painting code and onto the normal backdrop path. (Owner is checking the den in Unity first.)
-  - [ ] Shale Cliffs ledges in the earthen-ledge style (marsh and den already are). Cut and pushed 2026-11-25; waiting for the owner to confirm.
-  - [ ] Floor-strip double image check on marsh, cliffs, den and glade (the Highspire fix). (Owner is checking in Unity.)
-  - [ ] Tall maps (Shale Cliffs): painting runs out at the top. (Owner is checking in Unity.)
+  - [x] Den Shade: owner's decision 2026-11-25 is the earlier wraith art, still flying. Restored; the owner looked over the den the same evening and found nothing wrong.
+  - [x] Hollow Den: the owner checked it 2026-11-25 and it looks good, so it stays on its current painting code (moving it would be a risk for no visible gain).
+  - [ ] Hollow Den ledges were a little hard to see (owner, 2026-11-25). Brightened, with a pale teal glow along the top edge; pushed, waiting for the owner to confirm.
+  - [x] Shale Cliffs ledges in the earthen-ledge style. Cut 2026-11-25; the owner found nothing wrong on the cliffs.
+  - [x] Floor-strip double image check on marsh, cliffs, den and glade: the owner checked 2026-11-25, nothing found.
+  - [x] Tall maps (Shale Cliffs): painting running out at the top. The owner noticed nothing on the cliffs 2026-11-25; closed.
 
 ### 3. Sound
 - [ ] Hero: basic attack, skill and movement ability for each of the three heroes; jump, land, hurt, death, level-up.
