@@ -30,7 +30,7 @@ The owner asked to be told **no** when he drifts from this list, because he has 
 - [x] Same with the Rimecaller. (Done 2026-11-25; Thornmother beaten.)
 - [x] Send the notes (a list or clips). Sent and handled as they came in; see 2.
 
-### 2. Fix what the play-through found — OPEN
+### 2. Fix what the play-through found — DONE 2026-11-25
 
 Knight run, 2026-11-25. Pushed in 342e025 and after; confirmed by the owner 2026-11-25:
 - [x] Return portal shows only while one is open, labelled with the map it leads back to.
@@ -60,20 +60,32 @@ Rimecaller run, 2026-11-25:
 Knight run, still open:
 - [x] (Owner, 2026-11-25: the painting looks good now. Closed.) Emberhaven painting: two flaws in the front layer (a garbled hanging sign under the balcony, a mint cloth scrap at the left edge). Needs a repaint of those spots; an automatic patch looked worse.
 - [x] Merchant and blacksmith as characters in Emberhaven (2.0 and 1.7 units tall, blacksmith facing left; confirmed 2026-11-25). Cinderford's pair is tracked in 4.
-- [ ] Hero strength against Thornmother: all three runs are in; tune in 5. Notes so far: the Knight beat her at level 11 "no problem" before she was toughened; the Rimecaller found her very hard ("had to tank some hits") until Stormcall started landing, then fine.
-- [ ] Class-select screen redesign beyond the flame icon: parked (title menu restyle).
+- [x] (Carried to 5.) Hero strength against Thornmother: all three runs are in; tune in 5. Notes so far: the Knight beat her at level 11 "no problem" before she was toughened; the Rimecaller found her very hard ("had to tank some hits") until Stormcall started landing, then fine.
+- [x] (Parked.) Class-select screen redesign beyond the flame icon: parked (title menu restyle).
 
 - [x] Every bug reported in the three runs.
 - [x] Every "feel" note that is a code change.
-- [ ] Known loose ends inside the region:
+- [x] Known loose ends inside the region:
   - [x] Den Shade: owner's decision 2026-11-25 is the earlier wraith art, still flying. Restored; the owner looked over the den the same evening and found nothing wrong.
   - [x] Hollow Den: the owner checked it 2026-11-25 and it looks good, so it stays on its current painting code (moving it would be a risk for no visible gain).
-  - [ ] Hollow Den ledges were a little hard to see (owner, 2026-11-25). Brightened, with a pale teal glow along the top edge; pushed, waiting for the owner to confirm.
+  - [x] Hollow Den ledges were a little hard to see (owner, 2026-11-25). Brightened, with a pale teal glow along the top edge; confirmed the same evening.
   - [x] Shale Cliffs ledges in the earthen-ledge style. Cut 2026-11-25; the owner found nothing wrong on the cliffs.
   - [x] Floor-strip double image check on marsh, cliffs, den and glade: the owner checked 2026-11-25, nothing found.
   - [x] Tall maps (Shale Cliffs): painting running out at the top. The owner noticed nothing on the cliffs 2026-11-25; closed.
 
-### 3. Sound
+### 3. Sound — OPEN
+
+The owner is making the sounds (started 2026-11-25); Claude wires them in and mixes. Files go in `Assets/Resources/Audio/Sfx/` (music in `Assets/Resources/Audio/`), WAV or OGG, with these names. Several takes of one sound: add `_1`, `_2`, `_3` and the game picks one at random.
+
+- Knight: `knight_attack`, `knight_skill`, `knight_leap`
+- Ranger: `ranger_attack`, `ranger_skill`, `ranger_dash`
+- Rimecaller: `rime_attack`, `rime_skill`, `rime_blink`
+- Any hero: `hero_jump`, `hero_land`, `hero_hurt`, `hero_death`, `level_up`
+- Monsters: `monster_hit`, `monster_death`, `toad_spit`, `toad_puddle`
+- World: `drop_item`, `pickup_gear`, `pickup_part`, `pickup_gold`, `pickup_potion`, `potion_use`, `portal`, `waystone`, `ladder`
+- Interface: `ui_open`, `ui_close`, `ui_button`, `ui_buy`, `ui_sell`, `ui_upgrade`, `ui_rank_up`, `ui_error`
+- Music: one or more field tracks (any name; say which maps each covers)
+
 - [ ] Hero: basic attack, skill and movement ability for each of the three heroes; jump, land, hurt, death, level-up.
 - [ ] Monsters: hit, death; the Marsh Toad's spit and puddle.
 - [ ] World: item drop, pickup (gear, part, gold, potion), potion use, portal, waystone, ladder.
