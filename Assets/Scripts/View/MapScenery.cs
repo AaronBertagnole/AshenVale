@@ -103,7 +103,7 @@ namespace AshenVale
     //   ..._back                  either of those as a see-through front, with this distant picture sliding behind it
     //   MapArt                    animated lights (Resources/Shaders/MapEffect) and drifting specks per map
     //   Art/Themes/<theme>/sky, far, mid, ground, ground_back, platform_left, platform_mid, platform_right, ladder
-    //   Art/Props/portal, return_portal, waystone, merchant, smithy
+    //   Art/Props/portal, return_portal, waystone, merchant, smithy (and merchant_<town key>, smithy_<town key>)
     public static class MapScenery
     {
         // Sorting orders, back to front (ladders stand behind platforms). Monsters 7, drops 9, heroes 10-11,
@@ -483,9 +483,9 @@ namespace AshenVale
             {
                 visual.returnPortal = BuildPortal(root, def.returnX, def.returnY, true);
                 BuildWaystone(root, def, def.waystoneX, def.waystoneY, PaintedMapFraming.ShowPlaceholderProps(def, painted, front.Valid));
-                foreach (var stand in def.merchants) BuildMerchant(root, stand.x, stand.y, PaintedMapFraming.ShowPlaceholderProps(def, painted, front.Valid));
+                foreach (var stand in def.merchants) BuildMerchant(root, def, stand.x, stand.y, PaintedMapFraming.ShowPlaceholderProps(def, painted, front.Valid));
             }
-            if (def.hasSmithy) BuildSmithy(root, def.smithyX, def.smithyY, PaintedMapFraming.ShowPlaceholderProps(def, painted, front.Valid));
+            if (def.hasSmithy) BuildSmithy(root, def, def.smithyX, def.smithyY, PaintedMapFraming.ShowPlaceholderProps(def, painted, front.Valid));
             return visual;
         }
 
@@ -1008,9 +1008,12 @@ namespace AshenVale
             Sprites.Blob("Waystone rune", new Color(.75f, .95f, 1f, .95f), .3f, .3f, PropOrder + 1, root, x, y + 1.15f);
         }
 
-        static void BuildMerchant(Transform root, float x, float y, bool placeholder)
+        // A town's own merchant and blacksmith stand at their spots (Art/Props/merchant_<town key>, smithy_<town key>:
+        // the character alone, feet on the bottom edge), in front of whatever stall the painting shows.
+        static void BuildMerchant(Transform root, MapDef def, float x, float y, bool placeholder)
         {
-            var sprite = Sprites.Art("Art/Props/merchant");
+            var sprite = Sprites.Art("Art/Props/merchant_" + def.key);
+            if (sprite == null) sprite = Sprites.Art("Art/Props/merchant");
             if (sprite != null) { Sprites.Picture("Merchant", sprite, PropOrder, root, x, y); return; }
             if (!placeholder) return;
             Sprites.Block("Merchant stall", new Color(.53f, .31f, .18f), 2.6f, 1.1f, PropOrder, root, x + .6f, y + .55f);
@@ -1022,9 +1025,10 @@ namespace AshenVale
             Sprites.Blob("Merchant hat", new Color(.70f, .30f, .25f), .65f, .3f, PropOrder + 2, root, x - .3f, y + 1.45f);
         }
 
-        static void BuildSmithy(Transform root, float x, float y, bool placeholder)
+        static void BuildSmithy(Transform root, MapDef def, float x, float y, bool placeholder)
         {
-            var sprite = Sprites.Art("Art/Props/smithy");
+            var sprite = Sprites.Art("Art/Props/smithy_" + def.key);
+            if (sprite == null) sprite = Sprites.Art("Art/Props/smithy");
             if (sprite != null) { Sprites.Picture("Smithy", sprite, PropOrder, root, x, y); return; }
             if (!placeholder) return;
             Sprites.Block("Forge", new Color(.50f, .47f, .45f), 1.8f, 1.6f, PropOrder, root, x + 1f, y + .8f);

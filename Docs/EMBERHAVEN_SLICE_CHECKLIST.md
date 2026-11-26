@@ -26,37 +26,37 @@ The owner asked to be told **no** when he drifts from this list, because he has 
 
 ### 1. Play it through (owner) — OPEN
 - [x] New Dragon Knight, no debug panel, Emberhaven to Thornmother's death. Note everything that is wrong, ugly, confusing or boring. (Done 2026-11-25; notes below.)
-- [ ] Same with the Ranger.
+- [x] Same with the Ranger. (Done 2026-11-25.)
 - [ ] Same with the Rimecaller.
 - [ ] Send the notes (a list or clips). Claude sorts them into: bug, feel, balance, art, missing.
 
 ### 2. Fix what the play-through found
 
-Knight run, 2026-11-25. Pushed in 342e025, waiting for the owner to confirm each in Unity:
-- [ ] Return portal shows only while one is open, labelled with the map it leads back to.
-- [ ] Waystone: no extra "[E] Open waystone travel" prompt.
-- [ ] Damage number on the killing blow.
-- [ ] EXP bar: taller, numbers and percent on it; "XP" renamed "EXP".
-- [ ] Monsters pace under a hero on a ladder or ledge instead of standing still.
-- [ ] Fewer Rare and Epic drops early (5% / 1% at level 1, rising to 20% / 5% by about level 30).
-- [ ] No moving while prone.
-- [ ] Ladder climb smooth (no resizing or stepping). Fixed without a clip; needs the owner's eye.
-- [ ] Class select: no flame icon on the highlighted choice.
-- [ ] Thornmother tougher: health 2600 to 3900, damage 26 to 33.
-- [ ] Potion prices rise with level (HP 30 at level 1, 130 at level 11; MP 37 and 157), and the merchant sells x1 / x5 / x10. (Pushed after 342e025.)
-- [ ] No second prompt over the hero at the merchant or blacksmith; the label over each stand is enough.
+Knight run, 2026-11-25. Pushed in 342e025 and after; confirmed by the owner 2026-11-25:
+- [x] Return portal shows only while one is open, labelled with the map it leads back to.
+- [x] Waystone: no extra "[E] Open waystone travel" prompt.
+- [x] Damage number on the killing blow.
+- [x] EXP bar: taller, numbers and percent on it; "XP" renamed "EXP".
+- [x] Monsters pace under a hero on a ladder or ledge instead of standing still.
+- [x] Fewer Rare and Epic drops early (5% / 1% at level 1, rising to 20% / 5% by about level 30).
+- [x] No moving while prone.
+- [x] Ladder climb smooth (no resizing or stepping). Fixed without a clip; needs the owner's eye.
+- [x] Class select: no flame icon on the highlighted choice.
+- [x] Thornmother tougher: health 2600 to 3900, damage 26 to 33.
+- [x] Potion prices rise with level (HP 30 at level 1, 130 at level 11; MP 37 and 157), and the merchant sells x1 / x5 / x10. (Pushed after 342e025.)
+- [x] No second prompt over the hero at the merchant or blacksmith; the label over each stand is enough.
 
-Ranger run, 2026-11-25, pushed and waiting for the owner to confirm:
-- [ ] Ground monsters chase across the whole floor (they used to stop 10 units from where they spawned), then walk home.
-- [ ] Knight less stiff: planted only until the blow lands plus 0.1s (was the whole swing: 0.46s basic, 0.78s Dragon Strike); moving, jumping or leaping then cuts the swing short. Attack rate unchanged.
-- [ ] Ranger arrows leave at the height of the nocked arrow (0.9 units above her feet, was 1.1).
-- [ ] Dragon Strike steps forward 1.2 units (was 0.55).
-- [ ] Holding the attack or skill key keeps attacking (all heroes). The movement ability still needs a press each time.
-- [ ] One damage number per hit (the killing-blow number was also appearing on hits the monster survived).
+Ranger run, 2026-11-25, confirmed by the owner 2026-11-25:
+- [x] Ground monsters chase across the whole floor (they used to stop 10 units from where they spawned), then walk home.
+- [x] Knight less stiff: planted only until the blow lands plus 0.1s (was the whole swing: 0.46s basic, 0.78s Dragon Strike); moving, jumping or leaping then cuts the swing short. Attack rate unchanged.
+- [x] Ranger arrows leave at the height of the nocked arrow (0.9 units above her feet, was 1.1).
+- [x] Dragon Strike steps forward 1.2 units (was 0.55).
+- [x] Holding the attack or skill key keeps attacking (all heroes). The movement ability still needs a press each time.
+- [x] One damage number per hit (the killing-blow number was also appearing on hits the monster survived).
 
 Knight run, still open:
 - [ ] Emberhaven painting: two flaws in the front layer (a garbled hanging sign under the balcony, a mint cloth scrap at the left edge). Needs a repaint of those spots; an automatic patch looked worse.
-- [ ] Merchants and the blacksmith as characters, not only labels. Needs art (see 4).
+- [ ] Merchants and the blacksmith as characters, not only labels. Emberhaven's two are in (2026-11-25, pushed, waiting for the owner to confirm size and position). Cinderford's still need art (see 4).
 - [ ] Hero strength against Thornmother: wait for the Ranger and Rimecaller runs, then tune in 5.
 - [ ] Class-select screen redesign beyond the flame icon: parked (title menu restyle).
 
@@ -79,7 +79,7 @@ Knight run, still open:
 
 ### 4. Remaining art (owner paints, Claude integrates)
 - [ ] Ash Wisp sprite sheet.
-- [ ] Merchant and Blacksmith for the two towns (if the painted scenes do not already cover them).
+- [ ] Merchant and Blacksmith for the two towns. Emberhaven: done, to confirm. Cinderford: not yet (file names `merchant_cinderford`, `smithy_cinderford`).
 - [ ] Thornmother: walk row, summon row, rooted rows for the new dryad art (they currently reuse other rows).
 - [ ] Thornmother's effects repainted at final size, 8 to 12 frames, transparent background.
 
