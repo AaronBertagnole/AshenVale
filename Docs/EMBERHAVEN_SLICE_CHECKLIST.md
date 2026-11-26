@@ -24,13 +24,13 @@ The owner asked to be told **no** when he drifts from this list, because he has 
 
 ## The list
 
-### 1. Play it through (owner) — OPEN
+### 1. Play it through (owner) — DONE 2026-11-25
 - [x] New Dragon Knight, no debug panel, Emberhaven to Thornmother's death. Note everything that is wrong, ugly, confusing or boring. (Done 2026-11-25; notes below.)
 - [x] Same with the Ranger. (Done 2026-11-25.)
-- [ ] Same with the Rimecaller.
-- [ ] Send the notes (a list or clips). Claude sorts them into: bug, feel, balance, art, missing.
+- [x] Same with the Rimecaller. (Done 2026-11-25; Thornmother beaten.)
+- [x] Send the notes (a list or clips). Sent and handled as they came in; see 2.
 
-### 2. Fix what the play-through found
+### 2. Fix what the play-through found — OPEN
 
 Knight run, 2026-11-25. Pushed in 342e025 and after; confirmed by the owner 2026-11-25:
 - [x] Return portal shows only while one is open, labelled with the map it leads back to.
@@ -60,11 +60,11 @@ Rimecaller run, 2026-11-25:
 Knight run, still open:
 - [x] (Owner, 2026-11-25: the painting looks good now. Closed.) Emberhaven painting: two flaws in the front layer (a garbled hanging sign under the balcony, a mint cloth scrap at the left edge). Needs a repaint of those spots; an automatic patch looked worse.
 - [x] Merchant and blacksmith as characters in Emberhaven (2.0 and 1.7 units tall, blacksmith facing left; confirmed 2026-11-25). Cinderford's pair is tracked in 4.
-- [ ] Hero strength against Thornmother: wait for the Ranger and Rimecaller runs, then tune in 5.
+- [ ] Hero strength against Thornmother: all three runs are in; tune in 5. Notes so far: the Knight beat her at level 11 "no problem" before she was toughened; the Rimecaller found her very hard ("had to tank some hits") until Stormcall started landing, then fine.
 - [ ] Class-select screen redesign beyond the flame icon: parked (title menu restyle).
 
-- [ ] Every bug.
-- [ ] Every "feel" note that is a code change.
+- [x] Every bug reported in the three runs.
+- [x] Every "feel" note that is a code change.
 - [ ] Known loose ends inside the region:
   - [ ] Den Shade: the new art is a four-legged beast that still flies. Decide: walks, or flies with different art.
   - [ ] Hollow Den off the test-painting code and onto the normal backdrop path.
