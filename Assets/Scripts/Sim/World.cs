@@ -1323,6 +1323,7 @@ namespace AshenVale
                             map = p.map, playerId = p.id, amount = d.value, x = p.x, y = p.y + 1.8f });
                         break;
                 }
+                events.Add(new SimEvent { kind = SimEventKind.PickedUp, map = p.map, playerId = p.id, amount = (int)d.kind, x = p.x, y = p.y });
                 map.drops.RemoveAt(i);
             }
         }

@@ -75,7 +75,7 @@ Knight run, still open:
 
 ### 3. Sound — OPEN
 
-The owner is making the sounds (started 2026-11-25); Claude wires them in and mixes. Files go in `Assets/Resources/Audio/Sfx/` (music in `Assets/Resources/Audio/`), WAV or OGG, with these names. Several takes of one sound: add `_1`, `_2`, `_3` and the game picks one at random.
+The owner is making the sounds (started 2026-11-25); Claude wires them in and mixes. Files go in `Assets/Resources/Audio/Sfx/` (music in `Assets/Resources/Audio/`), WAV or OGG, with these names. Several takes of one sound: add `_1`, `_2`, `_3` and the game picks one at random. (Built 2026-11-25.)
 
 - Knight: `knight_attack`, `knight_skill`, `knight_leap`
 - Ranger: `ranger_attack`, `ranger_skill`, `ranger_dash`
@@ -89,6 +89,7 @@ The owner is making the sounds (started 2026-11-25); Claude wires them in and mi
 - [ ] Hero: basic attack, skill and movement ability for each of the three heroes; jump, land, hurt, death, level-up.
 - [ ] Monsters: hit, death; the Marsh Toad's spit and puddle.
 - [ ] World: item drop, pickup (gear, part, gold, potion), potion use, portal, waystone, ladder.
+  - [ ] Pickup: one sound in (`pickup`, 2026-11-25) used for all four kinds until `pickup_gear` / `_part` / `_gold` / `_potion` exist. Pushed; waiting for the owner to hear it.
 - [ ] Interface: window open and close, button, buy, sell, upgrade, rank up, error.
 - [ ] Music for the field maps (one track can cover several maps).
 - [ ] Mix pass: nothing drowns anything else at default volume.

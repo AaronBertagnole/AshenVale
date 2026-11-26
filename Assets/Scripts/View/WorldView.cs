@@ -196,6 +196,16 @@ namespace AshenVale
                         rest = dropPops.TryGetValue(e.amount, out running) ? running.rest : shown.transform.localScale };
                     continue;
                 }
+                if (e.kind == SimEventKind.PickedUp)
+                {
+                    // Only your own pickups make a sound. Each kind may have its own file; all fall back to "pickup".
+                    if (e.playerId == shownLocalId)
+                    {
+                        var kind = (DropKind)e.amount;
+                        GameSfx.Play(kind == DropKind.Gold ? "pickup_gold" : kind == DropKind.Item ? "pickup_gear" : kind == DropKind.Part ? "pickup_part" : "pickup_potion", .7f, .08f, "pickup");
+                    }
+                    continue;
+                }
                 if (e.kind == SimEventKind.EmbermarksPickedUp) continue;   // the bottom-left pickup note covers it (owner: no floating text)
                 if (e.kind == SimEventKind.Slash) SpawnSlash(e);
                 else if (e.kind == SimEventKind.DragonThrust || e.kind == SimEventKind.DragonFang || e.kind == SimEventKind.DragonFissure || e.kind == SimEventKind.DragonSweep) SpawnDragonFx(e);

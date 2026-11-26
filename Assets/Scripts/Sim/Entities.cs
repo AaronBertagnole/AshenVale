@@ -156,7 +156,8 @@ namespace AshenVale
         ThornWallsEnd,      // they crumble
         SproutHeal,         // a sprout at (x, y) sends healing to the monster with id `amount`
         PoisonSpit,         // a glob leaves (x, floor y) for amount / 100 on that floor: Tuning.SpitFlight in the air, then a puddle for Tuning.PuddleTime
-        Mastery }           // a hero's level-30 skill at (x, y), facing: amount says which (Abilities.Dragonfire ... ArrowStormWave, a wave landing at x, floor y)
+        Mastery,             // a hero's level-30 skill at (x, y), facing: amount says which (Abilities.Dragonfire ... ArrowStormWave, a wave landing at x, floor y)
+        PickedUp }          // playerId took a drop off the ground; amount is its DropKind (the view plays the pickup sound)
 
     // Something that happened during a tick, for the view (effects, sounds, numbers) and later for the network.
     public struct SimEvent
