@@ -56,7 +56,7 @@ Ranger run, 2026-11-25, confirmed by the owner 2026-11-25:
 
 Knight run, still open:
 - [ ] Emberhaven painting: two flaws in the front layer (a garbled hanging sign under the balcony, a mint cloth scrap at the left edge). Needs a repaint of those spots; an automatic patch looked worse.
-- [ ] Merchants and the blacksmith as characters, not only labels. Emberhaven's two are in (2026-11-25, pushed, waiting for the owner to confirm size and position). Cinderford's still need art (see 4).
+- [ ] Merchants and the blacksmith as characters, not only labels. Emberhaven's two are in (2026-11-25; enlarged to 2.0 and 1.7 units and the blacksmith turned to face left after the first look; waiting for the owner to confirm). Cinderford's still need art (see 4).
 - [ ] Hero strength against Thornmother: wait for the Ranger and Rimecaller runs, then tune in 5.
 - [ ] Class-select screen redesign beyond the flame icon: parked (title menu restyle).
 
