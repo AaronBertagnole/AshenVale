@@ -54,12 +54,12 @@ Ranger run, 2026-11-25, confirmed by the owner 2026-11-25:
 - [x] Holding the attack or skill key keeps attacking (all heroes). The movement ability still needs a press each time.
 - [x] One damage number per hit (the killing-blow number was also appearing on hits the monster survived).
 
-Rimecaller run, 2026-11-25, pushed and waiting for the owner to confirm:
-- [ ] Stormcall lands on the nearest monster in front of her (up to 5 units, including one right beside her) and follows it between strikes. It used to strike a fixed spot 2.6 units ahead and miss anything nearer, farther, or walking.
+Rimecaller run, 2026-11-25:
+- [x] (Confirmed 2026-11-25.) Stormcall lands on the nearest monster in front of her (up to 5 units, including one right beside her) and follows it between strikes. It used to strike a fixed spot 2.6 units ahead and miss anything nearer, farther, or walking.
 
 Knight run, still open:
-- [ ] Emberhaven painting: two flaws in the front layer (a garbled hanging sign under the balcony, a mint cloth scrap at the left edge). Needs a repaint of those spots; an automatic patch looked worse.
-- [ ] Merchants and the blacksmith as characters, not only labels. Emberhaven's two are in (2026-11-25; enlarged to 2.0 and 1.7 units and the blacksmith turned to face left after the first look; waiting for the owner to confirm). Cinderford's still need art (see 4).
+- [x] (Owner, 2026-11-25: the painting looks good now. Closed.) Emberhaven painting: two flaws in the front layer (a garbled hanging sign under the balcony, a mint cloth scrap at the left edge). Needs a repaint of those spots; an automatic patch looked worse.
+- [x] Merchant and blacksmith as characters in Emberhaven (2.0 and 1.7 units tall, blacksmith facing left; confirmed 2026-11-25). Cinderford's pair is tracked in 4.
 - [ ] Hero strength against Thornmother: wait for the Ranger and Rimecaller runs, then tune in 5.
 - [ ] Class-select screen redesign beyond the flame icon: parked (title menu restyle).
 
@@ -82,7 +82,7 @@ Knight run, still open:
 
 ### 4. Remaining art (owner paints, Claude integrates)
 - [ ] Ash Wisp sprite sheet.
-- [ ] Merchant and Blacksmith for the two towns. Emberhaven: done, to confirm. Cinderford: not yet (file names `merchant_cinderford`, `smithy_cinderford`).
+- [ ] Merchant and Blacksmith for the two towns. Emberhaven: done and confirmed 2026-11-25. Cinderford: not yet (file names `merchant_cinderford`, `smithy_cinderford`).
 - [ ] Thornmother: walk row, summon row, rooted rows for the new dryad art (they currently reuse other rows).
 - [ ] Thornmother's effects repainted at final size, 8 to 12 frames, transparent background.
 
