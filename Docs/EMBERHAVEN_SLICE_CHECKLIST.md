@@ -66,11 +66,11 @@ Knight run, still open:
 - [x] Every bug reported in the three runs.
 - [x] Every "feel" note that is a code change.
 - [ ] Known loose ends inside the region:
-  - [ ] Den Shade: the new art is a four-legged beast that still flies. Decide: walks, or flies with different art.
-  - [ ] Hollow Den off the test-painting code and onto the normal backdrop path.
-  - [ ] Shale Cliffs ledges in the earthen-ledge style (marsh and den already are).
-  - [ ] Floor-strip double image check on marsh, cliffs, den and glade (the Highspire fix).
-  - [ ] Tall maps (Shale Cliffs): painting runs out at the top.
+  - [ ] Den Shade: owner's decision 2026-11-25 is the earlier wraith art, still flying. Restored and pushed; waiting for the owner to confirm.
+  - [ ] Hollow Den off the test-painting code and onto the normal backdrop path. (Owner is checking the den in Unity first.)
+  - [ ] Shale Cliffs ledges in the earthen-ledge style (marsh and den already are). Cut and pushed 2026-11-25; waiting for the owner to confirm.
+  - [ ] Floor-strip double image check on marsh, cliffs, den and glade (the Highspire fix). (Owner is checking in Unity.)
+  - [ ] Tall maps (Shale Cliffs): painting runs out at the top. (Owner is checking in Unity.)
 
 ### 3. Sound
 - [ ] Hero: basic attack, skill and movement ability for each of the three heroes; jump, land, hurt, death, level-up.
