@@ -16,6 +16,7 @@ namespace AshenVale
                  : mapId == Maps.ThornGlade ? "Audio/BeneathTheTangledBough"      // Thornmother's Glade
                  : mapId == Maps.AmberleafTrail ? "Audio/FirstLightInTheGlade"
                  : mapId == Maps.Mosswood || mapId == Maps.MossgateHollow ? "Audio/BeneathTheMosswoodBough"   // one piece for both: it plays on between them
+                 : mapId == Maps.HollowDen ? "Audio/HeartbeatOfTheDeep"
                  : mapId == Maps.Emberfields ? "Audio/Emberfields"                // the first field (the owner's file was named amberleaf_trail)
                  : null;
         }
