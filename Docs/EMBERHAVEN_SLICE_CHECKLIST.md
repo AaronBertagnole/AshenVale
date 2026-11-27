@@ -93,6 +93,7 @@ The owner is making the sounds (started 2026-11-25); Claude wires them in and mi
 - [ ] Interface: window open and close, button, buy, sell, upgrade, rank up, error.
 - [ ] Music for the field maps (one track can cover several maps).
   - [ ] Emberfields: track in (2026-11-27, `Audio/Emberfields`). Pushed; waiting for the owner to hear it. The other field maps are still silent.
+  - [ ] Mosswood and Mossgate Hollow: one shared track in (2026-11-27, `Audio/BeneathTheMosswoodBough`). Pushed; waiting for the owner to hear it.
   - [ ] Amberleaf Trail: track in (2026-11-27, `Audio/FirstLightInTheGlade`). Pushed; waiting for the owner to hear it.
 - [ ] Mix pass: nothing drowns anything else at default volume.
 
