@@ -14,6 +14,7 @@ namespace AshenVale
         {
             return mapId == Maps.Emberhaven ? "Audio/TheBellsOfEmberhaven"
                  : mapId == Maps.ThornGlade ? "Audio/BeneathTheTangledBough"      // Thornmother's Glade
+                 : mapId == Maps.AmberleafTrail ? "Audio/FirstLightInTheGlade"
                  : mapId == Maps.Emberfields ? "Audio/Emberfields"                // the first field (the owner's file was named amberleaf_trail)
                  : null;
         }
