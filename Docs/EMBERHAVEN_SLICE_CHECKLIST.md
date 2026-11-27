@@ -92,6 +92,7 @@ The owner is making the sounds (started 2026-11-25); Claude wires them in and mi
   - [ ] Pickup: one sound in (`pickup`, 2026-11-25) used for all four kinds until `pickup_gear` / `_part` / `_gold` / `_potion` exist. Pushed; waiting for the owner to hear it.
 - [ ] Interface: window open and close, button, buy, sell, upgrade, rank up, error.
 - [ ] Music for the field maps (one track can cover several maps).
+  - [ ] Emberfields: track in (2026-11-27, `Audio/Emberfields`). Pushed; waiting for the owner to hear it. The other eight field maps are still silent.
 - [ ] Mix pass: nothing drowns anything else at default volume.
 
 ### 4. Remaining art (owner paints, Claude integrates)

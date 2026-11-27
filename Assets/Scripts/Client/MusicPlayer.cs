@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace AshenVale
 {
-    // Music: the title theme in the menus and a theme for the maps that have one (towns, so far), with a
+    // Music: the title theme in the menus and a theme for the maps that have one, with a
     // short fade between them. Its volume and the mute come from SoundSettings.
     public sealed class MusicPlayer
     {
@@ -14,6 +14,7 @@ namespace AshenVale
         {
             return mapId == Maps.Emberhaven ? "Audio/TheBellsOfEmberhaven"
                  : mapId == Maps.ThornGlade ? "Audio/BeneathTheTangledBough"      // Thornmother's Glade
+                 : mapId == Maps.Emberfields ? "Audio/Emberfields"                // the first field (the owner's file was named amberleaf_trail)
                  : null;
         }
 
