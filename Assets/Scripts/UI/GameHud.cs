@@ -918,12 +918,14 @@ namespace AshenVale
                     GUI.Label(new Rect(buy.x + 52, buy.y + 4, col - 176, 40),
                         "Buy " + (potionBuyCount > 1 ? potionBuyCount + " " : "") + (health ? "HP" : "MP") + (potionBuyCount > 1 ? " Potions" : " Potion"), economyBodyText);
                     int cost = Tuning.PotionCost(health, ch.level) * potionBuyCount;
-                    GUI.Label(new Rect(buy.x + col - 124, buy.y + 4, 112, 40), cost + " marks", economyPriceText);
-                    if (ch.gold < cost)
+                    // Short of marks: the price moves up to leave the lower half of the button for "NEED MORE".
+                    bool shortOfMarks = ch.gold < cost;
+                    GUI.Label(shortOfMarks ? new Rect(buy.x + col - 124, buy.y + 3, 112, 24) : new Rect(buy.x + col - 124, buy.y + 4, 112, 40), cost + " marks", economyPriceText);
+                    if (shortOfMarks)
                     {
                         Color old = GUI.color;
                         GUI.color = Color.white;
-                        GUI.Label(new Rect(buy.x + col - 124, buy.y + 24, 112, 16), "NEED MORE", economyWarnText);
+                        GUI.Label(new Rect(buy.x + col - 124, buy.y + 28, 112, 16), "NEED MORE", economyWarnText);
                         GUI.color = old;
                     }
                     if (clicked) commands.BuyPotion(health, potionBuyCount);

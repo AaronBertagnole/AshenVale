@@ -43,7 +43,7 @@ Knight run, 2026-11-25. Pushed in 342e025 and after; confirmed by the owner 2026
 - [x] Ladder climb smooth (no resizing or stepping). Fixed without a clip; needs the owner's eye.
 - [x] Class select: no flame icon on the highlighted choice.
 - [x] Thornmother tougher: health 2600 to 3900, damage 26 to 33.
-- [x] Potion prices rise with level (HP 30 at level 1, 130 at level 11; MP 37 and 157), and the merchant sells x1 / x5 / x10. (Pushed after 342e025.)
+- [x] Potion prices rise with level (HP 30 at level 1, 130 at level 11; MP 37 and 157), and the merchant sells x1 / x5 / x10. (Pushed after 342e025.) The price and "NEED MORE" no longer overlap (fixed 2026-11-27, to confirm).
 - [x] No second prompt over the hero at the merchant or blacksmith; the label over each stand is enough.
 
 Ranger run, 2026-11-25, confirmed by the owner 2026-11-25:
@@ -130,6 +130,10 @@ The owner is making the sounds (started 2026-11-25); Claude wires them in and mi
 - [ ] A new player learns to move, attack, pick up, open the ability window, use a waystone and find the first portal without being told outside the game.
 
 ### 10. Two players
+
+Found early by the owner in an online test, 2026-11-27 (pushed, waiting for him to confirm):
+- [ ] A joiner saw the Rimecaller's frost bolts as arrows (the host saw them right). Shots now carry their owner and direction to joiners; this also fixes arrows flying left being drawn backwards for joiners.
+
 - [ ] Host and one joiner play the slice start to finish. Fix what breaks (known: cooldowns do not show for the joiner).
 
 ### 11. Done

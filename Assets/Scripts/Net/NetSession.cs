@@ -418,7 +418,8 @@ namespace AshenVale
                     else if (d.kind == DropKind.Part) w.WriteValueSafe((byte)d.value);
                 }
                 w.WriteValueSafe(map.shots.Count);
-                foreach (var s in map.shots) { w.WriteValueSafe(s.id); w.WriteValueSafe(s.x); w.WriteValueSafe(s.y); }
+                // Owner and direction go too: the joiner draws a frost orb or an arrow by who fired it, and turns it the way it flies.
+                foreach (var s in map.shots) { w.WriteValueSafe(s.id); w.WriteValueSafe(s.x); w.WriteValueSafe(s.y); w.WriteValueSafe(s.owner); w.WriteValueSafe((sbyte)(s.direction < 0 ? -1 : 1)); }
                 int slashes = 0;
                 foreach (var e in pendingEvents) if (e.map == viewer.map) slashes++;
                 w.WriteValueSafe(slashes);
@@ -616,10 +617,11 @@ namespace AshenVale
             for (int i = 0; i < shotCount; i++)
             {
                 r.ReadValueSafe(out int id); r.ReadValueSafe(out float x); r.ReadValueSafe(out float y);
+                r.ReadValueSafe(out int shotOwner); r.ReadValueSafe(out sbyte shotDirection);
                 ProjectileState s;
                 if (shotLookup.TryGetValue(id, out s)) { s.px = s.x; s.py = s.y; }
                 else s = new ProjectileState { id = id, map = shown, px = x, py = y };
-                s.x = x; s.y = y;
+                s.x = x; s.y = y; s.owner = shotOwner; s.direction = shotDirection < 0 ? -1 : 1;
                 runtime.shots.Add(s);
             }
 
