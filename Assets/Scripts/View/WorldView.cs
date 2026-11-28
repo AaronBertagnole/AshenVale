@@ -207,6 +207,10 @@ namespace AshenVale
                     continue;
                 }
                 if (e.kind == SimEventKind.EmbermarksPickedUp) continue;   // the bottom-left pickup note covers it (owner: no floating text)
+                // Attack sounds: your own at full strength, other players' at half. A sound with no file yet stays silent.
+                if (e.kind == SimEventKind.DragonThrust || e.kind == SimEventKind.DragonSweep) GameSfx.Play("knight_attack", e.playerId == shownLocalId ? .6f : .3f);
+                else if (e.kind == SimEventKind.DragonFang) GameSfx.Play("knight_skill", e.playerId == shownLocalId ? .7f : .35f);
+                else if (e.kind == SimEventKind.RangerRelease) GameSfx.Play(e.heavy ? "ranger_skill" : "ranger_attack", e.playerId == shownLocalId ? .55f : .28f);
                 if (e.kind == SimEventKind.Slash) SpawnSlash(e);
                 else if (e.kind == SimEventKind.DragonThrust || e.kind == SimEventKind.DragonFang || e.kind == SimEventKind.DragonFissure || e.kind == SimEventKind.DragonSweep) SpawnDragonFx(e);
                 else if (e.kind == SimEventKind.BossSlam) { SpawnSlamRing(e); if (!CaptainEffects) GameSfx.Play("thorn_slam"); }
