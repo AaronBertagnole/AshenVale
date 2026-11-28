@@ -88,7 +88,7 @@ The owner is making the sounds (started 2026-11-25); Claude wires them in and mi
 
 - [ ] Hero: basic attack, skill and movement ability for each of the three heroes; jump, land, hurt, death, level-up.
   - [ ] Knight basic attack (`knight_attack`, the owner's "Swift Arc") and Ranger basic attack (`ranger_attack`, "Quick Swoosh"): in 2026-11-27, pushed, waiting for the owner to hear them. `knight_skill` and `ranger_skill` are hooked up and silent until their files arrive.
-  - [ ] Rimecaller frost bolt (`rime_attack`, the owner's "Frost Bolt Cast", which replaced "Rime Bolt" the same evening): in 2026-11-27, pushed, waiting for the owner to hear it.
+  - [x] Rimecaller frost bolt (`rime_attack`, the owner's "Frost Bolt Cast", which replaced "Rime Bolt"): in and confirmed by ear 2026-11-27.
 - [ ] Monsters: hit, death; the Marsh Toad's spit and puddle.
 - [ ] World: item drop, pickup (gear, part, gold, potion), potion use, portal, waystone, ladder.
   - [ ] Pickup: one sound in (`pickup`, 2026-11-25) used for all four kinds until `pickup_gear` / `_part` / `_gold` / `_potion` exist. Pushed; waiting for the owner to hear it.
