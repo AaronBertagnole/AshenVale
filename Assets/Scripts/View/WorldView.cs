@@ -751,7 +751,7 @@ namespace AshenVale
                     AddAttackTrail(go, rime, Mathf.Lerp(s.px, s.x, alpha), Mathf.Lerp(s.py, s.y, alpha));
                     shotViews[s.id] = go;
                     // A frost bolt sounds as it first appears (the Ranger's shot sounds from its release event instead).
-                    if (rime) GameSfx.Play("rime_attack", s.owner == shownLocalId ? .5f : .25f);
+                    if (rime) GameSfx.Play("rime_attack", s.owner == shownLocalId ? .55f : .28f);
                 }
                 go.transform.position = new Vector3(Mathf.Lerp(s.px, s.x, alpha), Mathf.Lerp(s.py, s.y, alpha), 0);
                 go.GetComponent<SpriteRenderer>().flipX = s.direction < 0;
