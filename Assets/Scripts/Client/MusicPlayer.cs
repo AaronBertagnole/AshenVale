@@ -19,6 +19,7 @@ namespace AshenVale
                  : mapId == Maps.HollowDen ? "Audio/HeartbeatOfTheDeep"
                  : mapId == Maps.Cinderford ? "Audio/MarketDayAtTheWalls"
                  : mapId == Maps.Kingsroad ? "Audio/TowardTheDistantGate"
+                 : mapId == Maps.AshenMarsh ? "Audio/StepsThroughTheMarshland"
                  : mapId == Maps.Emberfields ? "Audio/Emberfields"                // the first field (the owner's file was named amberleaf_trail)
                  : null;
         }

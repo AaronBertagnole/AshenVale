@@ -94,11 +94,12 @@ The owner is making the sounds (started 2026-11-25); Claude wires them in and mi
   - [ ] Pickup: one sound in (`pickup`, 2026-11-25) used for all four kinds until `pickup_gear` / `_part` / `_gold` / `_potion` exist. Pushed; waiting for the owner to hear it.
 - [ ] Interface: window open and close, button, buy, sell, upgrade, rank up, error.
 - [ ] Music for the field maps (one track can cover several maps).
-  - [ ] Emberfields: track in (2026-11-27, `Audio/Emberfields`). Pushed; waiting for the owner to hear it. Still silent: Ashen Marsh, Shale Cliffs.
+  - [ ] Emberfields: track in (2026-11-27, `Audio/Emberfields`). Pushed; waiting for the owner to hear it. Still silent: Shale Cliffs.
   - [ ] Mosswood and Mossgate Hollow: one shared track in (2026-11-27, `Audio/BeneathTheMosswoodBough`). Pushed; waiting for the owner to hear it.
   - [ ] Hollow Den: track in (2026-11-27, `Audio/HeartbeatOfTheDeep`). Pushed; waiting for the owner to hear it.
   - [ ] Cinderford (town): track in (2026-11-27, `Audio/MarketDayAtTheWalls`). Pushed; waiting for the owner to hear it.
   - [ ] Kingsroad: track in (2026-11-27, `Audio/TowardTheDistantGate`). Pushed; waiting for the owner to hear it.
+  - [ ] Ashen Marsh: track in (2026-11-27, `Audio/StepsThroughTheMarshland`; short, about 1 minute 24). Pushed; waiting for the owner to hear it.
   - [ ] Amberleaf Trail: track in (2026-11-27, `Audio/FirstLightInTheGlade`). Pushed; waiting for the owner to hear it.
 - [ ] Mix pass: nothing drowns anything else at default volume.
 
